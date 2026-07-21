@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Account from '../components/Account.jsx'
+
+// My Account page (US-022). The order history is a client:load island: auth
+// state and orders are per-request (session cookie), so nothing is prerendered.
+// An unauthenticated visitor is redirected to /login?redirect=/account.
+---
+
+<Layout
+  title="My Account — Atelier Textiles"
+  description="View your Atelier Textiles order history and status."
+>
+  <section class="page-intro">
+    <h1>My account</h1>
+    <p>Your orders and their current status. Need help? <a href="/order-lookup">Look up a guest order</a>.</p>
+  </section>
+
+  <Account client:load />
+</Layout>

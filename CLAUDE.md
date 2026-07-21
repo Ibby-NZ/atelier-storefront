@@ -118,6 +118,22 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   `/auth/me` → `user` or null, swallows 401), `logout()` (POST `/auth/logout`,
   never throws), `accountLabel(user)` (name or email). `/auth/me`,
   register and login all return a `{ user }` envelope — read `body.user`.
+- **`/account`, `/order-lookup` (US-022)** — order history + status. `/account`
+  (`Account.jsx`, `client:load`) resolves auth at runtime: `fetchCurrentUser()`;
+  no user → `window.location.href = '/login?redirect=/account'` (satisfies the
+  "unauthenticated → login" criterion), else `GET /orders/mine` → `{ orders }`
+  listed newest-first. `/order-lookup` (`OrderLookupForm.jsx`) is PUBLIC — order
+  number + email → `GET /orders/lookup?order_number=&email=`; a 404 (either key
+  wrong) shows a friendly "no order matches" message, never an enumeration
+  signal. Order rendering (status pill, line table, totals, invoice reference)
+  is **shared** via `src/lib/orderView.jsx`: `statusBadge(status)` +
+  `orderCard(order)` are plain FUNCTIONS returning JSX, CALLED normally
+  (`orders.map((o) => orderCard(o))`) — NOT `<OrderCard/>`. A shared component
+  used only in JSX would trip `no-unused-vars` (no React plugin); a called
+  function counts as a use. Order money fields are integer cents rendered with
+  `formatMoney`; totals rows omit when null (fabric requests are priced later by
+  the back office, so subtotal/total sit at 0 and `xero_invoice_ref` is null
+  until confirmation — the invoice row only appears once set).
 - **Header account island** — `Header.astro` renders `AccountNav.jsx`
   (`client:load`) in place of the old static "Account" link. Because the store
   is a static build, login state is resolved at runtime: the island calls
