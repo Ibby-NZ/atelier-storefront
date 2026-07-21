@@ -1,0 +1,47 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { safeFetch } from '../lib/api.js'
+
+// Exercises the shared fetch helper end to end: a health probe that renders a
+// friendly error state (never crashes the page) when the API is unreachable.
+const { data: health, error } = await safeFetch('/health')
+const apiOnline = Boolean(health?.ok)
+
+const sections = [
+  { href: '/products', title: 'Products', body: 'Browse fabrics and finished goods with live filters.' },
+  { href: '/brands', title: 'Brands', body: 'The houses we represent and the stories behind them.' },
+  { href: '/resources', title: 'Resources', body: 'Journal posts, newsletters, and making notes.' },
+  { href: '/story', title: 'Story', body: 'About Atelier Textiles and how we work.' },
+]
+---
+
+<Layout title="Atelier Textiles">
+  <section class="hero">
+    <h1>Atelier Textiles</h1>
+    <p>
+      Fine fabrics and finished goods for makers and trade — sourced from houses
+      across Aotearoa and beyond.
+    </p>
+  </section>
+
+  {
+    error ? (
+      <p class="error-state">Store service status: {error}</p>
+    ) : (
+      <p class="cart-indicator">
+        Store service: <strong>{apiOnline ? 'online' : 'starting up'}</strong>
+      </p>
+    )
+  }
+
+  <section class="card-grid">
+    {
+      sections.map((section) => (
+        <a class="card" href={section.href}>
+          <h2>{section.title}</h2>
+          <p>{section.body}</p>
+        </a>
+      ))
+    }
+  </section>
+</Layout>

@@ -1,0 +1,12 @@
+# build output & deps
+node_modules/
+dist/
+.astro/
+
+# env (never commit real values — see .env.example)
+.env
+.env.production
+
+# OS / editor
+.DS_Store
+*.log
