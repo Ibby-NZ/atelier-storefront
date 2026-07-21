@@ -285,6 +285,212 @@ main {
   color: var(--muted);
 }
 
+/* Product detail (US-018) ------------------------------------------------- */
+.product-detail {
+  max-width: var(--max-width);
+}
+
+.detail-breadcrumb {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.detail-breadcrumb a {
+  text-decoration: none;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 40rem) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-hero {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.detail-hero-placeholder {
+  aspect-ratio: 4 / 3;
+  display: block;
+}
+
+.detail-hires {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.detail-type {
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.detail-name {
+  margin: 0 0 0.15rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.detail-brand {
+  margin: 0 0 1rem;
+  color: var(--muted);
+}
+
+.detail-price {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.detail-price.muted {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.detail-price-label {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.purchase {
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.35rem;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.purchase-note {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.purchase-added {
+  margin: 0.5rem 0 0;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.detail-specs {
+  margin: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.detail-specs div {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.2rem 0;
+}
+
+.detail-specs dt {
+  color: var(--muted);
+  min-width: 8rem;
+}
+
+.detail-specs dd {
+  margin: 0;
+}
+
+.detail-colourways {
+  margin-top: 2.5rem;
+}
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space);
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.swatch {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.swatch-out {
+  opacity: 0.7;
+}
+
+.swatch-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 0.35rem;
+}
+
+.swatch-tones {
+  display: flex;
+  height: 3rem;
+  border-radius: 0.35rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.swatch-tone {
+  flex: 1;
+}
+
+.swatch-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.swatch-stock {
+  font-size: 0.8rem;
+}
+
+.swatch-stock.in {
+  color: #2e7a4f;
+}
+
+.swatch-stock.out {
+  color: var(--muted);
+}
+
 /* Footer ------------------------------------------------------------------ */
 .site-footer {
   border-top: 1px solid var(--line);

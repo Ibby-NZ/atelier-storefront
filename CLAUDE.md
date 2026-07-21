@@ -53,11 +53,40 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   filtered list; switch to server-side querystring filtering only if the set
   ever exceeds the API page cap.
 
+- **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` prerenders
+  one route per website-visible product. `getStaticPaths` enumerates slugs with
+  `safeFetch('/catalogue/products?limit=100')` (never throws → API offline just
+  yields zero detail routes, build still succeeds). The live detail is a
+  `client:load` island `ProductDetail.jsx` fetching `GET /catalogue/products/:slug`
+  per request — necessary because availability and trade pricing are per-request
+  (auth cookie). **Gotcha:** that endpoint wraps the product in an envelope
+  `{ product: {...} }` (unlike the LIST endpoint which returns `{ products, meta }`);
+  read `body.product`. Purchase action by type: finished good → Add to Cart;
+  fabric with any in-stock colourway → Request Order; fabric all out of stock →
+  Request Backorder + lead-time note. Request buttons link to
+  `/order-request?product=<slug>[&backorder=1]` (form built in US-020). Price
+  reuses the FR-3 rule plus trade: `trade_price_cents` present → show it;
+  else `price_hidden`/null retail → "Login for trade pricing"; else retail.
+
+### ESLint + JSX sub-components (constraint)
+
+The store's flat config has **no React ESLint plugin**, so `no-unused-vars` does
+NOT recognise a JSX-only reference (`<Swatch/>`) as using the `Swatch` binding —
+defining a helper component used only in JSX fails lint. Keep each island a
+SINGLE component (inline the sub-markup / lift child state up), the way
+`ProductLibrary.jsx` and `ProductDetail.jsx` do. Plain helper functions called
+normally (e.g. `priceInfo(product)`) are fine.
+
 ## Cart
 
 Client-side cart lives in `localStorage` under key `atelier_cart` (array of
-`{ sku, qty, ... }`). `CartIndicator.jsx` reads it for the header count and
-listens to the `storage` event. Cart write path arrives in US-019.
+`{ sku, name, qty, price_cents, currency }`). **Write path: `src/lib/cart.js`**
+(`addToCart(item, qty)` merges by SKU, `readCart()`, `CART_EVENT`). Every write
+dispatches a same-tab `atelier-cart-change` event (`CART_EVENT`) because the
+native `storage` event only fires in OTHER tabs. `CartIndicator.jsx` listens to
+BOTH `storage` and `CART_EVENT` so the header count updates instantly after an
+Add to Cart in the same tab. US-018 added the Add-to-Cart write; the full cart
+page (quantity edit / remove / checkout) arrives in US-019.
 
 ## Env
 

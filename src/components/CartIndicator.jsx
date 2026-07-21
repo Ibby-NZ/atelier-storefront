@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
+import { CART_EVENT } from '../lib/cart.js'
 
-// Small interactive island proving the @astrojs/react integration works.
-// Reads the client-side cart (localStorage, populated later in US-019) and shows
-// a live item count. Rendered with client:load in the header.
+// Small interactive island in the header. Reads the client-side cart
+// (localStorage) and shows a live item count. Updates from BOTH the native
+// `storage` event (cart changed in another tab) and our same-tab `CART_EVENT`
+// (Add to Cart in this tab — US-018), since `storage` never fires in the tab
+// that made the change.
 const STORAGE_KEY = 'atelier_cart'
 
 function readCount() {
@@ -26,8 +29,13 @@ export default function CartIndicator() {
     const onStorage = (event) => {
       if (event.key === STORAGE_KEY) setCount(readCount())
     }
+    const onCartChange = () => setCount(readCount())
     window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
+    window.addEventListener(CART_EVENT, onCartChange)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener(CART_EVENT, onCartChange)
+    }
   }, [])
 
   return (

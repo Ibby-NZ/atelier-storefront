@@ -1,0 +1,25 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import ProductDetail from '../../components/ProductDetail.jsx'
+import { safeFetch } from '../../lib/api.js'
+
+// Product detail page (US-018). The route is prerendered for every
+// website-visible product; the interactive detail (live availability, trade
+// pricing behind the auth cookie) is a client:load React island that fetches
+// GET /catalogue/products/:slug per request.
+//
+// getStaticPaths only enumerates the slug set. safeFetch never throws, so a
+// build with the API offline still succeeds — it just produces no detail routes,
+// matching the storefront rule that the API being down must not fail the build.
+export async function getStaticPaths() {
+  const { data } = await safeFetch('/catalogue/products?limit=100')
+  const products = Array.isArray(data?.products) ? data.products : []
+  return products.map((product) => ({ params: { slug: product.slug } }))
+}
+
+const { slug } = Astro.params
+---
+
+<Layout title="Product — Atelier Textiles" description="Product details, colourways, and availability.">
+  <ProductDetail client:load slug={slug} />
+</Layout>
