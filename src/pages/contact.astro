@@ -1,0 +1,25 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { getEntry, render } from 'astro:content'
+
+// Contact page, rendered from the `page` content collection (id "contact").
+// Static — a CMS can later edit the markdown body without a code change.
+const entry = await getEntry('page', 'contact')
+const Content = entry ? (await render(entry)).Content : null
+const title = entry?.data.title ?? 'Contact'
+---
+
+<Layout title={`${title} — Atelier Textiles`}>
+  <article class="content-page">
+    <h1>{title}</h1>
+    {
+      Content ? (
+        <div class="prose">
+          <Content />
+        </div>
+      ) : (
+        <p class="empty-state">This page has no content yet.</p>
+      )
+    }
+  </article>
+</Layout>

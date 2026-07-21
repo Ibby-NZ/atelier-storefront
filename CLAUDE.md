@@ -202,6 +202,27 @@ collection cards, optional body, related posts. Brands without a content entry
 degrade gracefully (empty slideshow, API story blurb, no cards). Related-post
 links point at `/resources/<id>` (route built in US-025).
 
+## Resources + company pages (US-025)
+
+All static (content is build-time; no islands):
+
+- **`/resources` (`resources/index.astro`)** — lists the `post` collection
+  newest-first via `getCollection('post')` (grid of cards, hero + title + date;
+  empty state when none). Cards link to `/resources/<post.id>`.
+- **`/resources/[slug]` (`resources/[slug].astro`)** — one route per post;
+  `getStaticPaths` maps `post.id` → `params.slug`, renders the markdown body with
+  `render(post)` inside `.prose`, shows date and `brands` tags (each links to
+  `/brands/<slug>`). Slug = entry `.id` = filename (matches the `/resources/<id>`
+  links from brand pages).
+- **`/story`, `/contact` (`story.astro`, `contact.astro`)** — each renders one
+  `page`-collection entry looked up by id with `getEntry('page', 'story'|'contact')`
+  then `render(entry)`. Falls back to an empty-state if the entry is missing.
+  Seeded markdown: `src/content/pages/story.md`, `contact.md`.
+
+Newsletters become posts (meeting decision) — no separate newsletter type; add a
+`post` entry. Content styles (`.post-card`, `.post`, `.prose`, `.tag`,
+`.content-page`) live in `global.css`.
+
 ## Cart
 
 Client-side cart lives in `localStorage` under key `atelier_cart` (array of

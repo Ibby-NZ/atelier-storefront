@@ -1,0 +1,41 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import { getCollection } from 'astro:content'
+
+// Resources / journal index. Newsletters become posts (meeting decision), so
+// this lists the `post` collection newest-first. Fully static — content is
+// build-time, no island needed.
+const posts = (await getCollection('post')).sort(
+  (a, b) => b.data.date - a.data.date,
+)
+
+const formatDate = (date) =>
+  date.toLocaleDateString('en-NZ', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+---
+
+<Layout title="Resources — Atelier Textiles">
+  <section class="page-intro">
+    <h1>Resources</h1>
+    <p>Journal, collection stories and news from the houses we represent.</p>
+  </section>
+
+  {posts.length === 0 && <p class="empty-state">No posts yet.</p>}
+
+  <section class="card-grid">
+    {
+      posts.map((post) => (
+        <a class="card post-card" href={`/resources/${post.id}`}>
+          {post.data.hero && (
+            <img src={post.data.hero} alt={post.data.title} loading="lazy" />
+          )}
+          <h2>{post.data.title}</h2>
+          <span class="post-date">{formatDate(post.data.date)}</span>
+        </a>
+      ))
+    }
+  </section>
+</Layout>

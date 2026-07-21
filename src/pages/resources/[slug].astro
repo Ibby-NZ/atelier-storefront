@@ -1,0 +1,55 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import { getCollection, render } from 'astro:content'
+
+// One page per journal post. Static routes from the `post` collection; entry
+// `.id` is the filename slug (matches the /resources/<id> links elsewhere).
+export async function getStaticPaths() {
+  const posts = await getCollection('post')
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }))
+}
+
+const { post } = Astro.props
+const { Content } = await render(post)
+
+const formattedDate = post.data.date.toLocaleDateString('en-NZ', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<Layout title={`${post.data.title} — Atelier Textiles`}>
+  <p class="breadcrumb"><a href="/resources">← All resources</a></p>
+
+  <article class="post">
+    <header class="post-header">
+      <h1>{post.data.title}</h1>
+      <span class="post-date">{formattedDate}</span>
+      {
+        (post.data.brands ?? []).length > 0 && (
+          <p class="post-brands">
+            {post.data.brands.map((slug) => (
+              <a class="tag" href={`/brands/${slug}`}>
+                {slug}
+              </a>
+            ))}
+          </p>
+        )
+      }
+    </header>
+
+    {
+      post.data.hero && (
+        <img class="post-hero" src={post.data.hero} alt={post.data.title} />
+      )
+    }
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Layout>
