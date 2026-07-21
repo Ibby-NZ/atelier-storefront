@@ -1,0 +1,127 @@
+---
+import { getCollection, render } from 'astro:content'
+import Layout from '../../layouts/Layout.astro'
+import { safeFetch } from '../../lib/api.js'
+
+// One page per brand. Static routes are the UNION of live API brand slugs and
+// seeded brandPage entries, so a seeded page still builds when the API is
+// offline (safeFetch never throws → zero API brands, content pages remain).
+export async function getStaticPaths() {
+  const { data } = await safeFetch('/catalogue/brands')
+  const apiBrands = data?.brands ?? []
+
+  const brandPages = await getCollection('brandPage')
+  const posts = await getCollection('post')
+
+  const bySlug = new Map()
+  for (const brand of apiBrands) {
+    bySlug.set(brand.slug, { slug: brand.slug, brand, page: null })
+  }
+  for (const entry of brandPages) {
+    const slug = entry.data.brand
+    const existing = bySlug.get(slug)
+    if (existing) {
+      existing.page = entry
+    } else {
+      bySlug.set(slug, { slug, brand: null, page: entry })
+    }
+  }
+
+  return Array.from(bySlug.values()).map(({ slug, brand, page }) => ({
+    params: { slug },
+    props: {
+      brand,
+      page,
+      relatedPosts: posts
+        .filter((p) => (p.data.brands ?? []).includes(slug))
+        .sort((a, b) => b.data.date - a.data.date),
+    },
+  }))
+}
+
+const { brand, page, relatedPosts } = Astro.props
+
+const name = brand?.name ?? page?.id ?? Astro.params.slug
+const blurb = page?.data.blurb ?? brand?.story ?? ''
+const slideshow = page?.data.slideshow ?? []
+const cards = page?.data.collectionCards ?? []
+const heroImage = slideshow[0] ?? null
+
+// Render the optional markdown body of the brand page.
+const Body = page ? (await render(page)).Content : null
+---
+
+<Layout title={`${name} — Atelier Textiles`}>
+  <p class="breadcrumb"><a href="/brands">← All brands</a></p>
+
+  <section class="brand-header">
+    {
+      heroImage ? (
+        <div class="brand-slideshow">
+          {slideshow.map((src, i) => (
+            <img
+              src={src}
+              alt={`${name} collection image ${i + 1}`}
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+          ))}
+        </div>
+      ) : (
+        <div class="brand-slideshow brand-slideshow--empty" aria-hidden="true" />
+      )
+    }
+    <h1>{name}</h1>
+    {brand?.country && <p class="brand-meta">{brand.country}</p>}
+    {blurb && <p class="brand-blurb">{blurb}</p>}
+    <p><a class="btn" href={`/products?brand=${Astro.params.slug}`}>Shop {name}</a></p>
+  </section>
+
+  {
+    cards.length > 0 && (
+      <section class="brand-collections">
+        <h2>Collections</h2>
+        <div class="card-grid">
+          {cards.map((card) => (
+            <a class="card collection-card" href={card.link}>
+              {card.featuredImage && (
+                <img src={card.featuredImage} alt={card.heading} loading="lazy" />
+              )}
+              <h3>{card.heading}</h3>
+              <p>{card.description}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    Body && (
+      <section class="brand-body prose">
+        <Body />
+      </section>
+    )
+  }
+
+  {
+    relatedPosts.length > 0 && (
+      <section class="brand-posts">
+        <h2>Related reading</h2>
+        <ul class="post-list">
+          {relatedPosts.map((post) => (
+            <li>
+              <a href={`/resources/${post.id}`}>{post.data.title}</a>
+              <span class="post-date">
+                {post.data.date.toLocaleDateString('en-NZ', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Layout>

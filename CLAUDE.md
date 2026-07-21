@@ -169,6 +169,39 @@ SINGLE component (inline the sub-markup / lift child state up), the way
 `ProductLibrary.jsx` and `ProductDetail.jsx` do. Plain helper functions called
 normally (e.g. `priceInfo(product)`) are fine.
 
+## Content collections (US-024)
+
+Structured content lives in **Astro content collections** (content layer),
+defined in **`src/content.config.js`** (`z` from `astro:content`, `glob` loader
+from `astro/loaders`). Three collections, all CMS-friendly (flat frontmatter +
+markdown body) so US-026's EmDash CMS can manage them and the markdown files are
+the fallback baseline:
+
+- **`brandPage`** (`src/content/brands/*.md`) — `brand` (API brand slug),
+  `slideshow` (image URLs), `blurb`, `collectionCards` (`{ heading, description,
+  link, featuredImage? }`). Body markdown is extended brand copy.
+- **`post`** (`src/content/posts/*.md`) — `title`, `date` (coerced), `brands`
+  (brand-slug tags), `hero?`. Body is the article. (Listing pages are US-025.)
+- **`page`** (`src/content/pages/*.md`) — `title`; body is the page (story /
+  contact, seeded in US-025; dir kept with `.gitkeep`).
+
+**Query with `getCollection('brandPage')` / `render(entry)`** — build-time only,
+so brand pages are fully STATIC (no islands). Entry `id` is the filename slug.
+
+**`/brands` (`brands/index.astro`)** — API-driven grid of ALL houses via
+`safeFetch('/catalogue/brands')` (→ `{ brands }`, offline renders error state),
+each card links to `/brands/<slug>`.
+
+**`/brands/[slug]` (`brands/[slug].astro`)** — `getStaticPaths` returns the
+UNION of live API brand slugs and seeded `brandPage` slugs (so a seeded page
+still builds with the API offline). Each route gets `{ brand, page, relatedPosts
+}`: brand from the API (or null), `page` the matching `brandPage` entry (matched
+by `entry.data.brand === slug`), `relatedPosts` = posts whose `brands` include
+the slug. Renders slideshow header, blurb (`page.blurb ?? brand.story`),
+collection cards, optional body, related posts. Brands without a content entry
+degrade gracefully (empty slideshow, API story blurb, no cards). Related-post
+links point at `/resources/<id>` (route built in US-025).
+
 ## Cart
 
 Client-side cart lives in `localStorage` under key `atelier_cart` (array of
