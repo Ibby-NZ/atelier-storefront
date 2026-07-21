@@ -689,3 +689,79 @@ main {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* Order-request form (US-020) --------------------------------------------- */
+.request-form {
+  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+}
+
+.request-product,
+.request-note {
+  margin: 0;
+}
+
+.request-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field > span,
+.field-group legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  background: #fff;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: var(--space);
+}
+
+.field-checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.field-checkbox input {
+  margin-top: 0.2rem;
+}
+
+.field-error {
+  color: #b23b3b;
+  font-size: 0.85rem;
+}
+
+.request-success {
+  max-width: 34rem;
+}
+
+.request-success h2 {
+  margin-top: 0;
+}

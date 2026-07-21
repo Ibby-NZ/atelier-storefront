@@ -19,6 +19,10 @@ export class ApiError extends Error {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    // Parsed JSON error body, when the API returned one. Lets callers read
+    // structured detail such as field-level validation errors (422 responses
+    // carry `{ message, errors: [{ field, message }] }`).
+    this.body = null
     if (cause) this.cause = cause
   }
 }
@@ -64,7 +68,9 @@ export async function apiFetch(path, options = {}) {
   const body = await parseBody(response)
 
   if (!response.ok) {
-    throw new ApiError(messageFromBody(body, response.status), response.status)
+    const error = new ApiError(messageFromBody(body, response.status), response.status)
+    error.body = body
+    throw error
   }
 
   return body

@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro'
+import OrderRequestForm from '../components/OrderRequestForm.jsx'
+
+// Order-request page (US-020). Reached from a fabric product page as
+// /order-request?product=<slug>[&backorder=1]. The whole form is a client:load
+// island: it reads the query string, loads the product's colourways, prefills
+// contact details for a logged-in customer, and POSTs to /orders/request.
+---
+
+<Layout
+  title="Request an order — Atelier Textiles"
+  description="Request fabric cut to order with your cut requirements. We reply within 24 hours."
+>
+  <section class="page-intro">
+    <h1>Request an order</h1>
+    <p>
+      Fabric is cut to order. Tell us how much you need and your cut requirements — we verify
+      stock and batch shading before invoicing, and reply within 24 hours.
+    </p>
+  </section>
+
+  <OrderRequestForm client:load />
+</Layout>

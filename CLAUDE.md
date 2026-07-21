@@ -22,6 +22,10 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     in page frontmatter / islands so the template renders an error state instead
     of crashing. Because it swallows errors, a build with the API offline still
     succeeds (page shows the error state).
+  - `ApiError` carries `.status` AND `.body` (the parsed JSON error body). For a
+    422 the API sends `{ message, errors: [{ field, message }] }`; read
+    `err.body?.errors` to show validation messages inline (see
+    `OrderRequestForm.jsx`). `.message` is still the human-friendly fallback.
   - Base URL from `PUBLIC_API_BASE_URL` (falls back to `http://localhost:3001`).
     The `PUBLIC_` prefix is REQUIRED for the value to reach browser islands; a
     non-prefixed var is server-only in Astro.
@@ -82,6 +86,22 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   `GET /checkout/session/:id`, shows the deterministic order number
   (`WEB-<id>`), and only THEN clears the cart. Money is formatted with the
   shared `src/lib/money.js` `formatMoney(cents, currency)`.
+
+- **`/order-request` (US-020)** — `src/pages/order-request.astro` renders
+  `OrderRequestForm.jsx` as a single `client:load` island. Reached from a fabric
+  product page as `/order-request?product=<slug>[&backorder=1]`. The island reads
+  the query string (`window.location.search`, SSR-guarded), loads the product's
+  colourways via `GET /catalogue/products/:slug` (colourway = SKU picker),
+  prefills name/email from `GET /auth/me` (401 = guest, ignored), and POSTs
+  `{ lines: [{ sku, qty_metres, cut_requirements }], contact: { name, email,
+  phone }, accepted_lead_time }` to `POST /orders/request`. The **backorder**
+  variant (`?backorder=1`) shows the lead-time note and an "I accept the quoted
+  lead time" checkbox that is REQUIRED before submit (sets `accepted_lead_time`).
+  Validation is two-layer: client checks (metres > 0, colourway chosen, email
+  present, checkbox for backorder), then server 422 field errors mapped from
+  `err.body.errors` field paths (`lines[0].qty_metres` → metres, `contact.email`
+  → email) shown inline; other errors show form-level. Success replaces the form
+  with the request number and "in touch within 24 hours".
 
 ### ESLint + JSX sub-components (constraint)
 
