@@ -103,6 +103,29 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   → email) shown inline; other errors show form-level. Success replaces the form
   with the request number and "in touch within 24 hours".
 
+- **`/login`, `/register`, `/trade-application` (US-021)** — each an Astro page
+  wrapping a single `client:load` form island (`LoginForm.jsx`,
+  `RegisterForm.jsx`, `TradeApplicationForm.jsx`). Login/register POST to
+  `/auth/login` / `/auth/register`; on success the API sets the session cookie
+  and the island does `window.location.href = '/'` (login honours a same-site
+  `?redirect=` path — off-site/`//` values are rejected). Trade-application POSTs
+  to `/auth/trade-application` and does NOT redirect — it shows a confirmation
+  that approval is **manual** (role=trade, `trade_approved=false`; no self-serve
+  approval endpoint exists). Errors surface inline from `ApiError.message` (the
+  API sends friendly `{ error }` on 401/409); register/trade check
+  `password.length >= 8` client-side to avoid the raw schema-400 message.
+  **Auth helpers live in `src/lib/auth.js`**: `fetchCurrentUser()` (GET
+  `/auth/me` → `user` or null, swallows 401), `logout()` (POST `/auth/logout`,
+  never throws), `accountLabel(user)` (name or email). `/auth/me`,
+  register and login all return a `{ user }` envelope — read `body.user`.
+- **Header account island** — `Header.astro` renders `AccountNav.jsx`
+  (`client:load`) in place of the old static "Account" link. Because the store
+  is a static build, login state is resolved at runtime: the island calls
+  `fetchCurrentUser()` and shows the account name (link to `/account`) + a Log
+  out button when signed in, else a Login link. It defaults to the Login link
+  while `/auth/me` is in flight (guest is the common case, no layout jump). Log
+  out calls `logout()` then reloads to `/` so every island re-reads state.
+
 ### ESLint + JSX sub-components (constraint)
 
 The store's flat config has **no React ESLint plugin**, so `no-unused-vars` does

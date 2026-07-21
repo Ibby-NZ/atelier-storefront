@@ -1,8 +1,12 @@
 ---
 import CartIndicator from './CartIndicator.jsx'
+import AccountNav from './AccountNav.jsx'
 
-// Primary site navigation. Cart is a React island (live count); the rest are
-// plain links. aria-current marks the active page for a11y and styling.
+// Primary site navigation. Cart and account are React islands (live state); the
+// rest are plain links. aria-current marks the active page for a11y and styling.
+// AccountNav (US-021) shows the account name + Log out when signed in, else a
+// Login link — it resolves login state at runtime via /auth/me since this is a
+// static build.
 const links = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
@@ -10,7 +14,6 @@ const links = [
   { href: '/resources', label: 'Resources' },
   { href: '/story', label: 'Story' },
   { href: '/contact', label: 'Contact' },
-  { href: '/account', label: 'Account' },
 ]
 
 const current = Astro.url.pathname
@@ -35,6 +38,9 @@ const isActive = (href) =>
             </li>
           ))
         }
+        <li>
+          <AccountNav client:load />
+        </li>
         <li>
           <CartIndicator client:load />
         </li>

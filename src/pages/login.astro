@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro'
+import LoginForm from '../components/LoginForm.jsx'
+
+// Login page (US-021). The form is a client:load island posting to
+// POST /auth/login; on success it redirects home (or ?redirect=) and the header
+// account island re-reads /auth/me.
+---
+
+<Layout
+  title="Log in — Atelier Textiles"
+  description="Log in to your Atelier Textiles account to view orders and trade pricing."
+>
+  <section class="page-intro">
+    <h1>Log in</h1>
+    <p>Access your orders and, for approved trade accounts, trade pricing.</p>
+  </section>
+
+  <LoginForm client:load />
+</Layout>

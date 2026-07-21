@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro'
+import TradeApplicationForm from '../components/TradeApplicationForm.jsx'
+
+// Trade-application page (US-021, FR-3). The form is a client:load island
+// posting to POST /auth/trade-application. It creates a role=trade account with
+// trade_approved=false and shows a confirmation explaining that approval is
+// manual (there is no self-serve approval endpoint).
+---
+
+<Layout
+  title="Apply for a trade account — Atelier Textiles"
+  description="Apply for an Atelier Textiles trade account to access trade pricing. Approval is manual."
+>
+  <section class="page-intro">
+    <h1>Apply for a trade account</h1>
+    <p>Trade accounts unlock trade pricing once approved by our team.</p>
+  </section>
+
+  <TradeApplicationForm client:load />
+</Layout>

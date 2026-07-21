@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro'
+import RegisterForm from '../components/RegisterForm.jsx'
+
+// Register page (US-021). The form is a client:load island posting to
+// POST /auth/register (role=customer); on success it redirects home and the
+// header account island shows the new account name.
+---
+
+<Layout
+  title="Create an account — Atelier Textiles"
+  description="Create an Atelier Textiles account to place orders and track them."
+>
+  <section class="page-intro">
+    <h1>Create an account</h1>
+    <p>Register to place orders and track them from your account.</p>
+  </section>
+
+  <RegisterForm client:load />
+</Layout>

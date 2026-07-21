@@ -765,3 +765,72 @@ main {
 .request-success h2 {
   margin-top: 0;
 }
+
+/* Auth pages + header account (US-021) ------------------------------------ */
+.auth-form {
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+}
+
+.auth-intro,
+.auth-alt {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.form-error {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d9a3a3;
+  border-radius: 4px;
+  background: #fbeaea;
+  color: #b23b3b;
+  font-size: 0.9rem;
+}
+
+.auth-success {
+  max-width: 32rem;
+}
+
+.auth-success h2 {
+  margin-top: 0;
+}
+
+.account-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.account-nav-signed-in > a {
+  font-weight: 600;
+}
+
+.account-logout {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.account-logout:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.account-logout:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
