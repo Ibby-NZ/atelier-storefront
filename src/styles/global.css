@@ -146,6 +146,145 @@ main {
   border-radius: 0.5rem;
 }
 
+/* Product library (US-017) ------------------------------------------------ */
+.page-intro {
+  margin-bottom: 1.5rem;
+}
+
+.page-intro h1 {
+  margin-bottom: 0.25rem;
+}
+
+.page-intro p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: #fff;
+  margin-bottom: 1.25rem;
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.filter select {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  min-width: 10rem;
+}
+
+.filter-clear {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.filter-clear:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.products-status,
+.products-empty {
+  color: var(--muted);
+  padding: 1.5rem 0;
+}
+
+.products-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-card {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.product-card a {
+  display: block;
+  padding: 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+}
+
+.product-card:hover {
+  border-color: var(--accent);
+}
+
+.product-card h2 {
+  margin: 0 0 0.15rem;
+  font-size: 1.05rem;
+}
+
+.product-brand {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.product-specs {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.product-specs div {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.product-specs dt {
+  color: var(--muted);
+  min-width: 6.5rem;
+}
+
+.product-specs dd {
+  margin: 0;
+}
+
+.product-price {
+  margin: 0;
+  font-weight: 600;
+}
+
+.product-price.muted {
+  font-weight: 400;
+  color: var(--muted);
+}
+
 /* Footer ------------------------------------------------------------------ */
 .site-footer {
   border-top: 1px solid var(--line);

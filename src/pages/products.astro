@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro'
+import ProductLibrary from '../components/ProductLibrary.jsx'
+
+// Product library page (US-017). The grid + filters are fully interactive, so
+// the whole thing is a client:load React island reading GET /catalogue/products.
+// Filtering happens in the browser with no page reload.
+---
+
+<Layout title="Products — Atelier Textiles" description="Browse fabrics and finished goods with live filters.">
+  <section class="page-intro">
+    <h1>Products</h1>
+    <p>Explore our fabrics and finished goods. Filter by brand, application, composition, and more.</p>
+  </section>
+
+  <ProductLibrary client:load />
+</Layout>

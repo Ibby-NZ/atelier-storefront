@@ -38,6 +38,21 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   build does diagnostics). Keep real logic in `.js/.jsx` modules so it stays
   covered. JSX parses via espree's `ecmaFeatures.jsx` — no extra parser dep.
 
+## Pages
+
+- **`/products` (US-017)** — `src/pages/products.astro` renders `ProductLibrary.jsx`
+  as a single `client:load` island. The island fetches the whole website
+  catalogue once (`GET /catalogue/products?limit=100`; the catalogue is small,
+  well under the API max) and **filters in memory** — instant, no page reload,
+  no per-filter request. Filter options are derived from the fetched set
+  (brand uses `brand.slug`/`brand.name`, `product_type` maps to friendly
+  labels, other fields are raw strings). Price rule (FR-3): `price_hidden` OR
+  missing `retail_price_cents` → "Login for trade pricing"; otherwise
+  `Intl.NumberFormat` in the product's `currency`. Empty state shown when no
+  product matches. Reuse the fetch-all-then-filter shape for any small
+  filtered list; switch to server-side querystring filtering only if the set
+  ever exceeds the API page cap.
+
 ## Cart
 
 Client-side cart lives in `localStorage` under key `atelier_cart` (array of
