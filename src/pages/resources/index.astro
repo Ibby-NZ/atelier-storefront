@@ -1,20 +1,37 @@
 ---
+export const prerender = false // merges live EmDash CMS posts with markdown baseline
 import Layout from '../../layouts/Layout.astro'
 import { getCollection } from 'astro:content'
+import { listEmdashPosts } from '../../lib/emdash.js'
 
-// Resources / journal index. Newsletters become posts (meeting decision), so
-// this lists the `post` collection newest-first. Fully static — content is
-// build-time, no island needed.
-const posts = (await getCollection('post')).sort(
-  (a, b) => b.data.date - a.data.date,
+// Resources / journal index. Newsletters become posts (meeting decision). The
+// list is the UNION of the markdown `post` collection (the shipped baseline) and
+// posts authored in the EmDash CMS (US-026). Markdown wins on slug collisions so
+// the baseline stays authoritative; EmDash is additive. Rendered on demand so
+// the CMS is queried live — `listEmdashPosts` never throws, so an empty/absent
+// CMS just yields the markdown posts.
+const markdownPosts = (await getCollection('post')).map((post) => ({
+  id: post.id,
+  title: post.data.title,
+  date: post.data.date,
+  hero: post.data.hero ?? null,
+}))
+
+const emdashPosts = await listEmdashPosts()
+
+const seen = new Set(markdownPosts.map((p) => p.id))
+const posts = [...markdownPosts, ...emdashPosts.filter((p) => !seen.has(p.id))].sort(
+  (a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0),
 )
 
 const formatDate = (date) =>
-  date.toLocaleDateString('en-NZ', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  date
+    ? date.toLocaleDateString('en-NZ', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : ''
 ---
 
 <Layout title="Resources — Atelier Textiles">
@@ -29,11 +46,9 @@ const formatDate = (date) =>
     {
       posts.map((post) => (
         <a class="card post-card" href={`/resources/${post.id}`}>
-          {post.data.hero && (
-            <img src={post.data.hero} alt={post.data.title} loading="lazy" />
-          )}
-          <h2>{post.data.title}</h2>
-          <span class="post-date">{formatDate(post.data.date)}</span>
+          {post.hero && <img src={post.hero} alt={post.title} loading="lazy" />}
+          <h2>{post.title}</h2>
+          {post.date && <span class="post-date">{formatDate(post.date)}</span>}
         </a>
       ))
     }

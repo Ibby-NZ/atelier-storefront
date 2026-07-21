@@ -223,6 +223,37 @@ Newsletters become posts (meeting decision) — no separate newsletter type; add
 `post` entry. Content styles (`.post-card`, `.post`, `.prose`, `.tag`,
 `.content-page`) live in `global.css`.
 
+## EmDash CMS (US-026)
+
+EmDash (`emdash@0.29.0`, beta) is added as an Astro integration so editors can
+manage journal posts without a deploy. It is **additive** — markdown collections
+(above) remain the shipped baseline.
+
+- **Server mode:** EmDash injects on-demand routes, so `astro.config.mjs` uses
+  `output: 'server'` + `@astrojs/node`. **Every storefront page therefore MUST
+  keep `export const prerender = true`** (first line of frontmatter) or it stops
+  being static — new pages need it too. Only EmDash routes and the two
+  `/resources` pages render on demand.
+- **Config:** `emdash({ database: sqlite({ url: 'file:./data/emdash.db' }),
+  storage: local({ directory: './data/uploads', ... }) })`. `data/` and
+  `emdash-env.d.ts` are gitignored — local content is never committed.
+- **Live collection:** `src/live.config.js` registers the `_emdash` loader.
+- **Reads go through `src/lib/emdash.js`** (`listEmdashPosts` / `getEmdashPost`),
+  which NEVER throw — an empty/absent CMS yields the markdown baseline, keeping
+  builds offline-safe. `getEmDashCollection('posts')` → `{ entries }` (entry has
+  `.slug` + `.data`); `getEmDashEntry('posts', slug)` → `{ entry, ... }` (unwrap
+  `.entry`). Post fields live under `entry.data` (`title`, `excerpt`,
+  `featured_image`, `content` (portableText), `publishedAt`).
+- **`/resources`** merges markdown + published EmDash posts (markdown wins on
+  slug); **`/resources/[slug]`** resolves markdown-first then EmDash, else 404.
+  Both are `prerender = false`.
+- **Admin:** http://localhost:4321/_emdash/admin (first run → `/setup`,
+  passkey auth). Dev-only headless bootstrap + API token:
+  `GET /_emdash/api/setup/dev-bypass?token=1`.
+- **MCP server:** `POST /_emdash/api/mcp` (Streamable HTTP, `Authorization:
+  Bearer <token>`) — see `README.md`.
+- Beta rough edges + workarounds: `../tasks/emdash-blockers.md`.
+
 ## Cart
 
 Client-side cart lives in `localStorage` under key `atelier_cart` (array of

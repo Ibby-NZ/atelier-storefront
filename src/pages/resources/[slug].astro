@@ -1,55 +1,76 @@
 ---
+export const prerender = false // resolves markdown baseline first, else live EmDash post
 import Layout from '../../layouts/Layout.astro'
-import { getCollection, render } from 'astro:content'
+import { getEntry, render } from 'astro:content'
+import { getEmdashPost } from '../../lib/emdash.js'
 
-// One page per journal post. Static routes from the `post` collection; entry
-// `.id` is the filename slug (matches the /resources/<id> links elsewhere).
-export async function getStaticPaths() {
-  const posts = await getCollection('post')
-  return posts.map((post) => ({
-    params: { slug: post.id },
-    props: { post },
-  }))
+// One journal post. The markdown `post` collection is the baseline and wins on
+// slug collisions; a slug with no markdown entry falls back to a post authored
+// in the EmDash CMS (US-026). Server-rendered so the CMS is queried live. When
+// neither source has the slug we return a 404 body.
+const { slug } = Astro.params
+
+const mdPost = await getEntry('post', slug)
+let Content = null
+if (mdPost) {
+  Content = (await render(mdPost)).Content
 }
 
-const { post } = Astro.props
-const { Content } = await render(post)
+const emPost = mdPost ? null : await getEmdashPost(slug)
+const found = mdPost ?? emPost
 
-const formattedDate = post.data.date.toLocaleDateString('en-NZ', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-})
+const title = mdPost?.data.title ?? emPost?.title ?? 'Not found'
+const date = mdPost?.data.date ?? emPost?.date ?? null
+const hero = mdPost?.data.hero ?? emPost?.hero ?? null
+const brands = mdPost?.data.brands ?? []
+
+const formattedDate = date
+  ? date.toLocaleDateString('en-NZ', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : ''
+
+if (!found) {
+  Astro.response.status = 404
+}
 ---
 
-<Layout title={`${post.data.title} — Atelier Textiles`}>
+<Layout title={`${title} — Atelier Textiles`}>
   <p class="breadcrumb"><a href="/resources">← All resources</a></p>
 
-  <article class="post">
-    <header class="post-header">
-      <h1>{post.data.title}</h1>
-      <span class="post-date">{formattedDate}</span>
-      {
-        (post.data.brands ?? []).length > 0 && (
-          <p class="post-brands">
-            {post.data.brands.map((slug) => (
-              <a class="tag" href={`/brands/${slug}`}>
-                {slug}
-              </a>
-            ))}
-          </p>
-        )
-      }
-    </header>
+  {
+    !found && (
+      <article class="post">
+        <p class="empty-state">That post could not be found.</p>
+      </article>
+    )
+  }
 
-    {
-      post.data.hero && (
-        <img class="post-hero" src={post.data.hero} alt={post.data.title} />
-      )
-    }
+  {
+    found && (
+      <article class="post">
+        <header class="post-header">
+          <h1>{title}</h1>
+          {formattedDate && <span class="post-date">{formattedDate}</span>}
+          {brands.length > 0 && (
+            <p class="post-brands">
+              {brands.map((b) => (
+                <a class="tag" href={`/brands/${b}`}>
+                  {b}
+                </a>
+              ))}
+            </p>
+          )}
+        </header>
 
-    <div class="prose">
-      <Content />
-    </div>
-  </article>
+        {hero && <img class="post-hero" src={hero} alt={title} />}
+
+        <div class="prose">
+          {Content ? <Content /> : <p>{emPost?.excerpt}</p>}
+        </div>
+      </article>
+    )
+  }
 </Layout>
