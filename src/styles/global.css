@@ -1002,3 +1002,142 @@ main {
 .order-total-row dd {
   font-weight: 700;
 }
+
+/* US-023 — back-office order queue */
+.btn-danger {
+  border-color: #b3261e;
+  color: #b3261e;
+  background: transparent;
+}
+
+.btn-danger:hover {
+  background: #b3261e;
+  color: #fff;
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-filter {
+  max-width: 16rem;
+}
+
+.admin-count {
+  margin: 0 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.admin-order-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-order {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.admin-order-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background: transparent;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-order-head:hover {
+  background: var(--surface, #f7f7f7);
+}
+
+.admin-order-number {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order-kind,
+.admin-order-customer,
+.admin-order-date {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin-order-customer {
+  flex: 1;
+}
+
+.admin-order-detail {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.admin-lines {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.admin-lines th,
+.admin-lines td {
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.admin-lines th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.admin-qty-input {
+  width: 6rem;
+  padding: 0.3rem 0.4rem;
+  font: inherit;
+}
+
+.admin-order-totals {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  max-width: 22rem;
+}
+
+.admin-order-totals > div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.admin-order-totals dt,
+.admin-order-totals dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.admin-confirm {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}

@@ -142,6 +142,24 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   while `/auth/me` is in flight (guest is the common case, no layout jump). Log
   out calls `logout()` then reloads to `/` so every island re-reads state.
 
+- **`/admin/orders` (US-023)** — back-office order queue, a single `client:load`
+  island `AdminOrders.jsx`. Because this is a static build with no server-side
+  guard, the island IS the access gate: `fetchCurrentUser()` on mount → no user
+  redirects to `/login?redirect=/admin/orders`; a signed-in user whose `role` is
+  neither `backoffice` nor `director` is redirected to `/` (no order data
+  fetched, no broken page). Backoffice/director load `GET /admin/orders?status=`
+  (a status `<select>` re-queries) and expand a row to edit line quantities
+  (`PATCH /admin/orders/:id` `{ lines: [{ id, qty }] }`) and drive the lifecycle:
+  Confirm (POST `/confirm` with `xero_invoice_ref`), Mark Paid (`/mark-paid`),
+  Mark Shipped (`/ship`), Decline (`/decline`). Action buttons are shown per
+  status (requested → Confirm/Decline/edit; confirmed → Mark Paid/Decline/edit;
+  paid → Ship; shipped/declined → none), and the API's state machine is the real
+  authority — an invalid transition returns 409 whose message is shown inline.
+  The list re-loads after every mutation so status/totals/reservation stay
+  accurate. `/auth/me` exposes `role` (from `PUBLIC_USER_COLUMNS`), so the role
+  check needs no extra call. Reuses `statusBadge` from `orderView.jsx` and
+  `formatMoney`.
+
 ### ESLint + JSX sub-components (constraint)
 
 The store's flat config has **no React ESLint plugin**, so `no-unused-vars` does
