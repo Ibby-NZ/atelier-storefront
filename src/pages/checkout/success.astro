@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import CheckoutSuccess from '../../components/CheckoutSuccess.jsx';
+
+// Checkout success page (US-019). Stripe's success_url redirects here with
+// ?session_id=...; the island verifies the session via the API, shows the order
+// number, and clears the cart.
+---
+
+<Layout title="Order confirmed — Atelier Textiles" description="Your order has been received.">
+  <CheckoutSuccess client:load />
+</Layout>

@@ -53,3 +53,42 @@ export function addToCart(item, qty = 1) {
   writeCart(next)
   return next
 }
+
+// Sets the absolute quantity of a line (US-019 cart edit). A qty <= 0 removes
+// the line. Returns the new cart. Immutable — never mutates the stored array.
+export function setCartQty(sku, qty) {
+  const amount = Math.floor(Number(qty))
+  if (!Number.isFinite(amount) || amount <= 0) return removeFromCart(sku)
+  const next = readCart().map((line) =>
+    line.sku === sku ? { ...line, qty: amount } : line
+  )
+  writeCart(next)
+  return next
+}
+
+// Removes a line by SKU. Returns the new cart.
+export function removeFromCart(sku) {
+  const next = readCart().filter((line) => line.sku !== sku)
+  writeCart(next)
+  return next
+}
+
+// Empties the cart (after a completed checkout). Returns [].
+export function clearCart() {
+  writeCart([])
+  return []
+}
+
+// Total item count across all lines.
+export function cartCount(items = readCart()) {
+  return items.reduce((sum, line) => sum + (Number(line.qty) || 0), 0)
+}
+
+// Subtotal in cents. Lines with an unknown price (price_cents null) contribute 0
+// — the cart only holds finished goods with a retail price, but guard anyway.
+export function cartSubtotalCents(items = readCart()) {
+  return items.reduce(
+    (sum, line) => sum + (Number(line.price_cents) || 0) * (Number(line.qty) || 0),
+    0
+  )
+}

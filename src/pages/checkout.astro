@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Checkout from '../components/Checkout.jsx';
+
+// Checkout page (US-019). Shipping-zone selector, live quote, order total, and
+// "Pay by Card" (redirects to Stripe). Reads the cart from localStorage, so the
+// whole page is a client:load island.
+---
+
+<Layout title="Checkout — Atelier Textiles" description="Choose a shipping zone and pay by card.">
+  <section class="page-intro">
+    <h1>Checkout</h1>
+    <p>Choose your shipping zone, then pay securely by card.</p>
+  </section>
+
+  <Checkout client:load />
+</Layout>

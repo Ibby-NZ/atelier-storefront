@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Cart from '../components/Cart.jsx'
+
+// Cart page (US-019). The cart lives entirely in localStorage, so the whole
+// page is a client:load React island (quantity edit / remove / subtotal).
+---
+
+<Layout title="Cart — Atelier Textiles" description="Review the finished goods in your cart before checkout.">
+  <section class="page-intro">
+    <h1>Your cart</h1>
+    <p>Finished goods ready to purchase. Fabrics are ordered separately by request.</p>
+  </section>
+
+  <Cart client:load />
+</Layout>

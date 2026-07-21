@@ -68,6 +68,21 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   reuses the FR-3 rule plus trade: `trade_price_cents` present → show it;
   else `price_hidden`/null retail → "Login for trade pricing"; else retail.
 
+- **`/cart`, `/checkout`, `/checkout/success` (US-019)** — the B2C card-checkout
+  flow, all `client:load` islands reading the client cart. `/cart` (`Cart.jsx`)
+  edits quantity / removes lines / shows subtotal. `/checkout` (`Checkout.jsx`)
+  has a shipping-zone selector (the three fixed NZ zones: Auckland / North
+  Island / South Island), fetches a **live** quote from
+  `GET /shipping/quote?zone=&qty=`, shows the total, and "Pay by Card" POSTs
+  `{ lines: [{ sku, qty }], zone }` to `POST /checkout/session` then
+  `window.location.href = body.url` (redirect to Stripe). **No prices are sent**
+  — the API re-resolves them. The cart is NOT cleared on redirect, so Stripe's
+  `cancel_url` (`/cart`) returns to an intact cart. `/checkout/success`
+  (`CheckoutSuccess.jsx`) reads `?session_id=` from the URL, verifies it via
+  `GET /checkout/session/:id`, shows the deterministic order number
+  (`WEB-<id>`), and only THEN clears the cart. Money is formatted with the
+  shared `src/lib/money.js` `formatMoney(cents, currency)`.
+
 ### ESLint + JSX sub-components (constraint)
 
 The store's flat config has **no React ESLint plugin**, so `no-unused-vars` does
@@ -85,8 +100,11 @@ Client-side cart lives in `localStorage` under key `atelier_cart` (array of
 dispatches a same-tab `atelier-cart-change` event (`CART_EVENT`) because the
 native `storage` event only fires in OTHER tabs. `CartIndicator.jsx` listens to
 BOTH `storage` and `CART_EVENT` so the header count updates instantly after an
-Add to Cart in the same tab. US-018 added the Add-to-Cart write; the full cart
-page (quantity edit / remove / checkout) arrives in US-019.
+Add to Cart in the same tab. Write helpers: `addToCart` (US-018), plus
+`setCartQty(sku, qty)` (qty ≤ 0 removes), `removeFromCart(sku)`, `clearCart()`,
+and read helpers `cartCount(items?)` / `cartSubtotalCents(items?)` (US-019). Any
+island that mutates the cart MUST go through these so the header stays live. The
+cart only ever holds finished goods (fabrics use the order-request flow).
 
 ## Env
 

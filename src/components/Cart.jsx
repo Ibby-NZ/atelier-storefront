@@ -1,0 +1,111 @@
+import { useEffect, useState } from 'react'
+import {
+  readCart,
+  setCartQty,
+  removeFromCart,
+  cartSubtotalCents,
+  CART_EVENT,
+} from '../lib/cart.js'
+import { formatMoney } from '../lib/money.js'
+
+// Cart page island (US-019). Shows the client-side cart (finished goods only —
+// fabrics never reach the cart, they go through the order-request flow), lets
+// the shopper change quantities or remove lines, and links to checkout. All
+// state lives in localStorage via src/lib/cart.js; this component mirrors it and
+// re-reads on every CART_EVENT so the header count and page stay in sync.
+//
+// One component only: the store ESLint has no React plugin, so a JSX-only
+// sub-component reference would trip no-unused-vars (see ProductDetail.jsx).
+
+export default function Cart() {
+  const [items, setItems] = useState(null) // null until hydrated (avoids SSR flash)
+
+  useEffect(() => {
+    setItems(readCart())
+    const sync = () => setItems(readCart())
+    window.addEventListener(CART_EVENT, sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener(CART_EVENT, sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [])
+
+  if (items === null) {
+    return <p className="products-status">Loading your cart…</p>
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="cart-empty">
+        <p className="products-empty">Your cart is empty.</p>
+        <a className="btn btn-primary" href="/products">
+          Browse products
+        </a>
+      </div>
+    )
+  }
+
+  const currency = items[0]?.currency || 'NZD'
+  const subtotal = cartSubtotalCents(items)
+
+  const changeQty = (sku, qty) => setItems(setCartQty(sku, qty))
+  const remove = (sku) => setItems(removeFromCart(sku))
+
+  return (
+    <div className="cart">
+      <ul className="cart-lines">
+        {items.map((line) => {
+          const linePrice = (Number(line.price_cents) || 0) * (Number(line.qty) || 0)
+          return (
+            <li key={line.sku} className="cart-line">
+              <div className="cart-line-main">
+                <p className="cart-line-name">{line.name || line.sku}</p>
+                <p className="cart-line-unit">
+                  {line.price_cents != null
+                    ? `${formatMoney(line.price_cents, line.currency)} each`
+                    : 'Price on request'}
+                </p>
+              </div>
+              <label className="cart-qty">
+                <span className="sr-only">Quantity</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={line.qty}
+                  onChange={(event) => changeQty(line.sku, event.target.value)}
+                />
+              </label>
+              <p className="cart-line-total">
+                {formatMoney(linePrice, line.currency)}
+              </p>
+              <button
+                type="button"
+                className="cart-remove"
+                onClick={() => remove(line.sku)}
+                aria-label={`Remove ${line.name || line.sku}`}
+              >
+                Remove
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+
+      <div className="cart-summary">
+        <p className="cart-subtotal">
+          <span>Subtotal</span>
+          <strong>{formatMoney(subtotal, currency)}</strong>
+        </p>
+        <p className="cart-note">Shipping is calculated at checkout.</p>
+        <a className="btn btn-primary" href="/checkout">
+          Proceed to checkout
+        </a>
+        <a className="cart-continue" href="/products">
+          Continue shopping
+        </a>
+      </div>
+    </div>
+  )
+}
