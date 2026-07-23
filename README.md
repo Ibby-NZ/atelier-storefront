@@ -95,4 +95,4 @@ curl -s -X POST http://localhost:4321/_emdash/api/mcp \
 ```
 
 > EmDash is a **beta** integration. Known rough edges and the workarounds applied
-> are recorded in [`../tasks/emdash-blockers.md`](../tasks/emdash-blockers.md).
+> are recorded in [`tasks/emdash-blockers.md`](tasks/emdash-blockers.md).

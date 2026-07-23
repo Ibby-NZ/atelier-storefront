@@ -252,7 +252,7 @@ manage journal posts without a deploy. It is **additive** — markdown collectio
   `GET /_emdash/api/setup/dev-bypass?token=1`.
 - **MCP server:** `POST /_emdash/api/mcp` (Streamable HTTP, `Authorization:
   Bearer <token>`) — see `README.md`.
-- Beta rough edges + workarounds: `../tasks/emdash-blockers.md`.
+- Beta rough edges + workarounds: `tasks/emdash-blockers.md`.
 
 ## Cart
 
