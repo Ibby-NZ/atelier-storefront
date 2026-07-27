@@ -6,6 +6,7 @@
   "description": "Atelier storefront — Astro + React islands reading from atelier-api.",
   "scripts": {
     "dev": "astro dev",
+    "prestart": "node -e \"require('fs').mkdirSync('data/uploads', { recursive: true })\"",
     "start": "node ./dist/server/entry.mjs",
     "build": "astro build",
     "preview": "astro preview",
