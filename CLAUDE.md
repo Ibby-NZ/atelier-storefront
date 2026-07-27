@@ -268,6 +268,41 @@ and read helpers `cartCount(items?)` / `cartSubtotalCents(items?)` (US-019). Any
 island that mutates the cart MUST go through these so the header stays live. The
 cart only ever holds finished goods (fabrics use the order-request flow).
 
+## Staging gate (server.mjs)
+
+The deployment at atelier-storefront.disrupted.co.nz is staging: whole site
+sits behind HTTP Basic Auth and is blocked from search indexing.
+
+- `npm start` runs **`server.mjs`** (Express), not the adapter entry — the
+  node adapter is in **`middleware` mode** (`astro.config.mjs`). Reason: in
+  standalone mode prerendered pages are served as static files *before* any
+  Astro middleware, so an app-level gate can't cover them. Consequence:
+  `astro preview` is unavailable; `astro dev` is ungated (local only).
+- `SITE_AUTH_USER` / `SITE_AUTH_PASS` (runtime env, `.env` via dotenv):
+  Basic Auth credentials. **Server exits 1 when unset** unless
+  `SITE_AUTH_DISABLED=true` (deliberate public launch). Comparison is a single
+  timing-safe check over `user:pass`.
+- Gate exemptions: `/robots.txt` (crawlers must read the Disallow) and
+  `/_emdash/api/*` — EmDash enforces its own auth there (Bearer token for MCP,
+  passkey session for admin API) and a Basic gate would clash with the
+  `Authorization` header those clients send. Note this leaves EmDash media
+  files (`/_emdash/api/media/file/...`) publicly fetchable by URL.
+- **Exemption matching is path-normalisation sensitive** — two bypasses were
+  found and fixed while building it, so do not "simplify" it back:
+  match on `new URL(req.url).pathname`, never `req.path` (Express keeps `..`
+  segments, so `/_emdash/api/../../resources` looked exempt and Astro then
+  served `/resources`), and refuse to exempt any URL containing `%2f`/`%5c`
+  (`express.static` decodes them, so `/_emdash/api/..%2f..%2f_astro/app.js`
+  cleared the prefix check and served a file outside the exempt subtree).
+  Both fail closed. Re-test both vectors if the exemption list changes.
+- **Noindex is three layers, one flag**: `ALLOW_INDEXING` (unset = staging).
+  `src/pages/robots.txt.js` (prerendered; defining it in `src/pages/` makes
+  EmDash skip its injected `Allow: /` robots route), noindex meta in
+  `Layout.astro`, `X-Robots-Tag` header in `server.mjs`. robots.txt + meta are
+  baked at **build** time — launch needs the flag in build AND runtime env,
+  then a rebuild. EmDash's injected `/sitemap.xml` stays behind the auth gate.
+
 ## Env
 
-Copy `.env.example` to `.env` (gitignored). Only `PUBLIC_API_BASE_URL` today.
+Copy `.env.example` to `.env` (gitignored): `PUBLIC_API_BASE_URL`, plus the
+staging-gate vars above.

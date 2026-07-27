@@ -17,8 +17,12 @@ export default defineConfig({
   // EmDash injects on-demand routes, so the site runs in server mode with a Node
   // adapter. Every storefront page opts back into static prerendering with
   // `export const prerender = true`, preserving the offline-safe static build.
+  // `middleware` mode (not `standalone`): server.mjs wraps the handler in
+  // Express to put a Basic Auth gate in front of EVERYTHING, prerendered pages
+  // included — standalone would serve those before any auth could run.
+  // Consequence: `npm start` runs server.mjs, and `astro preview` is unavailable.
   output: 'server',
-  adapter: node({ mode: 'standalone' }),
+  adapter: node({ mode: 'middleware' }),
   integrations: [
     react(),
     emdash({

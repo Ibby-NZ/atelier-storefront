@@ -4,6 +4,12 @@ import Footer from '../components/Footer.astro'
 import '../styles/global.css'
 
 const { title = 'Atelier Textiles', description = 'Fine textiles for makers and trade — fabrics, finished goods, and the houses behind them.' } = Astro.props
+
+// Staging is noindex by default; baked in at build time for prerendered pages.
+// ALLOW_INDEXING=true in the build environment (real launch) drops it — the
+// same flag flips robots.txt (src/pages/robots.txt.js) and the X-Robots-Tag
+// header (server.mjs).
+const allowIndexing = import.meta.env.ALLOW_INDEXING === 'true'
 ---
 
 <!doctype html>
@@ -12,6 +18,7 @@ const { title = 'Atelier Textiles', description = 'Fine textiles for makers and 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    {!allowIndexing && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
   </head>
   <body>
