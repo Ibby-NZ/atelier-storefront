@@ -279,9 +279,18 @@ sits behind HTTP Basic Auth and is blocked from search indexing.
   Astro middleware, so an app-level gate can't cover them. Consequence:
   `astro preview` is unavailable; `astro dev` is ungated (local only).
 - `SITE_AUTH_USER` / `SITE_AUTH_PASS` (runtime env, `.env` via dotenv):
-  Basic Auth credentials. **Server exits 1 when unset** unless
-  `SITE_AUTH_DISABLED=true` (deliberate public launch). Comparison is a single
-  timing-safe check over `user:pass`.
+  Basic Auth credentials. Comparison is a single timing-safe check over
+  `user:pass`. Unset (and no `SITE_AUTH_DISABLED=true`) → the server still
+  boots but answers **503 with the reason** on every path, exemptions included.
+  It deliberately does NOT exit: under pm2 that is a crash loop, and the
+  operator sees only a bare 502 from the proxy. 503-while-up is equally closed
+  and says why in the browser.
+- **Deploy needs `npm ci` and a rebuild**, not just `git pull` + restart:
+  `express`/`dotenv` are runtime dependencies, and a `dist/` left over from the
+  standalone build makes the adapter try to bind the port itself (harmless
+  `EADDRINUSE` noise — Express wins the port — but the build is stale).
+  Cloudflare fronts the site and EmDash's robots route sets `max-age=31536000`,
+  so **purge the cache** or the old `Allow: /` survives the deploy for a year.
 - Gate exemptions: `/robots.txt` (crawlers must read the Disallow) and
   `/_emdash/api/*` — EmDash enforces its own auth there (Bearer token for MCP,
   passkey session for admin API) and a Basic gate would clash with the

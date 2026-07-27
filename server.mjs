@@ -14,14 +14,19 @@ const sitePass = process.env.SITE_AUTH_PASS
 const authDisabled = process.env.SITE_AUTH_DISABLED === 'true'
 const allowIndexing = process.env.ALLOW_INDEXING === 'true'
 
-if (!authDisabled && (!siteUser || !sitePass)) {
-  console.error(
-    'SITE_AUTH_USER and SITE_AUTH_PASS must both be set (see .env.example) — '
-    + 'the storefront refuses to start unprotected. To run publicly on '
-    + 'purpose, set SITE_AUTH_DISABLED=true.'
-  )
-  process.exit(1)
-}
+// Missing credentials must never mean "serve the site unprotected", but they
+// must not mean "exit" either: under pm2 that is a crash loop, and the operator
+// sees only a bare 502 from the proxy with the real reason buried in pm2 logs.
+// Instead the process stays up and answers everything with an explanatory 503 —
+// still closed, but self-diagnosing in the browser.
+const misconfigured = !authDisabled && (!siteUser || !sitePass)
+
+const MISCONFIG_MESSAGE =
+  'Storefront is not configured: SITE_AUTH_USER and SITE_AUTH_PASS must both '
+  + 'be set (see .env.example). Nothing is served until they are. To run '
+  + 'publicly on purpose, set SITE_AUTH_DISABLED=true.'
+
+if (misconfigured) console.error(MISCONFIG_MESSAGE)
 
 // Paths that skip the Basic Auth gate:
 // - /robots.txt must stay readable so crawlers see "Disallow: /".
@@ -78,7 +83,12 @@ if (!allowIndexing) {
   })
 }
 
-if (!authDisabled) {
+if (misconfigured) {
+  // Registered before the static and SSR handlers, so nothing is ever served.
+  app.use((_req, res) => {
+    res.status(503).type('text/plain').send(MISCONFIG_MESSAGE)
+  })
+} else if (!authDisabled) {
   app.use((req, res, next) => {
     if (isExempt(req.url) || credentialsMatch(req.headers.authorization)) {
       return next()
@@ -95,7 +105,7 @@ const port = Number(process.env.PORT) || 4321
 app.listen(port, () => {
   console.log(
     `atelier-store on :${port} `
-    + `(auth ${authDisabled ? 'DISABLED' : 'on'}, `
+    + `(auth ${misconfigured ? 'MISCONFIGURED — serving 503' : authDisabled ? 'DISABLED' : 'on'}, `
     + `indexing ${allowIndexing ? 'allowed' : 'blocked'})`
   )
 })
