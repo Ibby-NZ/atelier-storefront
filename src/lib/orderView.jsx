@@ -110,7 +110,10 @@ export function orderCard(order) {
         {order.total_cents != null ? (
           <div className="order-total-row">
             <dt>Total</dt>
-            <dd>{formatMoney(order.total_cents, currency)}</dd>
+            <dd>
+              {formatMoney(order.total_cents, currency)}
+              <span className="indicative-note">Indicative</span>
+            </dd>
           </div>
         ) : null}
         {order.xero_invoice_ref ? (

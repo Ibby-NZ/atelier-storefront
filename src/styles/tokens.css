@@ -1,0 +1,335 @@
+/*
+ * Atelier Textiles — design tokens, reset and base typography.
+ *
+ * Palette, type and rhythm come from the platform design handoff
+ * (design_handoff_atelier_platform/README.md). Light-only by design: this is a
+ * warm-paper luxury brand, and the handoff defines no dark palette.
+ */
+
+:root {
+  /* --- Palette (handoff, verbatim) --- */
+  --paper: #f7f2e9; /* raw-silk ivory — primary background */
+  --surface: #efe8da; /* linen — cards / panels / nav */
+  --surface-deep: #e5dbc8; /* oat — table headers / recessed areas / chips */
+  --ink: #211c17; /* warm near-black — primary text & headlines */
+  --ink-soft: #4a4138; /* bark — secondary text */
+  --muted: #877c6b; /* stone — eyebrows / labels / meta / captions */
+  --line: #d8cdb8; /* greige — ALL 1px hairline borders & dividers */
+  --accent: #7a2e2e; /* claret — SPARINGLY */
+  --accent-soft: #9c4a43; /* claret hover */
+  --brass: #a98b5d; /* metallic detail — fine strokes, never fills */
+  --sage: #6f7a5a; /* positive / in stock */
+  --clay: #b06a4f; /* warning / low / out of stock */
+
+  /* Derived tints — hairlines and washes only, never new hues. */
+  --accent-wash: #f3eadf;
+  --sage-line: #cbd3bc;
+  --clay-line: #e2c9b8;
+  --scrim: rgba(33, 28, 23, 0.5);
+
+  /* --- Type families (system fallbacks keep the site legible if Google
+         Fonts is blocked — staging sits behind Cloudflare + Basic Auth). --- */
+  --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino,
+    Georgia, "Times New Roman", serif;
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
+
+  /* --- Type scale (UI, Inter/mono) --- */
+  --t-micro: 0.625rem; /* 10px — sku captions under swatches */
+  --t-eyebrow: 0.6875rem; /* 11px — uppercase eyebrows */
+  --t-xs: 0.75rem; /* 12px — utilities, fine print */
+  --t-sm: 0.8125rem; /* 13px — labels, table cells, meta */
+  --t-base: 0.875rem; /* 14px — controls, UI body */
+  --t-body: 0.9375rem; /* 15px — lede and page copy */
+  --t-prose: 1.0625rem; /* 17px — long-form article body */
+
+  /* --- Display scale (Fraunces) --- */
+  --d-xs: 1.0625rem; /* 17px */
+  --d-sm: 1.1875rem; /* 19px */
+  --d-md: 1.4375rem; /* 23px — product & design names */
+  --d-lg: 1.75rem; /* 28px — section headlines */
+  --d-xl: clamp(2rem, 1.4rem + 2.6vw, 2.875rem); /* 32→46 page headlines */
+  --d-2xl: clamp(2.25rem, 1.2rem + 4.6vw, 4.25rem); /* 36→68 hero */
+
+  /* --- Spacing scale --- */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2rem;
+  --s7: 2.75rem;
+  --s8: 3.5rem;
+  --s9: 4.5rem;
+  --s10: 6rem;
+
+  /* --- Layout --- */
+  --container: 84rem; /* 1344px — gallery width */
+  --container-narrow: 46rem; /* forms, summaries */
+  --container-prose: 41.25rem; /* ~660px — article measure */
+  --gutter: 3.5rem;
+
+  /* --- Surface detail --- */
+  --r-sm: 3px;
+  --r-md: 4px;
+  --r-chip: 5px;
+  --hair: 1px solid var(--line);
+  --shadow-lift: 0 16px 36px rgba(33, 28, 23, 0.13);
+  --shadow-panel: 0 24px 60px rgba(33, 28, 23, 0.3);
+
+  /* --- Motion --- */
+  --quick: 0.15s ease;
+  --slow: 0.25s ease;
+  --zoom: 0.5s ease;
+
+  /* --- Weave placeholder tones (overridable per element) --- */
+  --weave-light: #c9b79b;
+  --weave-dark: #6e4a2e;
+
+  color-scheme: light;
+  font-family: var(--font-ui);
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --gutter: 1.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --gutter: 1.25rem;
+  }
+}
+
+/* --- Reset ---------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--surface-deep);
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* --- Base typography ------------------------------------------------------ */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin: 0 0 var(--s3);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--d-xl);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: var(--d-lg);
+  line-height: 1.12;
+}
+
+h3 {
+  font-size: var(--d-md);
+  line-height: 1.15;
+}
+
+h4 {
+  font-size: var(--d-sm);
+  line-height: 1.2;
+}
+
+h1 em,
+h2 em,
+h3 em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+p {
+  margin: 0 0 var(--s4);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+strong,
+b {
+  font-weight: 600;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color var(--quick);
+}
+
+a:hover {
+  color: var(--accent-soft);
+}
+
+small {
+  font-size: var(--t-xs);
+}
+
+hr {
+  border: 0;
+  border-top: var(--hair);
+  margin: var(--s7) 0;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/* --- Focus & accessibility ------------------------------------------------ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Keep a brass ring where claret would sit on claret. */
+.btn-primary:focus-visible {
+  outline-color: var(--brass);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Quiet scrollbars (matches the CRM) ----------------------------------- */
+* {
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+  border: 3px solid var(--paper);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- Shell ---------------------------------------------------------------- */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+main {
+  display: block;
+  min-height: 58vh;
+  padding-block: var(--s8) var(--s10);
+}
+
+@media (max-width: 1024px) {
+  main {
+    padding-block: var(--s6) var(--s8);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Safety net: never let the page scroll sideways on a phone. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  main {
+    padding-block: var(--s5) var(--s7);
+  }
+}
+
+/* --- Reduced motion ------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .product-card:hover .product-media,
+  .product-card:hover .product-image,
+  .post-card:hover img,
+  .card:hover,
+  .collection-card:hover,
+  .home-hero-media:hover {
+    transform: none !important;
+  }
+}

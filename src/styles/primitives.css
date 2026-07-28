@@ -1,0 +1,615 @@
+/*
+ * Shared primitives: eyebrows, page headers, buttons, pills, tags, swatch
+ * chips, form controls, states and the weave placeholder.
+ *
+ * Discipline (handoff): hairline rules rather than heavy cards, roughly one
+ * claret element per screen, whisper-soft hover lifts only.
+ */
+
+/* --- Eyebrow -------------------------------------------------------------- */
+.home-eyebrow,
+.page-eyebrow,
+.detail-type,
+.product-brand,
+.cart-line-brand,
+.detail-price-label,
+.field > span,
+.field-group legend,
+.footer-heading,
+.library-results-label {
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* --- Page header (eyebrow → Fraunces headline → muted lede) --------------- */
+.page-intro,
+.hero {
+  max-width: 46rem;
+  margin: 0 0 var(--s8);
+}
+
+.page-intro::before,
+.hero::before {
+  content: "";
+  display: block;
+  width: 34px;
+  border-top: 1px solid var(--brass);
+  margin-bottom: var(--s5);
+}
+
+.page-intro h1,
+.hero h1 {
+  margin: 0;
+  font-size: var(--d-xl);
+}
+
+.page-intro > p,
+.hero > p {
+  margin: var(--s4) 0 0;
+  font-size: var(--t-body);
+  line-height: 1.65;
+  color: var(--ink-soft);
+  max-width: 42rem;
+}
+
+/* --- Breadcrumb ----------------------------------------------------------- */
+.breadcrumb,
+.detail-breadcrumb {
+  margin: 0 0 var(--s5);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.breadcrumb a,
+.detail-breadcrumb a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: var(--hair);
+  padding-bottom: 2px;
+}
+
+.breadcrumb a:hover,
+.detail-breadcrumb a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --- Buttons -------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--ink);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--quick), color var(--quick),
+    border-color var(--quick);
+}
+
+.btn:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+
+.btn-primary:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--paper);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--clay);
+  color: var(--clay);
+}
+
+.btn-danger:hover {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--paper);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  background: var(--paper);
+}
+
+.btn-primary:disabled:hover {
+  background: var(--accent);
+}
+
+/* Quiet text links used as secondary actions. */
+.cart-continue,
+.detail-hires,
+.auth-alt a,
+.filter-clear {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: var(--hair);
+  padding-bottom: 2px;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.cart-continue:hover,
+.detail-hires:hover,
+.auth-alt a:hover,
+.filter-clear:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.filter-clear {
+  align-self: flex-end;
+  background: none;
+  border-top: 0;
+  border-inline: 0;
+  padding: 0 0 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.detail-hires {
+  display: inline-block;
+  margin-top: var(--s4);
+  color: var(--brass);
+  border-bottom-color: var(--brass);
+}
+
+.detail-hires:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --- Tags / attribute pills ----------------------------------------------- */
+.tag {
+  display: inline-block;
+  padding: 6px 12px;
+  border: var(--hair);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background var(--quick), border-color var(--quick),
+    color var(--quick);
+}
+
+a.tag:hover {
+  background: var(--surface);
+  border-color: var(--brass);
+  color: var(--ink);
+}
+
+/* --- Status pills (dot + label) ------------------------------------------- */
+.pill,
+.status-badge,
+.product-stock,
+.swatch-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border: var(--hair);
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.pill::before,
+.status-badge::before,
+.product-stock::before,
+.swatch-stock::before {
+  content: "";
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.pill-sage,
+.product-stock.in,
+.swatch-stock.in,
+.status-paid,
+.status-shipped {
+  color: var(--sage);
+  border-color: var(--sage-line);
+}
+
+.pill-clay,
+.product-stock.out,
+.swatch-stock.out,
+.status-declined {
+  color: var(--clay);
+  border-color: var(--clay-line);
+}
+
+.pill-muted,
+.status-requested,
+.status-unknown {
+  color: var(--muted);
+  border-color: var(--line);
+}
+
+.status-confirmed {
+  color: var(--ink-soft);
+  border-color: var(--line);
+}
+
+/* --- "Indicative" annotation ---------------------------------------------- */
+.indicative-note {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--t-xs);
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+/* --- Weave placeholder (stands in for missing photography) ---------------- */
+.product-image-placeholder,
+.detail-hero-placeholder,
+.brand-slideshow--empty,
+.home-hero-media,
+.weave {
+  background:
+    repeating-linear-gradient(
+      48deg,
+      rgba(255, 255, 255, 0.05) 0 2px,
+      rgba(0, 0, 0, 0.05) 2px 4px
+    ),
+    linear-gradient(135deg, var(--weave-light), var(--weave-dark));
+}
+
+/* Rotate the tones so a grid of missing images still reads as a collection. */
+.product-grid > *:nth-child(7n + 2),
+.card-grid > *:nth-child(7n + 2) {
+  --weave-light: #d8ccb1;
+  --weave-dark: #b3a07c;
+}
+
+.product-grid > *:nth-child(7n + 3),
+.card-grid > *:nth-child(7n + 3) {
+  --weave-light: #b8b5a8;
+  --weave-dark: #8e8a7d;
+}
+
+.product-grid > *:nth-child(7n + 4),
+.card-grid > *:nth-child(7n + 4) {
+  --weave-light: #b87356;
+  --weave-dark: #7e4631;
+}
+
+.product-grid > *:nth-child(7n + 5),
+.card-grid > *:nth-child(7n + 5) {
+  --weave-light: #7b8590;
+  --weave-dark: #4a535e;
+}
+
+.product-grid > *:nth-child(7n + 6),
+.card-grid > *:nth-child(7n + 6) {
+  --weave-light: #8a8b6f;
+  --weave-dark: #565740;
+}
+
+.product-grid > *:nth-child(7n + 7),
+.card-grid > *:nth-child(7n + 7) {
+  --weave-light: #3e4760;
+  --weave-dark: #1f2336;
+}
+
+/* --- Cards ---------------------------------------------------------------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--s7) var(--s6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: block;
+  padding: var(--s5);
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--quick), border-color var(--quick),
+    transform var(--slow), box-shadow var(--slow);
+}
+
+a.card:hover {
+  background: var(--surface);
+  border-color: var(--brass);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+}
+
+.card h2,
+.card h3 {
+  margin: 0 0 var(--s2);
+  font-size: var(--d-md);
+  line-height: 1.15;
+}
+
+.card p {
+  margin: 0 0 var(--s2);
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.card p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Form controls -------------------------------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s5);
+  border: var(--hair);
+  border-radius: var(--r-md);
+}
+
+.field-group legend {
+  padding: 0 var(--s2);
+  margin-inline-start: calc(var(--s2) * -1);
+}
+
+.field input,
+.field select,
+.field textarea,
+.admin-row-form input,
+.admin-row-form select,
+.library-search input,
+.library-sort select,
+.filter select,
+.admin-qty-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: var(--hair);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  transition: border-color var(--quick), background var(--quick);
+}
+
+.field textarea {
+  min-height: 7.5rem;
+  padding: 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover,
+.filter select:hover,
+.library-search input:hover,
+.library-sort select:hover {
+  border-color: var(--brass);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.filter select:focus,
+.library-search input:focus,
+.library-sort select:focus,
+.admin-qty-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-wash);
+}
+
+.field input[type="number"],
+.admin-qty-input {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.field-checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--s3);
+}
+
+.field-checkbox input {
+  width: 17px;
+  min-height: 0;
+  height: 17px;
+  margin: 2px 0 0;
+  padding: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.field-checkbox > span {
+  font-size: var(--t-sm);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
+.field-error {
+  font-size: var(--t-xs);
+  color: var(--clay);
+}
+
+/* --- Quantity stepper -----------------------------------------------------
+   `.qty-field` is the bordered shell; `.qty-stepper` are the − / + buttons and
+   `.qty-value` the mono figure between them. */
+.qty-field {
+  display: inline-flex;
+  align-items: stretch;
+  flex: none;
+  height: 46px;
+  border: var(--hair);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.qty-stepper {
+  width: 38px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--quick), color var(--quick);
+}
+
+.qty-stepper:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.qty-stepper:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.qty-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  padding: 0 var(--s2);
+  border-inline: var(--hair);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+input.qty-value {
+  min-height: 0;
+  border: 0;
+  border-inline: var(--hair);
+  border-radius: 0;
+  text-align: center;
+}
+
+/* --- States --------------------------------------------------------------- */
+.empty-state,
+.products-empty,
+.products-status,
+.admin-notice,
+.admin-muted {
+  margin: 0;
+  padding: var(--s5) 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.admin-muted,
+.admin-notice {
+  padding: 0;
+  font-size: var(--t-sm);
+}
+
+.error-state,
+.form-error {
+  margin: 0 0 var(--s4);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--clay-line);
+  border-left: 2px solid var(--clay);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--clay);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+
+.error-state a,
+.form-error a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.error-state a:hover,
+.form-error a:hover {
+  color: var(--ink);
+}
+
+.not-found {
+  max-width: 34rem;
+  padding: var(--s9) 0;
+}
+
+.not-found h1 {
+  margin-bottom: var(--s4);
+}
+
+.not-found p {
+  color: var(--ink-soft);
+  margin-bottom: var(--s5);
+}

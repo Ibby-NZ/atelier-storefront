@@ -1,0 +1,384 @@
+/*
+ * Back-office screens (/admin/orders, /admin/brands).
+ *
+ * Same restrained system as the storefront — the handoff's whole premise is
+ * that the operations tool looks as considered as the brand world. Tables use a
+ * --surface-deep header, hairline dividers, no zebra striping, and mono
+ * right-aligned figures. Wide tables scroll inside their own container.
+ */
+
+.admin-orders,
+.admin-brands,
+.admin-products {
+  max-width: 72rem;
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  padding-bottom: var(--s5);
+  margin-bottom: var(--s6);
+  border-bottom: var(--hair);
+}
+
+.admin-filter {
+  max-width: 16rem;
+  min-width: 12rem;
+}
+
+.admin-count {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.admin-order-list,
+.admin-list,
+.admin-hub-list,
+.admin-sublist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.admin-order,
+.admin-item {
+  border: var(--hair);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.admin-order-head,
+.admin-item-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  width: 100%;
+  padding: var(--s4) var(--s5);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--quick);
+}
+
+.admin-order-head:hover,
+.admin-item-head:hover {
+  background: var(--surface);
+}
+
+.admin-order-number,
+.admin-item-title {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--t-sm);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.admin-item-title {
+  font-family: var(--font-display);
+  font-size: var(--t-body);
+  letter-spacing: 0;
+}
+
+.admin-order-kind {
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-order-customer,
+.admin-item-spacer {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-order-date {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+.admin-order-detail,
+.admin-item-detail {
+  padding: var(--s5);
+  border-top: var(--hair);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-item-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+}
+
+/* --- Tables --------------------------------------------------------------- */
+.admin-lines {
+  width: 100%;
+  min-width: 34rem;
+  margin: 0 0 var(--s5);
+  font-size: var(--t-sm);
+}
+
+.admin-lines th,
+.admin-lines td {
+  padding: var(--s3) var(--s3);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: var(--hair);
+}
+
+.admin-lines thead th {
+  background: var(--surface-deep);
+  border-bottom: var(--hair);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.admin-lines tbody td {
+  color: var(--ink-soft);
+}
+
+.admin-lines tbody td:nth-child(2) {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.admin-lines th:last-child,
+.admin-lines td:last-child {
+  text-align: right;
+}
+
+.admin-qty-input {
+  width: 6.5rem;
+  min-height: 36px;
+  text-align: right;
+}
+
+/* --- Totals + actions ----------------------------------------------------- */
+.admin-order-totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0 0 var(--s5);
+  max-width: 24rem;
+  padding: var(--s4) var(--s5);
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.admin-order-totals > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+}
+
+.admin-order-totals dt {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.admin-order-totals dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink);
+}
+
+/* --- Delivery address ----------------------------------------------------- */
+.admin-order-address {
+  margin: 0 0 var(--s5);
+  padding: var(--s4) var(--s5);
+  border: var(--hair);
+  border-left: 2px solid var(--brass);
+  border-radius: var(--r-sm);
+  max-width: 24rem;
+}
+
+.admin-order-address h4 {
+  margin: 0 0 var(--s3);
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-order-address address {
+  font-style: normal;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.admin-order-address address span {
+  display: block;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+}
+
+.admin-actions .btn {
+  height: 40px;
+  font-size: var(--t-sm);
+}
+
+.admin-confirm {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+.admin-confirm .field {
+  min-width: 13rem;
+}
+
+.admin-confirm .field input {
+  min-height: 40px;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+}
+
+/* --- Catalogue admin (brands / collections / products / colourways) ------- */
+.admin-hub-list a {
+  display: block;
+  padding: var(--s4) var(--s5);
+  border: var(--hair);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background var(--quick), border-color var(--quick);
+}
+
+.admin-hub-list a:hover {
+  background: var(--surface);
+  border-color: var(--brass);
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  margin: 0 0 var(--s6);
+  padding: var(--s5);
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.admin-form h2 {
+  margin: 0;
+  font-size: var(--d-sm);
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--s4);
+}
+
+.admin-subhead {
+  margin: 0;
+  font-size: var(--t-eyebrow);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-row-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  padding: var(--s3) 0;
+  border-bottom: var(--hair);
+}
+
+.admin-row-form input,
+.admin-row-form select {
+  width: auto;
+  min-width: 8rem;
+  min-height: 38px;
+  font-size: var(--t-sm);
+}
+
+.admin-row-form .btn {
+  height: 38px;
+  padding: 0 14px;
+  font-size: var(--t-sm);
+}
+
+.admin-tones {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.admin-tone-chip {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: var(--hair);
+  border-radius: var(--r-sm);
+}
+
+@media (max-width: 640px) {
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-order-head,
+  .admin-item-head {
+    gap: var(--s2) var(--s3);
+  }
+
+  .admin-order-customer {
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
+  .admin-actions,
+  .admin-confirm {
+    width: 100%;
+  }
+
+  .admin-actions .btn {
+    flex: 1 1 auto;
+  }
+}

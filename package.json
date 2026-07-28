@@ -11,7 +11,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "seed:cms": "emdash seed --database ./data/emdash.db --uploads-dir ./data/uploads"
   },
   "dependencies": {
     "@astrojs/node": "^11.0.2",

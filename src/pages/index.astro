@@ -1,48 +1,231 @@
 ---
 export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+import { getCollection } from 'astro:content'
 import Layout from '../layouts/Layout.astro'
 import { safeFetch } from '../lib/api.js'
+import { priceInfo, weaveBackground } from '../lib/catalogue.js'
 
-// Exercises the shared fetch helper end to end: a health probe that renders a
-// friendly error state (never crashes the page) when the API is unreachable.
-const { data: health, error } = await safeFetch('/health')
-const apiOnline = Boolean(health?.ok)
+// Home is merchandising, built at build time from the live catalogue. Everything
+// here degrades to an empty section when the API is down (safeFetch never
+// throws), so the build always succeeds — the storefront is a static build and
+// must never depend on the API being up to compile.
+//
+// The fetch is anonymous, so no trade pricing is ever baked into these cards;
+// trade figures only appear on the live islands (/products, product detail).
 
-const sections = [
-  { href: '/products', title: 'Products', body: 'Browse fabrics and finished goods with live filters.' },
-  { href: '/brands', title: 'Brands', body: 'The houses we represent and the stories behind them.' },
-  { href: '/resources', title: 'Resources', body: 'Journal posts, newsletters, and making notes.' },
-  { href: '/story', title: 'Story', body: 'About Atelier Textiles and how we work.' },
-]
+const { data: catalogue } = await safeFetch('/catalogue/products?limit=100')
+const products = catalogue?.products ?? []
+
+const { data: brandList } = await safeFetch('/catalogue/brands')
+const brands = brandList?.brands ?? []
+
+// Shoppable now: a finished good with a visible price and a photograph. These
+// are the only things a card checkout can actually take money for, so they lead.
+const shoppable = products
+  .filter(
+    (product) =>
+      product.product_type === 'finished_good' &&
+      !product.price_hidden &&
+      product.retail_price_cents != null
+  )
+  .slice(0, 4)
+
+// The cloth itself — cut to order, so these route to the request flow. Prefer
+// designs we have a photograph for.
+const fabrics = products
+  .filter((product) => product.product_type === 'fabric')
+  .sort((a, b) => Number(Boolean(b.image_url)) - Number(Boolean(a.image_url)))
+  .slice(0, 3)
+
+const houses = brands.filter((brand) => brand.is_international).slice(0, 12)
+
+const posts = (await getCollection('post'))
+  .sort((a, b) => b.data.date - a.data.date)
+  .slice(0, 3)
+
+const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
 ---
 
-<Layout title="Atelier Textiles">
-  <section class="hero">
-    <h1>Atelier Textiles</h1>
-    <p>
-      Fine fabrics and finished goods for makers and trade — sourced from houses
-      across Aotearoa and beyond.
-    </p>
+<Layout
+  title="Atelier Textiles — Curators of global design excellence"
+  description="Fine fabrics and finished goods for makers and trade, sourced from houses across Aotearoa and beyond."
+>
+  <section class="home-hero">
+    <div class="home-hero-body">
+      <p class="home-hero-eyebrow">Parnell, Auckland</p>
+      <h1>Curators of global <em>design excellence</em></h1>
+      <p>
+        Fine cloth and finished goods, gathered from houses across Europe and made
+        here in Aotearoa. Browse the library, request a cutting, or order direct.
+      </p>
+      <div class="home-cta">
+        <a class="btn btn-primary" href="/products">Enter the library</a>
+        <a class="btn" href="/trade-application">Apply for trade</a>
+      </div>
+    </div>
+    <div class="home-hero-media" aria-hidden="true">
+      {
+        products.find((product) => product.image_url) ? (
+          <img
+            src={products.find((product) => product.image_url).image_url}
+            alt=""
+            loading="eager"
+          />
+        ) : (
+          <span class="product-image-placeholder" />
+        )
+      }
+    </div>
   </section>
 
   {
-    error ? (
-      <p class="error-state">Store service status: {error}</p>
-    ) : (
-      <p class="cart-indicator">
-        Store service: <strong>{apiOnline ? 'online' : 'starting up'}</strong>
-      </p>
+    shoppable.length > 0 && (
+      <section class="home-section">
+        <div class="home-section-head">
+          <p class="home-eyebrow">Ready to ship</p>
+          <h2>Finished goods</h2>
+          <a href="/products?product_type=finished_good">See all</a>
+        </div>
+        <ul class="product-grid home-featured">
+          {shoppable.map((product) => {
+            const price = priceInfo(product)
+            const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
+            return (
+              <li class="product-card">
+                <a href={`/products/${product.slug}`}>
+                  <span class="product-media">
+                    {product.image_url ? (
+                      <img
+                        class="product-image"
+                        src={product.image_url}
+                        alt={product.name}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span
+                        class="product-image-placeholder"
+                        style={weave ? `background: ${weave}` : undefined}
+                      />
+                    )}
+                  </span>
+                  <span class="product-card-body">
+                    <span class="product-brand">{product.brand?.name}</span>
+                    <h3>{product.name}</h3>
+                    <span class="product-price">
+                      {price.text}
+                      <span class="indicative-note">Indicative</span>
+                    </span>
+                  </span>
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
     )
   }
 
-  <section class="card-grid">
-    {
-      sections.map((section) => (
-        <a class="card" href={section.href}>
-          <h2>{section.title}</h2>
-          <p>{section.body}</p>
-        </a>
-      ))
-    }
-  </section>
+  {
+    fabrics.length > 0 && (
+      <section class="home-section">
+        <div class="home-section-head">
+          <p class="home-eyebrow">Cut to order</p>
+          <h2>The cloth</h2>
+          <a href="/products?product_type=fabric">See all</a>
+        </div>
+        <ul class="product-grid home-featured">
+          {fabrics.map((product) => {
+            const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
+            return (
+              <li class="product-card">
+                <a href={`/products/${product.slug}`}>
+                  <span class="product-media">
+                    {product.image_url ? (
+                      <img
+                        class="product-image"
+                        src={product.image_url}
+                        alt={product.name}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span
+                        class="product-image-placeholder"
+                        style={weave ? `background: ${weave}` : undefined}
+                      />
+                    )}
+                  </span>
+                  <span class="product-card-body">
+                    <span class="product-brand">{product.brand?.name}</span>
+                    <h3>{product.name}</h3>
+                    <span class="product-specs">
+                      {[product.composition, product.width].filter(Boolean).join(' · ')}
+                    </span>
+                    <span class="product-price muted">Sign in for trade pricing</span>
+                  </span>
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    houses.length > 0 && (
+      <section class="home-section">
+        <div class="home-section-head">
+          <p class="home-eyebrow">The houses we represent</p>
+          <h2>Our makers</h2>
+          <a href="/brands">All houses</a>
+        </div>
+        <ul class="brand-strip">
+          {houses.map((brand) => (
+            <li class="brand-strip-item">
+              <a href={`/brands/${brand.slug}`}>
+                {brand.name}
+                {brand.country && <span>{brand.country}</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    posts.length > 0 && (
+      <section class="home-section">
+        <div class="home-section-head">
+          <p class="home-eyebrow">The Atelier Journal</p>
+          <h2>Notes from the mill</h2>
+          <a href="/resources">Read the journal</a>
+        </div>
+        <ul class="post-list">
+          {posts.map((post) => (
+            <li class="post-card">
+              <a href={`/resources/${post.id}`}>
+                {post.data.hero && (
+                  <span class="post-media">
+                    <img class="post-hero" src={post.data.hero} alt="" loading="lazy" />
+                  </span>
+                )}
+                <h3>{post.data.title}</h3>
+                <p class="post-date">{dateFormat.format(post.data.date)}</p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    products.length === 0 && (
+      <p class="error-state">
+        The catalogue is unavailable right now. Please try again shortly, or
+        <a href="/contact"> get in touch</a>.
+      </p>
+    )
+  }
 </Layout>

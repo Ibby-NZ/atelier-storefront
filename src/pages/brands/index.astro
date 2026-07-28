@@ -1,19 +1,22 @@
 ---
-export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+export const prerender = false // on-demand so a newly created brand appears without a rebuild
 import Layout from '../../layouts/Layout.astro'
 import { safeFetch } from '../../lib/api.js'
 
 // Brands index: every house we represent, sourced live from the catalogue API.
-// Static build — safeFetch never throws, so an offline API renders the error
-// state and the build still succeeds. Each card links to the brand page, which
-// enriches the API brand with a content-collection entry (slideshow, cards).
+// Rendered on demand — staff add brands through /admin/brands at runtime, so a
+// prerendered grid would be stale until the next deploy. safeFetch never
+// throws, so an API outage renders the error state rather than a 500 (and the
+// build, which no longer calls the API at all, stays offline-safe). Each card
+// links to the brand page, which enriches the API brand with editorial content.
 const { data, error } = await safeFetch('/catalogue/brands')
 const brands = data?.brands ?? []
 ---
 
 <Layout title="Brands — Atelier Textiles">
   <section class="page-intro">
-    <h1>Brands</h1>
+    <p class="page-eyebrow">Our makers</p>
+    <h1>The <em>houses</em></h1>
     <p>The houses we represent and the stories behind them.</p>
   </section>
 

@@ -2,6 +2,7 @@
 export const prerender = false // resolves markdown baseline first, else live EmDash post
 import Layout from '../../layouts/Layout.astro'
 import { getEntry, render } from 'astro:content'
+import { PortableText } from 'emdash/ui'
 import { getEmdashPost } from '../../lib/emdash.js'
 
 // One journal post. The markdown `post` collection is the baseline and wins on
@@ -68,7 +69,18 @@ if (!found) {
         {hero && <img class="post-hero" src={hero} alt={title} />}
 
         <div class="prose">
-          {Content ? <Content /> : <p>{emPost?.excerpt}</p>}
+          {
+            /* Markdown body, else the CMS post's Portable Text body. The
+               excerpt is only a last resort — before US-018's companion fix an
+               EmDash post rendered its excerpt and dropped the whole body. */
+            Content ? (
+              <Content />
+            ) : emPost?.content ? (
+              <PortableText value={emPost.content} />
+            ) : (
+              <p>{emPost?.excerpt}</p>
+            )
+          }
         </div>
       </article>
     )

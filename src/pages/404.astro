@@ -1,0 +1,26 @@
+---
+export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout
+  title="Page not found — Atelier Textiles"
+  description="The page you were looking for is not here."
+>
+  <section class="not-found">
+    <p class="page-eyebrow">404</p>
+    <h1>This page has been <em>put away</em></h1>
+    <p>
+      The page you were looking for is not here. It may have moved, or the design
+      may have been retired from the website.
+    </p>
+    <div class="home-cta">
+      <a class="btn btn-primary" href="/products">Browse the library</a>
+      <a class="btn" href="/contact">Get in touch</a>
+    </div>
+    <p class="cart-note">
+      Looking for an order? Track it with your order number at 
+      <a href="/order-lookup">order lookup</a>.
+    </p>
+  </section>
+</Layout>

@@ -36,7 +36,8 @@ const formatDate = (date) =>
 
 <Layout title="Resources — Atelier Textiles">
   <section class="page-intro">
-    <h1>Resources</h1>
+    <p class="page-eyebrow">The Atelier Journal</p>
+    <h1>Notes &amp; <em>stories</em></h1>
     <p>Journal, collection stories and news from the houses we represent.</p>
   </section>
 
@@ -46,7 +47,11 @@ const formatDate = (date) =>
     {
       posts.map((post) => (
         <a class="card post-card" href={`/resources/${post.id}`}>
-          {post.hero && <img src={post.hero} alt={post.title} loading="lazy" />}
+          {post.hero && (
+            <span class="post-media">
+              <img class="post-hero" src={post.hero} alt={post.title} loading="lazy" />
+            </span>
+          )}
           <h2>{post.title}</h2>
           {post.date && <span class="post-date">{formatDate(post.date)}</span>}
         </a>

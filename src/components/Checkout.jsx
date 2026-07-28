@@ -111,7 +111,8 @@ export default function Checkout() {
         {items.map((line) => (
           <li key={line.sku} className="checkout-line">
             <span>
-              {line.name || line.sku} × {line.qty}
+              {line.name || line.sku}
+              {line.colourway ? ` — ${line.colourway}` : ''} × {line.qty}
             </span>
             <span>
               {formatMoney((Number(line.price_cents) || 0) * (Number(line.qty) || 0), line.currency)}
@@ -148,12 +149,19 @@ export default function Checkout() {
         </div>
         <div className="checkout-total">
           <dt>Total</dt>
-          <dd>{total != null ? formatMoney(total, currency) : '—'}</dd>
+          <dd>
+            {total != null ? formatMoney(total, currency) : '—'}
+            <span className="indicative-note">Indicative</span>
+          </dd>
         </div>
       </dl>
 
       {quoteStatus === 'error' && <p className="error-state">{quoteError}</p>}
-      {payError && <p className="error-state">{payError}</p>}
+      {payError && (
+        <p className="error-state">
+          {payError} <a href="/cart">Review your cart</a>
+        </p>
+      )}
 
       <button
         type="button"
@@ -161,8 +169,12 @@ export default function Checkout() {
         onClick={payByCard}
         disabled={submitting || quoteStatus !== 'ready'}
       >
-        {submitting ? 'Redirecting…' : 'Pay by Card'}
+        {submitting ? 'Redirecting…' : 'Pay by card'}
       </button>
+      <p className="cart-note">
+        Card payment is handled by Stripe, which collects your delivery address and
+        contact number on the next screen. We deliver within New Zealand only.
+      </p>
       <a className="cart-continue" href="/cart">
         Back to cart
       </a>

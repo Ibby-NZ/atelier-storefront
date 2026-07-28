@@ -48,6 +48,38 @@ resolved within the timebox.
    directly and correctly serves published content. Public rendering uses the
    loader, not the REST API.
 
+6. **A user seed file SHADOWS the built-in default seed — it does not merge.**
+   `generateSeedModule()` (`dist/astro/index.mjs`) emits `seed = userSeed` as
+   soon as `.emdash/seed.json` exists; the default seed is only the fallback
+   branch. Adding one custom collection therefore silently removes the built-in
+   `posts` and `pages` collections (and the category/tag taxonomies) from every
+   fresh environment.
+   **Workaround:** `.emdash/seed.json` carries verbatim copies of the default
+   `posts`/`pages` collections and both taxonomies, lifted from
+   `node_modules/emdash/dist/default-*.mjs`. They must be re-diffed on upgrade —
+   an upstream change to the default schema will not reach us automatically.
+
+7. **Media values expose their URL as `.src`, not `.url`.**
+   A `MediaValue` is `{ provider, id, src?, previewUrl?, ... }`; the live loader
+   (`normalizeLocalMediaValue`) rewrites a bare storage key into
+   `src: "/_emdash/api/media/file/<key>"`. Confusingly the *server-side*
+   `normalizeMediaValue()` **deletes** `src` for `provider: "local"` (it expects
+   the consumer to resolve through a provider), so the two paths disagree about
+   which fields are present.
+   **Impact:** this was a live bug in our code — `heroUrl` in `src/lib/emdash.js`
+   checked only `.url`, so every EmDash post's featured image was dropped.
+   **Workaround:** `mediaUrl(value)` accepts a bare string and otherwise tries
+   `url ?? src ?? previewUrl`, returning null rather than rendering an object.
+
+8. **Repeater sub-fields are configured under `validation.subFields`.**
+   Not a top-level `subFields` key, and not documented in the seed examples —
+   the shape (`{ slug, label, type, required?, options? }`, `type` restricted to
+   a subset that does include `image`) is only discoverable from
+   `dist/types-*.d.mts`. `validateSeed` does not check it at all, so a wrong
+   shape seeds "successfully" and yields an unusable field in the admin.
+   Collection/field slugs must also match `^[a-z][a-z0-9_]*$` — underscores
+   only, hyphens are rejected (hence `brand_pages`, not `brand-pages`).
+
 ## Verification note
 
 The full "create a post → appears on the site" path was verified **headlessly**

@@ -8,8 +8,16 @@ import { fetchCurrentUser, logout, accountLabel } from '../lib/auth.js'
 // in flight it shows the Login link so there's no layout jump for the common
 // (guest) case; it swaps to the name once the user resolves.
 //
+// Staff also get an Admin link to the back-office hub. It is only a shortcut —
+// every admin page gates on the user itself, so hiding the link is convenience,
+// not access control.
+//
 // Single component by design — the store ESLint has no React plugin, so a
 // JSX-only sub-component reference would trip no-unused-vars.
+function isBackoffice(user) {
+  return user?.role === 'backoffice' || user?.role === 'director'
+}
+
 export default function AccountNav() {
   const [user, setUser] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -47,6 +55,7 @@ export default function AccountNav() {
 
   return (
     <span className="account-nav account-nav-signed-in">
+      {isBackoffice(user) && <a href="/admin/">Admin</a>}
       <a href="/account">{accountLabel(user)}</a>
       <button
         type="button"

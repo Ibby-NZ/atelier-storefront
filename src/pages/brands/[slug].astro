@@ -1,84 +1,101 @@
 ---
-export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+export const prerender = false // live: API brand + EmDash/markdown editorial overlay
 import { getCollection, render } from 'astro:content'
+import { PortableText } from 'emdash/ui'
 import Layout from '../../layouts/Layout.astro'
-import { safeFetch } from '../../lib/api.js'
+import { apiFetch, ApiError } from '../../lib/api.js'
+import { getEmdashBrandPage } from '../../lib/emdash.js'
 
-// One page per brand. Static routes are the UNION of live API brand slugs and
-// seeded brandPage entries, so a seeded page still builds when the API is
-// offline (safeFetch never throws → zero API brands, content pages remain).
-export async function getStaticPaths() {
-  const { data } = await safeFetch('/catalogue/brands')
-  const apiBrands = data?.brands ?? []
+// One brand page, resolved per request so a brand created in /admin/brands or a
+// page published in the EmDash CMS appears without a rebuild.
+const { slug } = Astro.params
 
-  const brandPages = await getCollection('brandPage')
-  const posts = await getCollection('post')
-
-  const bySlug = new Map()
-  for (const brand of apiBrands) {
-    bySlug.set(brand.slug, { slug: brand.slug, brand, page: null })
-  }
-  for (const entry of brandPages) {
-    const slug = entry.data.brand
-    const existing = bySlug.get(slug)
-    if (existing) {
-      existing.page = entry
-    } else {
-      bySlug.set(slug, { slug, brand: null, page: entry })
-    }
-  }
-
-  return Array.from(bySlug.values()).map(({ slug, brand, page }) => ({
-    params: { slug },
-    props: {
-      brand,
-      page,
-      relatedPosts: posts
-        .filter((p) => (p.data.brands ?? []).includes(slug))
-        .sort((a, b) => b.data.date - a.data.date),
-    },
-  }))
+// The brand itself comes from the live catalogue API. apiFetch (not safeFetch)
+// because the two failure modes need different handling: a 404 means "no such
+// brand" (an editorial-only page may still exist), while any other failure
+// means the API is down and we must NOT 404 a brand that really exists.
+let brand = null
+let apiDown = false
+try {
+  const body = await apiFetch(`/catalogue/brands/${encodeURIComponent(slug)}`)
+  brand = body?.brand ?? null
+} catch (err) {
+  if (!(err instanceof ApiError) || err.status !== 404) apiDown = true
 }
 
-const { brand, page, relatedPosts } = Astro.props
+// Editorial precedence: EMDASH WINS OVER MARKDOWN here. This deliberately
+// diverges from /resources, where markdown wins — brand pages are handed to the
+// CMS as the editor of record (it is the whole point of wiring them through
+// EmDash), while the markdown files under src/content/brands stay as the
+// offline baseline that ships with the repo. Precedence is per PAGE, not per
+// field: the markdown entry is only read when the CMS has nothing for this
+// slug, so a page is never a confusing hybrid of the two sources.
+const emPage = await getEmdashBrandPage(slug)
+const mdPage = emPage
+  ? null
+  : (await getCollection('brandPage')).find((entry) => entry.data.brand === slug) ?? null
 
-const name = brand?.name ?? page?.id ?? Astro.params.slug
-const blurb = page?.data.blurb ?? brand?.story ?? ''
-const slideshow = page?.data.slideshow ?? []
-const cards = page?.data.collectionCards ?? []
+const name = brand?.name ?? emPage?.name ?? mdPage?.id ?? slug
+const blurb = emPage?.blurb || mdPage?.data.blurb || brand?.story || ''
+const slideshow = emPage?.slideshow ?? mdPage?.data.slideshow ?? []
+const cards = emPage?.collectionCards ?? mdPage?.data.collectionCards ?? []
 const heroImage = slideshow[0] ?? null
 
-// Render the optional markdown body of the brand page.
-const Body = page ? (await render(page)).Content : null
+// Extended copy: Portable Text blocks from the CMS, or the markdown body.
+const story = emPage?.story ?? null
+const Body = mdPage ? (await render(mdPage)).Content : null
+
+// Related reading, previously computed in getStaticPaths — same logic, now at
+// request time.
+const relatedPosts = (await getCollection('post'))
+  .filter((post) => (post.data.brands ?? []).includes(slug))
+  .sort((a, b) => b.data.date - a.data.date)
+
+// Only a genuine miss 404s: the API answered and has no such brand, AND no
+// editorial page exists in either source. An API outage renders whatever
+// editorial we have (offline-safe), and an editorial page for a slug the API
+// does not know still renders — that union was the seeded-page behaviour before
+// this route went live and it is preserved.
+const notFound = !brand && !apiDown && !emPage && !mdPage
+if (notFound) {
+  Astro.response.status = 404
+}
 ---
 
 <Layout title={`${name} — Atelier Textiles`}>
   <p class="breadcrumb"><a href="/brands">← All brands</a></p>
 
-  <section class="brand-header">
-    {
-      heroImage ? (
-        <div class="brand-slideshow">
-          {slideshow.map((src, i) => (
-            <img
-              src={src}
-              alt={`${name} collection image ${i + 1}`}
-              loading={i === 0 ? 'eager' : 'lazy'}
-            />
-          ))}
-        </div>
-      ) : (
-        <div class="brand-slideshow brand-slideshow--empty" aria-hidden="true" />
-      )
-    }
-    <h1>{name}</h1>
-    {brand?.country && <p class="brand-meta">{brand.country}</p>}
-    {blurb && <p class="brand-blurb">{blurb}</p>}
-    <p><a class="btn" href={`/products?brand=${Astro.params.slug}`}>Shop {name}</a></p>
-  </section>
+  {
+    notFound ? (
+      <section class="brand-header">
+        <h1>Brand not found</h1>
+        <p class="empty-state">We could not find that house.</p>
+      </section>
+    ) : (
+      <section class="brand-header">
+        {heroImage ? (
+          <div class="brand-slideshow">
+            {slideshow.map((src, i) => (
+              <img
+                src={src}
+                alt={`${name} collection image ${i + 1}`}
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
+            ))}
+          </div>
+        ) : (
+          <div class="brand-slideshow brand-slideshow--empty" aria-hidden="true" />
+        )}
+        <h1>{name}</h1>
+        {brand?.country && <p class="brand-meta">{brand.country}</p>}
+        {blurb && <p class="brand-blurb">{blurb}</p>}
+        <p><a class="btn" href={`/products?brand=${slug}`}>Shop {name}</a></p>
+      </section>
+    )
+  }
 
   {
-    cards.length > 0 && (
+    !notFound && cards.length > 0 && (
       <section class="brand-collections">
         <h2>Collections</h2>
         <div class="card-grid">
@@ -97,6 +114,14 @@ const Body = page ? (await render(page)).Content : null
   }
 
   {
+    story && (
+      <section class="brand-body prose">
+        <PortableText value={story} />
+      </section>
+    )
+  }
+
+  {
     Body && (
       <section class="brand-body prose">
         <Body />
@@ -105,7 +130,7 @@ const Body = page ? (await render(page)).Content : null
   }
 
   {
-    relatedPosts.length > 0 && (
+    !notFound && relatedPosts.length > 0 && (
       <section class="brand-posts">
         <h2>Related reading</h2>
         <ul class="post-list">

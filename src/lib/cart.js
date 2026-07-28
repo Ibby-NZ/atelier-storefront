@@ -8,7 +8,9 @@
 // native `storage` event only fires in OTHER tabs, so we need our own signal for
 // the tab that made the change.
 
-const STORAGE_KEY = 'atelier_cart'
+// Exported so the header island can compare it against a native `storage`
+// event's key without redefining the string.
+export const STORAGE_KEY = 'atelier_cart'
 export const CART_EVENT = 'atelier-cart-change'
 
 // SSR runs islands once before hydration; guard every localStorage access.

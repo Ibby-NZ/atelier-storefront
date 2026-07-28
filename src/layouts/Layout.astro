@@ -3,13 +3,28 @@ import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import '../styles/global.css'
 
-const { title = 'Atelier Textiles', description = 'Fine textiles for makers and trade — fabrics, finished goods, and the houses behind them.' } = Astro.props
+const {
+  title = 'Atelier Textiles',
+  description = 'Fine textiles for makers and trade — fabrics, finished goods, and the houses behind them.',
+  image,
+  type = 'website',
+} = Astro.props
 
 // Staging is noindex by default; baked in at build time for prerendered pages.
 // ALLOW_INDEXING=true in the build environment (real launch) drops it — the
 // same flag flips robots.txt (src/pages/robots.txt.js) and the X-Robots-Tag
 // header (server.mjs).
 const allowIndexing = import.meta.env.ALLOW_INDEXING === 'true'
+
+// Canonical / social URLs. `site` is not set in astro.config.mjs, so fall back
+// to the request URL's own origin — both branches yield an absolute URL.
+const base = Astro.site ?? Astro.url
+const canonical = new URL(Astro.url.pathname, base).href
+const socialImage = image ? new URL(image, base).href : null
+
+const SITE_NAME = 'Atelier Textiles'
+const FONTS =
+  'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap'
 ---
 
 <!doctype html>
@@ -18,12 +33,33 @@ const allowIndexing = import.meta.env.ALLOW_INDEXING === 'true'
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#F7F2E9" />
     {!allowIndexing && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    {socialImage && <meta property="og:image" content={socialImage} />}
+    <meta
+      name="twitter:card"
+      content={socialImage ? 'summary_large_image' : 'summary'}
+    />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {socialImage && <meta name="twitter:image" content={socialImage} />}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href={FONTS} />
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <Header />
-    <main>
+    <main id="main">
       <div class="container">
         <slot />
       </div>

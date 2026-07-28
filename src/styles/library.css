@@ -1,0 +1,349 @@
+/*
+ * Library: the browse toolbar (search, filter selects, sort), the active-facet
+ * chips, and the product gallery grid.
+ *
+ * Modelled on "Library Browse" from the design handoff — tactile framed
+ * imagery, the house name as an eyebrow, a Fraunces design name, and the
+ * colourway strip as the signature element. Active facets are claret.
+ */
+
+/* --- Library toolbar ------------------------------------------------------ */
+.library-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s5) var(--s6);
+  padding: var(--s5) 0;
+  border-block: var(--hair);
+  margin-bottom: var(--s5);
+}
+
+.library-toolbar > .filters {
+  flex: 1 1 auto;
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+
+/* `.library-search` is a <label> wrapping the input — the control styling
+   belongs to the input, the label is only the flex slot. */
+.library-search {
+  display: block;
+  flex: 1 1 16rem;
+  max-width: 24rem;
+}
+
+.library-search input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: var(--t-sm);
+}
+
+.library-sort {
+  flex: 0 0 auto;
+  min-width: 11rem;
+}
+
+.product-library {
+  min-width: 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s4) var(--s5);
+  padding: var(--s5) 0;
+  border-block: var(--hair);
+  margin: 0 0 var(--s5);
+}
+
+.filter,
+.library-sort,
+.checkout-shipping .filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 9rem;
+}
+
+.filter select,
+.library-sort select {
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: var(--t-sm);
+}
+
+.library-results,
+.products-count {
+  margin: 0 0 var(--s5);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+/* --- Active facets -------------------------------------------------------- */
+.active-facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: 0 0 var(--s5);
+  padding: 0;
+  list-style: none;
+}
+
+.facet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 5px 6px 5px 11px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-size: var(--t-xs);
+  line-height: 1.2;
+}
+
+.facet-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--accent);
+  font-size: var(--t-sm);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--quick);
+}
+
+.facet-chip-remove:hover {
+  background: rgba(122, 46, 46, 0.12);
+}
+
+/* --- Product gallery ------------------------------------------------------ */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s8) var(--s6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-card {
+  min-width: 0;
+}
+
+.product-card > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* `.product-media` ships as a <span>, so it must be told to be a block. */
+.product-media {
+  display: block;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition: border-color var(--slow), box-shadow var(--slow),
+    transform var(--slow);
+}
+
+.product-card > a:hover .product-media {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-4px);
+}
+
+.product-image,
+.product-image-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--zoom);
+}
+
+.product-card > a:hover .product-image {
+  transform: scale(1.04);
+}
+
+/* Availability sits on the image, on a paper chip so it stays legible over
+   any photograph. */
+.product-media .product-stock {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  margin: 0;
+  background: var(--paper);
+}
+
+.product-card-body {
+  display: block;
+  padding-top: var(--s4);
+}
+
+.product-card h2,
+.product-card h3 {
+  margin: var(--s2) 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--d-md);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  transition: color var(--quick);
+}
+
+.product-card > a:hover h2,
+.product-card > a:hover h3 {
+  color: var(--accent);
+}
+
+.product-card .product-brand {
+  display: block;
+  margin: 0;
+}
+
+/* Colourway strip on a card */
+.product-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-swatch-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border: var(--hair);
+  border-radius: var(--r-sm);
+  background: var(--surface-deep);
+}
+
+/* "+3" overflow chip at the end of the strip. */
+.product-swatch-dot.is-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 18px;
+  padding: 0 5px;
+  border-color: transparent;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--muted);
+}
+
+.product-card-body > .product-stock {
+  margin-top: var(--s3);
+}
+
+.product-price {
+  display: block;
+  margin: var(--s3) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-base);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.product-price.muted {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--t-sm);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.product-price .detail-price-label {
+  display: inline;
+  margin: 0;
+}
+
+.product-price .indicative-note {
+  display: block;
+  margin-top: var(--s1);
+}
+
+/* Meta line under the name: a joined "Fabric · 100% Linen · 140cm" string on
+   the current cards, a hairline <dl> on the older markup. Both are covered. */
+.product-specs {
+  display: block;
+  margin: var(--s3) 0 0;
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.product-specs > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 6px 0;
+  border-bottom: var(--hair);
+}
+
+.product-specs dt {
+  color: var(--muted);
+}
+
+.product-specs dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+
+@media (max-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s7) var(--s5);
+  }
+}
+
+@media (max-width: 640px) {
+  .library-toolbar,
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s4);
+  }
+
+  .library-search,
+  .library-sort,
+  .filter {
+    max-width: none;
+    min-width: 0;
+  }
+
+  .filter-clear {
+    align-self: flex-start;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: var(--s7);
+  }
+}

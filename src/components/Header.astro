@@ -2,11 +2,15 @@
 import CartIndicator from './CartIndicator.jsx'
 import AccountNav from './AccountNav.jsx'
 
-// Primary site navigation. Cart and account are React islands (live state); the
-// rest are plain links. aria-current marks the active page for a11y and styling.
-// AccountNav (US-021) shows the account name + Log out when signed in, else a
-// Login link — it resolves login state at runtime via /auth/me since this is a
-// static build.
+// Editorial brand-world TopBar (design handoff): centred ATELIER / TEXTILES
+// wordmark, centred uppercase nav whose active item is claret with a 2px
+// underline meeting the header hairline, and utilities pinned right. Cart and
+// account are React islands (live state); the rest are plain links.
+// aria-current marks the active page for a11y and styling.
+//
+// Responsive without JS: below 640px the CSS reflows this same markup to
+// wordmark + utilities on one line with the nav on a scrollable row beneath
+// (see src/styles/chrome.css).
 const links = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
@@ -22,8 +26,12 @@ const isActive = (href) =>
 ---
 
 <header class="site-header">
-  <div class="container">
-    <a class="brand" href="/">ATELIER TEXTILES</a>
+  <div class="container site-header-inner">
+    <a class="brand" href="/" aria-label="Atelier Textiles — home">
+      <span class="brand-mark">ATELIER</span>
+      <span class="brand-sub">TEXTILES</span>
+    </a>
+
     <nav class="site-nav" aria-label="Primary">
       <ul>
         {
@@ -38,13 +46,12 @@ const isActive = (href) =>
             </li>
           ))
         }
-        <li>
-          <AccountNav client:load />
-        </li>
-        <li>
-          <CartIndicator client:load />
-        </li>
       </ul>
     </nav>
+
+    <div class="site-utils">
+      <AccountNav client:load />
+      <CartIndicator client:load />
+    </div>
   </div>
 </header>

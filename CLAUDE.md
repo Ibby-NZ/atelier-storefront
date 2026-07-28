@@ -33,44 +33,142 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   hydrated with a `client:*` directive (`client:load` for immediately
   interactive UI). Server-render guard: check `typeof window === 'undefined'`
   before touching `window`/`localStorage` (islands are SSR'd first).
-- **Layout**: `src/layouts/Layout.astro` wraps every page (Header + Footer +
-  global CSS). Pass `title` / `description` props.
-- **Styling is placeholder-only**, all in `src/styles/global.css` — one obvious
-  file, imported once by the layout. Keep markup semantic; real design is applied
-  by hand later, so restyling must not require restructuring HTML.
+- **Layout**: `src/layouts/Layout.astro` wraps every page (skip link + Header +
+  `<main id="main">` + Footer + global CSS). Props: `title`, `description`,
+  optional `image` (og:image) and `type` (og:type). It emits canonical,
+  Open Graph and Twitter tags built from `Astro.site` (see `SITE_URL` under Env)
+  and keeps the `ALLOW_INDEXING` noindex behaviour.
+- **Styling** is the hand-built Atelier design system, matching the platform
+  design handoff (`~/Documents/atelier-platform-demo/design_handoff_atelier_platform/`
+  — palette, type, component rules) and the CRM's interaction conventions. Plain
+  CSS, no framework, no build step beyond Astro.
+  - `src/styles/global.css` is the **only** file the layout imports; it is just
+    the `@import` manifest, in cascade order:
+    `tokens` → `primitives` → `chrome` → `home` → `library` → `product` →
+    `commerce` → `admin` → `editorial`. Add a new area as its own file and
+    import it here rather than growing one giant sheet.
+  - `tokens.css` holds the palette (`--paper --surface --surface-deep --ink
+    --ink-soft --muted --line --accent --accent-soft --brass --sage --clay`),
+    the type scale (`--t-*` UI, `--d-*` display), the spacing scale
+    (`--s1`…`--s10`), container widths, radii, shadows and durations. **Use the
+    tokens; do not hardcode a hex.**
+  - Type: **Fraunces** display, **Inter** UI, **IBM Plex Mono** data (SKUs,
+    money, dates), loaded from Google Fonts in `Layout.astro` with system
+    fallbacks. Eyebrows are uppercase 10–11px `--muted` with wide tracking.
+  - Discipline from the handoff, worth keeping: richness comes from photography,
+    not chrome; **roughly one claret element per screen**; 1px `--line` hairlines
+    instead of heavy cards; no zebra striping; shadows only as a whisper-soft
+    hover lift; **brass is never a text colour** (2.7:1 on paper) — fine strokes
+    and rules only; every monetary figure carries the muted italic
+    `.indicative-note`; NZ spelling; no emoji.
+  - A missing photograph renders the duotone **weave placeholder**
+    (`.product-image-placeholder`, tones from `weaveBackground()`), not an empty
+    box — a grid of unphotographed designs still reads as a collection.
+  - Ships **light-only** by design (warm-paper brand identity). Breakpoints are
+    the CRM's two: `max-width: 1024px` and `max-width: 640px`.
+    `prefers-reduced-motion` disables every transform/zoom.
+  - Keep markup semantic and class-driven: the CSS is the only thing styling the
+    site, so a restyle must not require restructuring HTML. New markup needs its
+    class added to the relevant stylesheet.
 - **Linting**: `.astro` files are NOT linted by ESLint (markup-first; Astro's own
   build does diagnostics). Keep real logic in `.js/.jsx` modules so it stays
   covered. JSX parses via espree's `ecmaFeatures.jsx` — no extra parser dep.
+
+## Shared view helpers
+
+- **`src/lib/catalogue.js`** is the single place the catalogue display rules
+  live, so the library grid, the product detail island and the homepage cannot
+  drift apart. Pure functions, no fetching, no DOM.
+  - `priceInfo(product)` → `{ label, text, muted, indicative, retail }`. FR-3
+    precedence: `trade_price_cents` (only ever sent to an approved trade user, so
+    if it arrived, show it, with the visible retail struck through beside it) →
+    `price_hidden` or no retail price → "Sign in for trade pricing" → retail.
+    **`trade_price_cents` is NZD cents**, while `products.currency` is the
+    supplier's currency and belongs to `retail_price_cents` — formatting the
+    trade figure with the product currency rendered NZ money as "US$187.76".
+    `TRADE_CURRENCY` is the constant; do not pass `product.currency` there.
+    `indicative: true` drives the small muted "Indicative" annotation the design
+    system puts beside every monetary figure.
+  - `weaveBackground(hexTones)` builds the duotone weave placeholder from a
+    colourway's tones (texture layer first — it is semi-transparent and sits on
+    top). Returns `undefined` when there are no tones, so the caller falls back
+    to the plain CSS placeholder.
+  - `toneList`, `productTypeLabel`, `isFabric`.
+- `src/lib/money.js` `formatMoney(cents, currency)` stays the only money
+  formatter.
 
 ## Pages
 
 - **`/products` (US-017)** — `src/pages/products.astro` renders `ProductLibrary.jsx`
   as a single `client:load` island. The island fetches the whole website
   catalogue once (`GET /catalogue/products?limit=100`; the catalogue is small,
-  well under the API max) and **filters in memory** — instant, no page reload,
-  no per-filter request. Filter options are derived from the fetched set
-  (brand uses `brand.slug`/`brand.name`, `product_type` maps to friendly
-  labels, other fields are raw strings). Price rule (FR-3): `price_hidden` OR
-  missing `retail_price_cents` → "Login for trade pricing"; otherwise
-  `Intl.NumberFormat` in the product's `currency`. Empty state shown when no
-  product matches. Reuse the fetch-all-then-filter shape for any small
-  filtered list; switch to server-side querystring filtering only if the set
-  ever exceeds the API page cap.
+  well under the API max) and **searches, filters and sorts in memory** —
+  instant, no page reload, no per-request round trip. Filter options are derived
+  from the fetched set (brand uses `brand.slug`/`brand.name`, `product_type` maps
+  to friendly labels, other fields are raw strings). Reuse the
+  fetch-all-then-filter shape for any small filtered list; switch to the API's
+  server-side `q`/`sort`/filter params (they all exist) only if the set ever
+  exceeds the API page cap.
+  - **Cards are merchandising, not a spec table**: the list endpoint now carries
+    `image_url`, `in_stock`, `colourway_count` and a capped `colourways`
+    strip, so each card shows a photograph (or the weave-gradient placeholder),
+    a stock pill and its colourway dots. `weaveBackground()` builds the
+    placeholder from the colourway's `hex_tones` — texture layer FIRST, it is
+    semi-transparent and sits on top.
+  - **Search** matches product name, house name, composition, application and
+    every colourway name/SKU — the same fields the API's `q` matches, so
+    switching to server-side search changes nothing a shopper can see.
+  - **Sort** is `name` | `price_asc` | `price_desc` | `in_stock`. Price sorting
+    uses `sortablePrice()`, which reads the price the shopper is actually shown
+    (trade if present, else visible retail, else null-sorts-last) — never sort on
+    a figure FR-3 hides.
+  - **The view is deep-linkable**: `readUrlState()`/`writeUrlState()` sync
+    filters + `q` + `sort` with the querystring, so `/products?brand=dedar` is
+    shareable and is how the homepage and brand pages hand off into the library.
+    `replaceState`, not `pushState` — every keystroke would otherwise become a
+    history entry.
+  - Price rendering is the shared `priceInfo()` in **`src/lib/catalogue.js`**
+    (see below); the island never re-implements FR-3.
 
-- **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` prerenders
-  one route per website-visible product. `getStaticPaths` enumerates slugs with
-  `safeFetch('/catalogue/products?limit=100')` (never throws → API offline just
-  yields zero detail routes, build still succeeds). The live detail is a
+- **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` is
+  `prerender = false`. It had `getStaticPaths` enumerating website-visible
+  slugs; that was deleted when staff gained product create/edit at runtime
+  (`/admin/products`), because a prerendered route set 404s every new slug until
+  the next deploy. The page frontmatter now does NO fetching at all — it only
+  reads `Astro.params.slug` — so it needs the API neither at build nor at
+  request time. The live detail is a
   `client:load` island `ProductDetail.jsx` fetching `GET /catalogue/products/:slug`
   per request — necessary because availability and trade pricing are per-request
   (auth cookie). **Gotcha:** that endpoint wraps the product in an envelope
   `{ product: {...} }` (unlike the LIST endpoint which returns `{ products, meta }`);
-  read `body.product`. Purchase action by type: finished good → Add to Cart;
-  fabric with any in-stock colourway → Request Order; fabric all out of stock →
-  Request Backorder + lead-time note. Request buttons link to
-  `/order-request?product=<slug>[&backorder=1]` (form built in US-020). Price
-  reuses the FR-3 rule plus trade: `trade_price_cents` present → show it;
-  else `price_hidden`/null retail → "Login for trade pricing"; else retail.
+  read `body.product`.
+  - **The colourway is the unit of purchase** — every SKU belongs to a colourway,
+    not to the product — so selection drives the whole page: hero image,
+    displayed SKU, stock state, and what the primary action acts on. Selection
+    defaults to the first in-stock colourway (else the first listed) so the CTA is
+    live on arrival. Both the thumbnail strip and the colourway grid set it.
+  - Purchase action by type: finished good → Add to cart (with a quantity
+    stepper), enabled only when the **selected** colourway is in stock; fabric
+    with any in-stock colourway → Request order; fabric all out of stock →
+    Request backorder + lead-time note. Request buttons link to
+    `/order-request?product=<slug>&sku=<selected>[&backorder=1]` — the form
+    preselects that SKU.
+  - Add to cart stores the selected colourway's SKU, name and image (see Cart).
+  - Price rendering is the shared `priceInfo()` in `src/lib/catalogue.js`.
+
+- **`/` (home)** — merchandising, built at build time from the live catalogue
+  via `safeFetch` (never throws → the API being down yields empty sections and a
+  successful build, which is the rule for every storefront page). Sections:
+  editorial hero, "Ready to ship" (finished goods with a *visible* retail price —
+  the only things card checkout can actually take money for), "The cloth"
+  (fabrics, routed to the request flow), a house strip, and the three newest
+  journal posts. The build-time fetch is anonymous, so **no trade pricing is ever
+  baked into the homepage** — trade figures only appear on the live islands.
+  "See all" links hand off to the library with real filter keys
+  (`/products?product_type=fabric`), which `ProductLibrary` reads from the URL.
+
+- **`/404`** — `src/pages/404.astro`, static, routes back to the library, contact
+  and order lookup.
 
 - **`/cart`, `/checkout`, `/checkout/success` (US-019)** — the B2C card-checkout
   flow, all `client:load` islands reading the client cart. `/cart` (`Cart.jsx`)
@@ -81,7 +179,13 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   `{ lines: [{ sku, qty }], zone }` to `POST /checkout/session` then
   `window.location.href = body.url` (redirect to Stripe). **No prices are sent**
   — the API re-resolves them. The cart is NOT cleared on redirect, so Stripe's
-  `cancel_url` (`/cart`) returns to an intact cart. `/checkout/success`
+  `cancel_url` (`/cart`) returns to an intact cart. **The store collects no
+  delivery details itself** — Stripe collects the NZ shipping address and phone
+  on its own page (`shipping_address_collection` / `phone_number_collection`,
+  set API-side) and the webhook persists them onto the order; the checkout page
+  just says so. A failed `POST /checkout/session` surfaces the API's message
+  inline, which for the common case names the SKU and how many remain in stock.
+  `/checkout/success`
   (`CheckoutSuccess.jsx`) reads `?session_id=` from the URL, verifies it via
   `GET /checkout/session/:id`, shows the deterministic order number
   (`WEB-<id>`), and only THEN clears the cart. Money is formatted with the
@@ -158,7 +262,37 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   The list re-loads after every mutation so status/totals/reservation stay
   accurate. `/auth/me` exposes `role` (from `PUBLIC_USER_COLUMNS`), so the role
   check needs no extra call. Reuses `statusBadge` from `orderView.jsx` and
-  `formatMoney`.
+  `formatMoney`. An expanded card also shows the **delivery address and phone**
+  Stripe collected (`order.shipping_address` / `order.contact_phone`, flattened
+  by the plain `addressLines()` helper — a called function, not a JSX
+  sub-component, per the ESLint constraint below). Request-kind orders carry
+  neither, so the block is simply absent.
+
+- **`/admin`, `/admin/brands`, `/admin/products` — catalogue admin** — staff
+  create/edit brands, collections, products and colourways against the
+  backoffice-only `/admin/{brands,collections,products,colourways}` JSON
+  endpoints. `/admin/index.astro` is a static, island-free hub (three links, no
+  data); `AdminBrands.jsx` and `AdminProducts.jsx` copy the `AdminOrders.jsx`
+  gate verbatim (`fetchCurrentUser()` → no user `/login?redirect=…`, non-staff
+  → `/`) — the island IS the guard, the hub page holds nothing worth guarding.
+  `AccountNav.jsx` shows an extra **Admin** link for `backoffice`/`director`;
+  that is a convenience shortcut, NOT access control.
+  - **Slugs are server-generated and immutable**, so no slug input exists and
+    PATCH bodies must not carry one (the API 400s it). Same for `product_type`
+    (the inventory unit is derived from it) — both render read-only in the edit
+    form.
+  - **PATCH sends only changed fields.** The API 400s an empty PATCH body, so an
+    empty diff is a client-side no-op ("No changes to save."), never a request.
+    Blank text inputs become `null` (clear the column), not `''`.
+  - Money is entered in **dollars** and sent as integer cents
+    (`Math.round(Number(v) * 100)`); `hex_tones` is a comma-separated
+    `#RRGGBB` text input parsed and validated client-side into a jsonb array.
+  - SKUs are typed by hand (no generator); a duplicate returns 409 and the
+    message renders inline. Creating a colourway auto-creates its inventory row
+    at qty 0 server-side — **stock levels are not editable here**, that stays in
+    the AdminJS `/panel`.
+  - Shared view helpers (`toneList`, `PRODUCT_TYPE_LABELS`) come from
+    `src/lib/catalogue.js`, not re-declared per island.
 
 ### ESLint + JSX sub-components (constraint)
 
@@ -185,22 +319,45 @@ the fallback baseline:
 - **`page`** (`src/content/pages/*.md`) — `title`; body is the page (story /
   contact, seeded in US-025; dir kept with `.gitkeep`).
 
-**Query with `getCollection('brandPage')` / `render(entry)`** — build-time only,
-so brand pages are fully STATIC (no islands). Entry `id` is the filename slug.
+**Query with `getCollection('brandPage')` / `render(entry)`** — the content
+layer is available at request time too, so these queries work on the on-demand
+brand pages below. Entry `id` is the filename slug.
 
 **`/brands` (`brands/index.astro`)** — API-driven grid of ALL houses via
 `safeFetch('/catalogue/brands')` (→ `{ brands }`, offline renders error state),
-each card links to `/brands/<slug>`.
+each card links to `/brands/<slug>`. **`prerender = false`** so a brand created
+in `/admin/brands` appears without a rebuild; safeFetch still never throws, so
+an API outage renders the error state rather than a 500 — and the build no
+longer calls the API at all.
 
-**`/brands/[slug]` (`brands/[slug].astro`)** — `getStaticPaths` returns the
-UNION of live API brand slugs and seeded `brandPage` slugs (so a seeded page
-still builds with the API offline). Each route gets `{ brand, page, relatedPosts
-}`: brand from the API (or null), `page` the matching `brandPage` entry (matched
-by `entry.data.brand === slug`), `relatedPosts` = posts whose `brands` include
-the slug. Renders slideshow header, blurb (`page.blurb ?? brand.story`),
-collection cards, optional body, related posts. Brands without a content entry
-degrade gracefully (empty slideshow, API story blurb, no cards). Related-post
-links point at `/resources/<id>` (route built in US-025).
+**`/brands/[slug]` (`brands/[slug].astro`)** — **`prerender = false`**;
+`getStaticPaths` is gone. Resolved per request from three sources:
+- **Brand** via `apiFetch` — deliberately NOT `safeFetch`, because the two
+  failure modes need different handling. `ApiError.status === 404` means "no
+  such brand"; anything else sets `apiDown`. That distinction is the whole
+  point: an outage must never turn a real brand into a 404.
+- **Editorial**: `getEmdashBrandPage(slug)` first, then the markdown `brandPage`
+  entry (`entry.data.brand === slug`) — **only when the CMS has nothing**.
+- `relatedPosts` (posts whose `brands` include the slug) moved from
+  `getStaticPaths` to request time, logic unchanged.
+
+Derivation chain: `name = brand?.name ?? emPage?.name ?? mdPage?.id ?? slug`;
+blurb falls back CMS → markdown → `brand.story`; slideshow/cards CMS → markdown
+→ empty. Body copy is the CMS `story` rendered with `<PortableText>` from
+`emdash/ui`, or the markdown body via `render()`. Related-post links point at
+`/resources/<id>`.
+
+**404 rule:** `!brand && !apiDown && !emPage && !mdPage`. So an API 404 with an
+editorial page still renders (preserving the old `getStaticPaths` UNION
+behaviour), and an API outage renders whatever editorial exists — offline-safe.
+
+**Precedence: EmDash WINS over markdown here**, deliberately diverging from
+`/resources`, where markdown wins. Brand pages were handed to the CMS as the
+editor of record (that is the point of wiring them through EmDash at all), while
+the markdown files stay the offline baseline shipped in the repo; posts are the
+other way round because the markdown journal is the curated, reviewed set.
+Precedence is per PAGE, not per field — the markdown entry is not even loaded
+when a CMS page exists, so a page is never a confusing hybrid of both sources.
 
 ## Resources + company pages (US-025)
 
@@ -226,27 +383,62 @@ Newsletters become posts (meeting decision) — no separate newsletter type; add
 ## EmDash CMS (US-026)
 
 EmDash (`emdash@0.29.0`, beta) is added as an Astro integration so editors can
-manage journal posts without a deploy. It is **additive** — markdown collections
-(above) remain the shipped baseline.
+manage journal posts and brand pages without a deploy. It is **additive** —
+markdown collections (above) remain the shipped baseline.
 
 - **Server mode:** EmDash injects on-demand routes, so `astro.config.mjs` uses
   `output: 'server'` + `@astrojs/node`. **Every storefront page therefore MUST
   keep `export const prerender = true`** (first line of frontmatter) or it stops
-  being static — new pages need it too. Only EmDash routes and the two
-  `/resources` pages render on demand.
+  being static — new pages need it too. The ONLY pages that render on demand are
+  `/brands`, `/brands/[slug]`, `/products/[slug]`, `/resources`,
+  `/resources/[slug]` (plus EmDash's own routes). Anything else appearing in the
+  on-demand set is a silent-SSR regression: `npm run build` prints the
+  prerendered routes, and `find dist/client -name '*.html'` is the check.
 - **Config:** `emdash({ database: sqlite({ url: 'file:./data/emdash.db' }),
   storage: local({ directory: './data/uploads', ... }) })`. `data/` and
   `emdash-env.d.ts` are gitignored — local content is never committed.
 - **Live collection:** `src/live.config.js` registers the `_emdash` loader.
-- **Reads go through `src/lib/emdash.js`** (`listEmdashPosts` / `getEmdashPost`),
-  which NEVER throw — an empty/absent CMS yields the markdown baseline, keeping
-  builds offline-safe. `getEmDashCollection('posts')` → `{ entries }` (entry has
-  `.slug` + `.data`); `getEmDashEntry('posts', slug)` → `{ entry, ... }` (unwrap
-  `.entry`). Post fields live under `entry.data` (`title`, `excerpt`,
-  `featured_image`, `content` (portableText), `publishedAt`).
+- **Schema lives in `.emdash/seed.json`** (committed), applied with
+  `npm run seed:cms` (`emdash seed --database ./data/emdash.db --uploads-dir
+  ./data/uploads` — the CLI defaults `./data.db` / `./uploads` are wrong for
+  this repo, so never run bare `npx emdash seed`). Idempotent; on an existing DB
+  expect `Collections: 1 created, 2 skipped`. Astro reads the file into a
+  virtual module at startup, so **restart the dev server after editing it**.
+  - **CAVEAT: a user seed SHADOWS the built-in default, it does not extend it.**
+    `virtual:emdash/seed` sets `seed = userSeed` whenever `.emdash/seed.json`
+    exists, so the `posts` and `pages` definitions in our seed are load-bearing
+    verbatim copies of `node_modules/emdash/dist/default-*.mjs` — delete them and
+    a fresh environment gets no Posts/Pages collection at all. Re-diff on every
+    EmDash upgrade.
+  - Repeater sub-fields go under **`validation.subFields`**, not a top-level
+    `subFields` key (`{ slug, label, type, required? }`, where `type` may be
+    `image`). Collection and field slugs must match `^[a-z][a-z0-9_]*$` —
+    underscores, never hyphens (hence `brand_pages`, `collection_cards`).
+- **Reads go through `src/lib/emdash.js`** (`listEmdashPosts` / `getEmdashPost` /
+  `listEmdashBrandPages` / `getEmdashBrandPage`), which NEVER throw — an
+  empty/absent CMS yields the markdown baseline, keeping builds offline-safe.
+  `getEmDashCollection(name)` → `{ entries }` (entry has `.slug` + `.data`);
+  `getEmDashEntry(name, slug)` → `{ entry, ... }` (unwrap `.entry`). Post fields
+  live under `entry.data` (`title`, `excerpt`, `featured_image`, `content`
+  (portableText), `publishedAt`); brand-page fields are `title`, `blurb`,
+  `slideshow`, `collection_cards`, `story`, normalised by `normaliseBrandPage`
+  to the same names the markdown `brandPage` collection uses.
+- **Media URL gotcha:** an image/file field holds a MediaValue OBJECT and the
+  property carrying the URL is **`.src`**, not `.url` — the live loader rewrites
+  a bare storage key to `/_emdash/api/media/file/<key>` and leaves it in `.src`.
+  `mediaUrl(value)` checks `url ?? src ?? previewUrl` and returns null for
+  anything else. The old `heroUrl` checked only `.url`, so **every EmDash post's
+  featured image was being silently dropped**; `mediaUrl` replaced it and fixed
+  that as well as powering the brand-page slideshow.
+- **Portable Text** bodies render with `import { PortableText } from 'emdash/ui'`
+  → `<PortableText value={blocks} />`. `/resources/[slug]` uses it for a CMS
+  post's `content`; before that it fell back to the excerpt and dropped the body.
 - **`/resources`** merges markdown + published EmDash posts (markdown wins on
   slug); **`/resources/[slug]`** resolves markdown-first then EmDash, else 404.
-  Both are `prerender = false`.
+  Both are `prerender = false`. **Brand pages invert that precedence** (EmDash
+  wins) — rationale in the US-024 section above.
+- **`brand_pages` entry slug MUST equal the atelier-api brand slug** — that is
+  the only key joining CMS editorial to the live catalogue brand.
 - **Admin:** http://localhost:4321/_emdash/admin (first run → `/setup`,
   passkey auth). Dev-only headless bootstrap + API token:
   `GET /_emdash/api/setup/dev-bypass?token=1`.
@@ -257,12 +449,17 @@ manage journal posts without a deploy. It is **additive** — markdown collectio
 ## Cart
 
 Client-side cart lives in `localStorage` under key `atelier_cart` (array of
-`{ sku, name, qty, price_cents, currency }`). **Write path: `src/lib/cart.js`**
+`{ sku, name, qty, price_cents, currency }` plus the optional merchandising
+fields `colourway`, `brand`, `slug`, `image_url` — added so a cart row can show a
+thumbnail, the house, the colourway and a link back to the product). Every
+merchandising field is optional: a cart written before they existed still renders,
+just without the thumbnail or link. **Write path: `src/lib/cart.js`**
 (`addToCart(item, qty)` merges by SKU, `readCart()`, `CART_EVENT`). Every write
 dispatches a same-tab `atelier-cart-change` event (`CART_EVENT`) because the
 native `storage` event only fires in OTHER tabs. `CartIndicator.jsx` listens to
 BOTH `storage` and `CART_EVENT` so the header count updates instantly after an
-Add to Cart in the same tab. Write helpers: `addToCart` (US-018), plus
+Add to cart in the same tab; it counts through the shared `cartCount()` and
+compares against the exported `STORAGE_KEY` rather than re-implementing either. Write helpers: `addToCart` (US-018), plus
 `setCartQty(sku, qty)` (qty ≤ 0 removes), `removeFromCart(sku)`, `clearCart()`,
 and read helpers `cartCount(items?)` / `cartSubtotalCents(items?)` (US-019). Any
 island that mutates the cart MUST go through these so the header stays live. The
@@ -313,5 +510,12 @@ sits behind HTTP Basic Auth and is blocked from search indexing.
 
 ## Env
 
-Copy `.env.example` to `.env` (gitignored): `PUBLIC_API_BASE_URL`, plus the
-staging-gate vars above.
+Copy `.env.example` to `.env` (gitignored): `PUBLIC_API_BASE_URL`, `SITE_URL`,
+plus the staging-gate vars above.
+
+`SITE_URL` is the public origin of the deployment. `astro.config.mjs` reads it
+with Vite's `loadEnv` (`import.meta.env` is NOT available in a config file) and
+passes it to Astro's `site`, which `Layout.astro` uses for `<link
+rel="canonical">` and `og:url`. It is **build time**: unset, those URLs bake as
+`http://localhost:4321`, so it belongs on the launch checklist beside
+`ALLOW_INDEXING` — set both in the build env and rebuild.

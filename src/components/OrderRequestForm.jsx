@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { fetchCurrentUser } from '../lib/auth.js'
 
 // Order-request form island (US-020, FR-5/FR-6). Reached from a fabric product
 // page as /order-request?product=<slug>[&backorder=1]. The customer asks the
@@ -27,6 +28,9 @@ function queryParam(name) {
 export default function OrderRequestForm() {
   const [productSlug] = useState(() => queryParam('product'))
   const [isBackorder] = useState(() => queryParam('backorder') === '1')
+  // The product page carries the colourway the shopper was looking at, so the
+  // form opens on the same SKU rather than resetting to the first in stock.
+  const [requestedSku] = useState(() => queryParam('sku'))
 
   const [product, setProduct] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ready | error | none
@@ -61,8 +65,12 @@ export default function OrderRequestForm() {
         const loaded = body?.product ?? null
         setProduct(loaded)
         const colourways = loaded?.colourways ?? []
-        // Default to the first in-stock colourway, else the first listed.
-        const preferred = colourways.find((c) => c.in_stock) ?? colourways[0]
+        // Honour the colourway the product page linked to; otherwise default to
+        // the first in-stock one, else the first listed.
+        const preferred =
+          colourways.find((c) => c.sku === requestedSku) ??
+          colourways.find((c) => c.in_stock) ??
+          colourways[0]
         if (preferred?.sku) setSku(preferred.sku)
         setStatus('ready')
       })
@@ -72,20 +80,20 @@ export default function OrderRequestForm() {
         setStatus('error')
       })
 
-    apiFetch('/auth/me')
-      .then((body) => {
-        if (!active || !body) return
-        if (body.name) setName(body.name)
-        if (body.email) setEmail(body.email)
-      })
-      .catch(() => {
-        // Guest (401) or transient failure — leave contact fields blank.
-      })
+    // Go through the shared helper: /auth/me answers with a { user } ENVELOPE,
+    // and reading body.email off the raw response silently prefilled nothing,
+    // so every signed-in customer had to retype their own contact details.
+    // fetchCurrentUser never throws — a guest simply leaves the fields blank.
+    fetchCurrentUser().then((user) => {
+      if (!active || !user) return
+      if (user.name) setName(user.name)
+      if (user.email) setEmail(user.email)
+    })
 
     return () => {
       active = false
     }
-  }, [productSlug])
+  }, [productSlug, requestedSku])
 
   if (status === 'none') {
     return (

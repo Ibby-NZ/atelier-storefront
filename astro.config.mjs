@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config'
+import { loadEnv } from 'vite'
 import react from '@astrojs/react'
 import node from '@astrojs/node'
 import emdash, { local } from 'emdash/astro'
@@ -13,7 +14,17 @@ import { sqlite } from 'emdash/db'
 // server adapter (Node standalone) is required. Existing storefront pages keep
 // their default static prerendering — only EmDash's injected routes render on
 // demand. Content lives in a local SQLite file; media uploads on the local disk.
+// `import.meta.env` is not available in a config file, so .env is loaded by hand
+// (Vite's own helper — vite is already a dependency of Astro). SITE_URL is the
+// public origin of the deployment; it feeds Astro's `site`, which Layout.astro
+// uses for canonical and og:url. WITHOUT IT those URLs bake as
+// http://localhost:4321 at build time, which is wrong the moment the site is
+// indexable — so SITE_URL belongs in the launch checklist next to
+// ALLOW_INDEXING (both are build-time, both need a rebuild to take effect).
+const { SITE_URL } = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '')
+
 export default defineConfig({
+  site: SITE_URL || undefined,
   // EmDash injects on-demand routes, so the site runs in server mode with a Node
   // adapter. Every storefront page opts back into static prerendering with
   // `export const prerender = true`, preserving the offline-safe static build.

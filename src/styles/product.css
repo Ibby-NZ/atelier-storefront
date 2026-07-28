@@ -1,0 +1,346 @@
+/*
+ * Product detail: hero gallery with colourway thumbnails, the selected
+ * colourway line, the claret price block, purchase actions, the hairline spec
+ * sheet and the full colourway grid.
+ *
+ * Modelled on "Product Page" from the design handoff. The price is the single
+ * claret figure on this screen; the selected swatch carries a 2px claret ring.
+ */
+
+/* --- Product detail ------------------------------------------------------- */
+.product-detail {
+  max-width: 82rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  gap: var(--s8);
+  align-items: start;
+}
+
+.detail-media,
+.detail-gallery {
+  min-width: 0;
+}
+
+.detail-hero {
+  width: 100%;
+  aspect-ratio: 7 / 6;
+  object-fit: cover;
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition: background var(--zoom);
+}
+
+.detail-hero-placeholder {
+  display: block;
+}
+
+.detail-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin: var(--s4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detail-thumb {
+  width: 62px;
+  height: 62px;
+  padding: 0;
+  overflow: hidden;
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background-color: var(--surface-deep);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  transition: box-shadow var(--quick), border-color var(--quick);
+}
+
+.detail-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-thumb:hover {
+  border-color: var(--brass);
+}
+
+.detail-thumb.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.detail-info {
+  min-width: 0;
+}
+
+.detail-type {
+  margin: 0 0 var(--s3);
+}
+
+.detail-name {
+  margin: 0;
+  font-size: var(--d-xl);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.detail-brand {
+  margin: var(--s3) 0 0;
+  font-size: var(--t-sm);
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+/* Selected colourway line */
+.detail-colourway-name {
+  margin: var(--s6) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--d-sm);
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.detail-selected-sku {
+  display: block;
+  margin-top: var(--s1);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* Price block — the single claret figure on this screen. */
+.detail-price {
+  margin: var(--s6) 0 0;
+  padding-top: var(--s5);
+  border-top: var(--hair);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+
+.detail-price.muted {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--t-body);
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.detail-price-label {
+  display: block;
+  margin-bottom: var(--s2);
+  font-style: normal;
+}
+
+/* Retail struck through beside the claret trade figure. */
+.detail-price-retail {
+  margin-left: var(--s3);
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  font-weight: 400;
+  color: var(--muted);
+  text-decoration-thickness: 1px;
+}
+
+.detail-price .indicative-note {
+  display: block;
+  margin-top: var(--s2);
+  font-size: var(--t-xs);
+}
+
+/* Purchase block */
+.purchase {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+  margin: var(--s6) 0 0;
+}
+
+.purchase .btn {
+  height: 46px;
+}
+
+.purchase-note,
+.request-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.purchase-added {
+  flex-basis: 100%;
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--t-sm);
+  color: var(--sage);
+}
+
+/* Spec sheet — airy hairline rows, mono values, no zebra. */
+.detail-specs {
+  margin: var(--s7) 0 0;
+  padding: 0;
+  border-top: var(--hair);
+}
+
+.detail-specs > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: 14px 0;
+  border-bottom: var(--hair);
+}
+
+.detail-specs dt {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.detail-specs dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink);
+  text-align: right;
+}
+
+/* --- Colourways ----------------------------------------------------------- */
+.detail-colourways {
+  margin-top: var(--s10);
+  padding-top: var(--s7);
+  border-top: var(--hair);
+}
+
+.detail-colourways h2 {
+  margin: 0 0 var(--s6);
+  font-size: var(--d-lg);
+}
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--s5) var(--s4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The swatch may be the interactive element itself, or an <li> wrapping a
+   button — both lay out as the same column. */
+.swatch,
+.swatch > button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+}
+
+.swatch > button,
+button.swatch {
+  cursor: pointer;
+  font: inherit;
+}
+
+.swatch > button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-chip);
+}
+
+.swatch > button .detail-selected-sku {
+  margin-top: 0;
+}
+
+.swatch-image,
+.swatch-tones {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  overflow: hidden;
+  border: var(--hair);
+  border-radius: var(--r-chip);
+  background: var(--surface-deep);
+  transition: box-shadow var(--quick), border-color var(--quick);
+}
+
+.swatch:hover .swatch-image,
+.swatch:hover .swatch-tones,
+.swatch > button:focus-visible .swatch-image,
+.swatch > button:focus-visible .swatch-tones {
+  border-color: var(--brass);
+}
+
+.swatch.is-selected .swatch-image,
+.swatch.is-selected .swatch-tones {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.swatch-tone {
+  flex: 1;
+  min-width: 0;
+}
+
+.swatch-name {
+  font-family: var(--font-display);
+  font-size: var(--t-body);
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.swatch-stock {
+  align-self: flex-start;
+}
+
+.swatch-out {
+  opacity: 0.72;
+}
+
+
+@media (max-width: 1024px) {
+  .detail-grid {
+    gap: var(--s6);
+  }
+
+  .detail-colourways {
+    margin-top: var(--s8);
+  }
+}
+
+@media (max-width: 640px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: var(--s6);
+  }
+
+  .detail-price {
+    font-size: 1.5rem;
+  }
+
+  .swatch-grid {
+    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  }
+}

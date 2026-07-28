@@ -54,6 +54,19 @@ function formatDate(value) {
   }).format(date)
 }
 
+// Flattens a stored Stripe address snapshot into printable lines. Every field is
+// optional, so blanks are dropped rather than rendered as empty rows.
+function addressLines(address) {
+  const { name, line1, line2, city, state, postal_code: postcode, country } = address
+  return [
+    name,
+    line1,
+    line2,
+    [city, state, postcode].filter(Boolean).join(' '),
+    country,
+  ].filter((line) => typeof line === 'string' && line.trim() !== '')
+}
+
 export default function AdminOrders() {
   const [phase, setPhase] = useState('loading') // loading | ready | error
   const [error, setError] = useState('')
@@ -328,7 +341,27 @@ export default function AdminOrders() {
                           <dd>{order.xero_invoice_ref}</dd>
                         </div>
                       ) : null}
+                      {order.contact_phone ? (
+                        <div>
+                          <dt>Phone</dt>
+                          <dd>{order.contact_phone}</dd>
+                        </div>
+                      ) : null}
                     </dl>
+
+                    {/* Card checkouts carry the address Stripe collected; a
+                        request-kind order has none until the back office adds
+                        one, so the block is simply absent. */}
+                    {order.shipping_address ? (
+                      <div className="admin-order-address">
+                        <h4>Deliver to</h4>
+                        <address>
+                          {addressLines(order.shipping_address).map((line) => (
+                            <span key={line}>{line}</span>
+                          ))}
+                        </address>
+                      </div>
+                    ) : null}
 
                     <div className="admin-actions">
                       {editable && (

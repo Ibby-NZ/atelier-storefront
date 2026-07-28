@@ -1,0 +1,382 @@
+/*
+ * Site chrome: skip link, editorial TopBar and the gallery footer.
+ *
+ * The header reproduces the brand-world TopBar from the design handoff —
+ * centred ATELIER / TEXTILES wordmark, centred uppercase nav, active link in
+ * claret with a 2px underline that meets the header's own hairline, utilities
+ * (account + cart) pinned right. Below 640px it reflows to wordmark + utilities
+ * on one line with the nav on a scrollable row beneath. Pure CSS, no JS.
+ */
+
+/* --- Skip link ------------------------------------------------------------ */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  padding: 12px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  border-radius: 0 0 var(--r-sm) 0;
+}
+
+.skip-link:focus {
+  left: 0;
+  color: var(--paper);
+}
+
+/* --- Header --------------------------------------------------------------- */
+.site-header {
+  background: var(--paper);
+  border-bottom: var(--hair);
+}
+
+.site-header-inner {
+  position: relative;
+  padding-top: 22px;
+}
+
+/* Wordmark */
+.brand {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.brand:hover {
+  color: var(--ink);
+}
+
+.brand-mark {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.32em;
+  padding-left: 0.32em;
+  color: var(--ink);
+}
+
+.brand-sub {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 9.5px;
+  line-height: 1;
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+  color: var(--brass);
+}
+
+/* Nav */
+.site-nav {
+  margin-top: 18px;
+}
+
+.site-nav ul {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 34px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-nav a {
+  display: block;
+  padding-bottom: 12px;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-ui);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.site-nav a:hover {
+  color: var(--ink);
+  border-bottom-color: var(--line);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+/* Utilities (account + cart islands) */
+.site-utils {
+  position: absolute;
+  inset-inline-end: var(--gutter);
+  top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.site-utils .account-nav,
+.site-utils .cart-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.site-utils a.account-nav,
+.site-utils .account-nav > a,
+.site-utils .cart-indicator {
+  border-bottom: var(--hair);
+  padding-bottom: 2px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.site-utils a.account-nav:hover,
+.site-utils .account-nav > a:hover,
+.site-utils .cart-indicator:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.site-utils .cart-indicator strong {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--t-xs);
+  color: var(--accent);
+}
+
+.account-nav-signed-in {
+  gap: var(--s3);
+}
+
+.account-logout {
+  padding: 0 0 2px;
+  border: 0;
+  border-bottom: var(--hair);
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.account-logout:hover:not(:disabled) {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.account-logout:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Standalone (non-header) fallback for the cart pill — the homepage uses the
+   same class for a service-status line. */
+.cart-indicator {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.cart-indicator strong {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+@media (max-width: 1024px) {
+  .site-nav ul {
+    gap: 0 24px;
+  }
+
+  .brand-mark {
+    font-size: 22px;
+    letter-spacing: 0.28em;
+    padding-left: 0.28em;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-header-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s3);
+    padding-top: 14px;
+  }
+
+  .brand {
+    text-align: left;
+  }
+
+  .brand-mark {
+    font-size: 18px;
+    letter-spacing: 0.22em;
+    padding-left: 0.22em;
+  }
+
+  .brand-sub {
+    font-size: 8px;
+    letter-spacing: 0.38em;
+    padding-left: 0.38em;
+  }
+
+  .site-utils {
+    position: static;
+    order: 2;
+    gap: var(--s3);
+  }
+
+  .site-nav {
+    order: 3;
+    flex-basis: 100%;
+    margin-top: var(--s2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .site-nav ul {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 0 20px;
+  }
+
+  .site-nav a {
+    white-space: nowrap;
+    padding-bottom: 10px;
+    font-size: var(--t-xs);
+  }
+}
+
+/* --- Footer --------------------------------------------------------------- */
+.site-footer {
+  margin-top: var(--s10);
+  border-top: var(--hair);
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.site-footer .container {
+  padding-block: var(--s8) var(--s6);
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr);
+  gap: var(--s8);
+  align-items: start;
+}
+
+.footer-brand .brand-mark {
+  font-size: 21px;
+  letter-spacing: 0.26em;
+  padding-left: 0.26em;
+}
+
+.footer-brand .brand-sub {
+  font-size: 8px;
+  letter-spacing: 0.44em;
+  padding-left: 0.44em;
+}
+
+.footer-line {
+  margin: var(--s5) 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--d-xs);
+  line-height: 1.4;
+  color: var(--ink);
+  max-width: 20ch;
+}
+
+.footer-place {
+  margin: var(--s3) 0 0;
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.footer-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s6);
+}
+
+.footer-group ul {
+  margin: var(--s4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.footer-group a {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.footer-group a:hover {
+  color: var(--accent);
+}
+
+.footer-base {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-top: var(--s8);
+  padding-top: var(--s5);
+  border-top: var(--hair);
+}
+
+.footer-copy,
+.footer-note {
+  margin: 0;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+.footer-note {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+@media (max-width: 1024px) {
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: var(--s7);
+  }
+}
+
+@media (max-width: 640px) {
+  .site-footer {
+    margin-top: var(--s8);
+  }
+
+  .footer-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s5);
+  }
+}

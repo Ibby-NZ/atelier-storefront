@@ -1,0 +1,286 @@
+/*
+ * Homepage: editorial hero, repeating section rhythm and the house strip.
+ *
+ * The hero breaks out of the container gutter so it reads edge-to-edge against
+ * the page margins without ever introducing horizontal page scroll.
+ */
+
+.home-hero {
+  margin: 0 calc(var(--gutter) * -1) var(--s10);
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: stretch;
+  border-block: var(--hair);
+  background: var(--surface);
+}
+
+.home-hero-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--s10) var(--s8);
+  max-width: 40rem;
+  margin-inline-start: auto;
+}
+
+.home-hero-eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+.home-hero-body h1 {
+  margin: var(--s4) 0 0;
+  font-size: var(--d-2xl);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+}
+
+.home-hero-body h1 em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.home-hero-body p {
+  margin: var(--s5) 0 0;
+  max-width: 34rem;
+  font-size: var(--t-body);
+  line-height: 1.68;
+  color: var(--ink-soft);
+}
+
+/* Container for the hero's call-to-action pair (primary claret + outline). */
+.home-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-top: var(--s6);
+}
+
+.home-cta .btn {
+  height: 46px;
+  padding: 0 26px;
+}
+
+/* When `.home-cta` is used directly on a link, it reads as the primary CTA. */
+a.home-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding: 0 26px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--paper);
+  font-size: var(--t-base);
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  transition: background var(--quick), border-color var(--quick);
+}
+
+a.home-cta:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--paper);
+}
+
+.home-hero-media {
+  min-height: 30rem;
+  border-inline-start: var(--hair);
+  overflow: hidden;
+}
+
+.home-hero-media img,
+.home-hero-media .product-image-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Section rhythm ------------------------------------------------------- */
+.home-section {
+  margin-bottom: var(--s10);
+}
+
+.home-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Eyebrow spans the full width; headline and the "see all" link share the row
+   beneath it. Children are flat siblings, so this is laid out as a grid. */
+.home-section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: var(--s5);
+  padding-bottom: var(--s4);
+  margin-bottom: var(--s7);
+  border-bottom: var(--hair);
+}
+
+.home-section-head .home-eyebrow,
+.home-section-head > p:first-child {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--s3);
+}
+
+.home-section-head h2 {
+  grid-column: 1;
+  margin: 0;
+  font-size: var(--d-lg);
+}
+
+.home-section-head h2 em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.home-section-head a {
+  grid-column: 2;
+  justify-self: end;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: var(--hair);
+  padding-bottom: 2px;
+  white-space: nowrap;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.home-section-head a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.home-featured {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s7) var(--s6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* --- House strip ---------------------------------------------------------- */
+.brand-strip {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block: var(--hair);
+}
+
+.brand-strip-item {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-inline-start: var(--hair);
+  transition: background var(--quick);
+}
+
+.brand-strip-item:first-child {
+  border-inline-start: 0;
+}
+
+.brand-strip-item:hover {
+  background: var(--surface);
+}
+
+/* The cell may be the link itself, or an <li> wrapping one. */
+.brand-strip-item,
+.brand-strip-item > a {
+  display: block;
+  padding: var(--s5) var(--s4);
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.brand-strip-item > a {
+  padding: 0;
+}
+
+.brand-strip-item > a:hover {
+  color: var(--ink);
+}
+
+/* Optional country caption under the house name. */
+.brand-strip-item span {
+  display: block;
+  margin-top: var(--s2);
+  font-size: var(--t-micro);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+@media (max-width: 1024px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+    margin-bottom: var(--s8);
+  }
+
+  .home-hero-body {
+    order: 2;
+    max-width: none;
+    margin-inline-start: 0;
+    padding: var(--s7) var(--s6);
+  }
+
+  .home-hero-media {
+    order: 1;
+    min-height: 18rem;
+    border-inline-start: 0;
+    border-bottom: var(--hair);
+  }
+
+  .home-featured {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-section {
+    margin-bottom: var(--s8);
+  }
+}
+
+@media (max-width: 640px) {
+  .home-hero-body {
+    padding: var(--s6) var(--s5);
+  }
+
+  .home-hero-media {
+    min-height: 13rem;
+  }
+
+  .home-featured {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-strip-item {
+    flex-basis: 50%;
+    padding: var(--s4) var(--s3);
+  }
+
+  .brand-strip-item:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .brand-strip-item:nth-child(n + 3) {
+    border-top: var(--hair);
+  }
+}

@@ -14,8 +14,13 @@ import { formatMoney } from '../lib/money.js'
 // state lives in localStorage via src/lib/cart.js; this component mirrors it and
 // re-reads on every CART_EVENT so the header count and page stay in sync.
 //
+// Lines added before the cart carried imagery (US-018 shape) simply render
+// without a thumbnail or link — every merchandising field is optional here.
+//
 // One component only: the store ESLint has no React plugin, so a JSX-only
 // sub-component reference would trip no-unused-vars (see ProductDetail.jsx).
+
+const MAX_QTY = 99
 
 export default function Cart() {
   const [items, setItems] = useState(null) // null until hydrated (avoids SSR flash)
@@ -40,7 +45,7 @@ export default function Cart() {
       <div className="cart-empty">
         <p className="products-empty">Your cart is empty.</p>
         <a className="btn btn-primary" href="/products">
-          Browse products
+          Browse the library
         </a>
       </div>
     )
@@ -57,34 +62,56 @@ export default function Cart() {
       <ul className="cart-lines">
         {items.map((line) => {
           const linePrice = (Number(line.price_cents) || 0) * (Number(line.qty) || 0)
+          const label = line.name || line.sku
           return (
             <li key={line.sku} className="cart-line">
+              <div className="cart-line-media">
+                {line.image_url ? (
+                  <img className="cart-line-image" src={line.image_url} alt="" loading="lazy" />
+                ) : (
+                  <span className="cart-line-image product-image-placeholder" aria-hidden="true" />
+                )}
+              </div>
+
               <div className="cart-line-main">
-                <p className="cart-line-name">{line.name || line.sku}</p>
+                {line.brand && <p className="cart-line-brand">{line.brand}</p>}
+                <p className="cart-line-name">
+                  {line.slug ? (
+                    <a className="cart-line-link" href={`/products/${line.slug}`}>
+                      {label}
+                    </a>
+                  ) : (
+                    label
+                  )}
+                  {line.colourway && <span className="cart-line-colourway"> — {line.colourway}</span>}
+                </p>
                 <p className="cart-line-unit">
                   {line.price_cents != null
                     ? `${formatMoney(line.price_cents, line.currency)} each`
                     : 'Price on request'}
+                  <span className="detail-selected-sku">{line.sku}</span>
                 </p>
               </div>
+
               <label className="cart-qty">
-                <span className="sr-only">Quantity</span>
+                <span className="sr-only">Quantity for {label}</span>
                 <input
                   type="number"
                   min="1"
+                  max={MAX_QTY}
                   step="1"
                   value={line.qty}
                   onChange={(event) => changeQty(line.sku, event.target.value)}
                 />
               </label>
-              <p className="cart-line-total">
-                {formatMoney(linePrice, line.currency)}
-              </p>
+
+              <p className="cart-line-total">{formatMoney(linePrice, line.currency)}</p>
+
               <button
                 type="button"
                 className="cart-remove"
                 onClick={() => remove(line.sku)}
-                aria-label={`Remove ${line.name || line.sku}`}
+                aria-label={`Remove ${label}`}
               >
                 Remove
               </button>
@@ -97,6 +124,7 @@ export default function Cart() {
         <p className="cart-subtotal">
           <span>Subtotal</span>
           <strong>{formatMoney(subtotal, currency)}</strong>
+          <span className="indicative-note">Indicative</span>
         </p>
         <p className="cart-note">Shipping is calculated at checkout.</p>
         <a className="btn btn-primary" href="/checkout">
