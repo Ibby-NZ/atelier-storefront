@@ -7,30 +7,39 @@ import {
   PRODUCT_TYPE_LABELS,
 } from '../lib/catalogue.js'
 
-// Product library island (US-017). Fetches the website-visible catalogue once
-// from GET /catalogue/products, then searches, filters and sorts in-memory so
-// the grid updates instantly with no page reload. The catalogue is small (well
-// under the API's max page size), so a single request backs every combination.
+// Product library island (US-017), Maison direction (design: "Maison Library").
+// Fetches the website-visible catalogue once from GET /catalogue/products, then
+// searches, filters and sorts in-memory so the grid updates instantly with no
+// page reload. The catalogue is small (well under the API's max page size), so
+// a single request backs every combination.
 //
 // The request is credentialed (see lib/api.js), so an approved trade user's
 // cards carry trade_price_cents — the API is the gate, this island only renders
 // whatever price it was given.
 //
-// One component only: the store ESLint has no React plugin, so a JSX-only
+// Layout: a sticky refine sidebar (search, House / Type facet lists, the
+// remaining filters as underline selects) beside the results column. Sidebar
+// and grid share every piece of state, so they are one island — and one
+// component only: the store ESLint has no React plugin, so a JSX-only
 // sub-component reference would trip no-unused-vars.
 const PAGE_LIMIT = 100
 
-// Filter definitions. `type` picks how a product maps to an option. Order here
-// is the order controls render in.
+// Filter definitions. `type` picks how a product maps to an option; `control`
+// picks how it renders — `list` is a click-to-toggle facet list with live
+// counts in the sidebar, `select` is an underline dropdown under "More
+// filters". Order here is the order controls render in.
 const FILTERS = [
-  { key: 'brand', label: 'House', type: 'brand' },
-  { key: 'product_type', label: 'Type', type: 'enum' },
-  { key: 'application', label: 'Application', type: 'text' },
-  { key: 'composition', label: 'Composition', type: 'text' },
-  { key: 'width', label: 'Width', type: 'text' },
-  { key: 'price_band', label: 'Price band', type: 'text' },
-  { key: 'lead_time', label: 'Lead time', type: 'text' },
+  { key: 'brand', label: 'House', type: 'brand', control: 'list' },
+  { key: 'product_type', label: 'Type', type: 'enum', control: 'list' },
+  { key: 'application', label: 'Application', type: 'text', control: 'select' },
+  { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
+  { key: 'width', label: 'Width', type: 'text', control: 'select' },
+  { key: 'price_band', label: 'Price band', type: 'text', control: 'select' },
+  { key: 'lead_time', label: 'Lead time', type: 'text', control: 'select' },
 ]
+
+const LIST_FILTERS = FILTERS.filter((filter) => filter.control === 'list')
+const SELECT_FILTERS = FILTERS.filter((filter) => filter.control === 'select')
 
 const SORTS = [
   { value: 'name', label: 'Name (A–Z)' },
@@ -136,6 +145,32 @@ function matchesQuery(product, needle) {
   )
 }
 
+// Options + live counts for one sidebar facet list. The count is measured
+// against the search term and every OTHER filter, never the facet's own
+// selection — so picking "Pierre Frey" does not collapse the House list to a
+// single row, while the counts still track what is actually on screen.
+// An option that can no longer yield a result is dropped unless it is the one
+// currently selected (which must stay clickable to switch it off).
+function facetOptions(products, filter, selection, needle) {
+  const others = FILTERS.filter((other) => other.key !== filter.key)
+  const counts = new Map()
+  for (const product of products) {
+    const matches =
+      others.every(
+        (other) =>
+          !selection[other.key] ||
+          productValue(product, other.key) === selection[other.key]
+      ) && matchesQuery(product, needle)
+    if (!matches) continue
+    const value = productValue(product, filter.key)
+    if (!value) continue
+    counts.set(value, (counts.get(value) || 0) + 1)
+  }
+  return optionsFor(products, filter)
+    .map((option) => ({ ...option, count: counts.get(option.value) || 0 }))
+    .filter((option) => option.count > 0 || option.value === selection[filter.key])
+}
+
 // The price a shopper may actually see, for sorting. A hidden or absent price
 // sorts last in both directions — never order on a figure we are not showing.
 function sortablePrice(product) {
@@ -171,6 +206,9 @@ export default function ProductLibrary() {
   const [selection, setSelection] = useState(initial.selection)
   const [query, setQuery] = useState(initial.query)
   const [sort, setSort] = useState(initial.sort)
+  // Narrow viewports collapse the sidebar behind a toggle; above 1024px the CSS
+  // shows it regardless, so this state is inert there.
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   useEffect(() => {
     writeUrlState(selection, query, sort)
@@ -194,12 +232,25 @@ export default function ProductLibrary() {
     }
   }, [])
 
-  const optionSets = useMemo(
-    () => FILTERS.map((filter) => ({ filter, options: optionsFor(products, filter) })),
-    [products]
+  const needle = query.trim().toLowerCase()
+
+  // Facet lists recompute with the search term and the other selections; the
+  // dropdown options stay drawn from the whole catalogue so a shopper can
+  // always widen a choice from any state. A group with nothing left to offer is
+  // dropped entirely rather than rendering a heading over an empty rule.
+  const facetLists = useMemo(
+    () =>
+      LIST_FILTERS.map((filter) => ({
+        filter,
+        options: facetOptions(products, filter, selection, needle),
+      })).filter(({ options }) => options.length > 0),
+    [products, selection, needle]
   )
 
-  const needle = query.trim().toLowerCase()
+  const selectSets = useMemo(
+    () => SELECT_FILTERS.map((filter) => ({ filter, options: optionsFor(products, filter) })),
+    [products]
+  )
 
   const visible = useMemo(() => {
     const matched = products.filter(
@@ -209,27 +260,16 @@ export default function ProductLibrary() {
     return [...matched].sort((a, b) => compareProducts(a, b, sort))
   }, [products, selection, needle, sort])
 
-  // Every filter currently narrowing the grid, as removable chips. Labels come
-  // from the same option lists the selects use, so a chip always reads the way
-  // the shopper chose it.
-  const activeFacets = useMemo(
-    () =>
-      optionSets
-        .filter(({ filter }) => selection[filter.key])
-        .map(({ filter, options }) => ({
-          key: filter.key,
-          label: filter.label,
-          value:
-            options.find((option) => option.value === selection[filter.key])?.label ??
-            selection[filter.key],
-        })),
-    [optionSets, selection]
-  )
-
-  const hasActiveFilters = activeFacets.length > 0 || needle !== ''
+  const activeCount =
+    FILTERS.filter((filter) => selection[filter.key]).length + (needle ? 1 : 0)
+  const hasActiveFilters = activeCount > 0
 
   const onFilterChange = (key, value) =>
     setSelection((prev) => ({ ...prev, [key]: value }))
+
+  // Facet rows are toggles: clicking the active one clears it.
+  const onFacetToggle = (key, value) =>
+    setSelection((prev) => ({ ...prev, [key]: prev[key] === value ? '' : value }))
 
   const clearFilters = () => {
     setSelection(EMPTY_SELECTION)
@@ -246,23 +286,79 @@ export default function ProductLibrary() {
 
   return (
     <div className="product-library">
-      <form
-        className="library-toolbar"
-        aria-label="Search and filter products"
-        onSubmit={(event) => event.preventDefault()}
+      <button
+        type="button"
+        className="library-filters-toggle"
+        aria-expanded={filtersOpen}
+        aria-controls="library-refine"
+        onClick={() => setFiltersOpen((open) => !open)}
+      >
+        {filtersOpen ? 'Hide refine' : 'Refine'}
+        {hasActiveFilters && <span className="library-filters-badge">{activeCount}</span>}
+      </button>
+
+      <aside
+        id="library-refine"
+        className={filtersOpen ? 'library-aside is-open' : 'library-aside'}
+        aria-label="Refine the library"
       >
         <label className="library-search">
-          <span className="sr-only">Search the library</span>
-          <input
-            type="search"
-            value={query}
-            placeholder="Search by name, house, composition or SKU"
-            onChange={(event) => setQuery(event.target.value)}
-          />
+          <span className="library-eyebrow">Search</span>
+          <span className="library-search-field">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <circle cx="6" cy="6" r="4.6" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M9.6 9.6 13 13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              placeholder="Name, house, composition, SKU…"
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </span>
         </label>
 
-        <div className="filters">
-          {optionSets.map(({ filter, options }) => (
+        <div className="library-refine-row">
+          <p className="library-eyebrow is-muted">Refine</p>
+          {hasActiveFilters && (
+            <button type="button" className="library-clear" onClick={clearFilters}>
+              Clear all
+            </button>
+          )}
+        </div>
+
+        {facetLists.map(({ filter, options }) => (
+          <div className="library-facet" key={filter.key}>
+            <p className="library-eyebrow" id={`facet-${filter.key}`}>
+              {filter.label}
+            </p>
+            <ul className="library-facet-list" aria-labelledby={`facet-${filter.key}`}>
+              {options.map((option) => {
+                const active = selection[filter.key] === option.value
+                return (
+                  <li key={option.value}>
+                    <button
+                      type="button"
+                      className={active ? 'library-facet-row is-active' : 'library-facet-row'}
+                      aria-pressed={active}
+                      onClick={() => onFacetToggle(filter.key, option.value)}
+                    >
+                      <span className="library-facet-name">
+                        <span className="library-facet-dot" aria-hidden="true" />
+                        <span className="library-facet-text">{option.label}</span>
+                      </span>
+                      <span className="library-facet-count">{option.count}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
+
+        <div className="library-facet library-more">
+          <p className="library-eyebrow">More filters</p>
+          {selectSets.map(({ filter, options }) => (
             <label className="filter" key={filter.key}>
               <span>{filter.label}</span>
               <select
@@ -278,9 +374,16 @@ export default function ProductLibrary() {
               </select>
             </label>
           ))}
+        </div>
+      </aside>
 
-          <label className="filter library-sort">
-            <span>Sort</span>
+      <div className="library-main">
+        <div className="library-main-head">
+          <p className="library-count" aria-live="polite">
+            {visible.length} {visible.length === 1 ? 'design' : 'designs'}
+          </p>
+          <label className="library-sort">
+            <span className="library-eyebrow">Sort</span>
             <select value={sort} onChange={(event) => setSort(event.target.value)}>
               {SORTS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -290,124 +393,89 @@ export default function ProductLibrary() {
             </select>
           </label>
         </div>
-      </form>
 
-      {hasActiveFilters && (
-        <div className="active-facets">
-          {needle && (
-            <span className="facet-chip">
-              Search: {query.trim()}
-              <button
-                type="button"
-                className="facet-chip-remove"
-                onClick={() => setQuery('')}
-                aria-label="Clear search"
-              >
-                ×
-              </button>
-            </span>
-          )}
-          {activeFacets.map((facet) => (
-            <span className="facet-chip" key={facet.key}>
-              {facet.label}: {facet.value}
-              <button
-                type="button"
-                className="facet-chip-remove"
-                onClick={() => onFilterChange(facet.key, '')}
-                aria-label={`Clear ${facet.label} filter`}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          <button type="button" className="filter-clear" onClick={clearFilters}>
-            Clear all
-          </button>
-        </div>
-      )}
-
-      <p className="library-results products-count" aria-live="polite">
-        {visible.length} {visible.length === 1 ? 'design' : 'designs'}
-      </p>
-
-      {visible.length === 0 ? (
-        <p className="products-empty">
-          Nothing matches that search. Try a broader term or clear a filter.
-        </p>
-      ) : (
-        <ul className="product-grid">
-          {visible.map((product) => {
-            const price = priceInfo(product)
-            const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
-            const shown = product.colourways || []
-            const extra = (product.colourway_count || 0) - shown.length
-            return (
-              <li key={product.slug} className="product-card">
-                <a href={`/products/${product.slug}`}>
-                  <span className="product-media">
-                    {product.image_url ? (
-                      <img
-                        className="product-image"
-                        src={product.image_url}
-                        alt={product.name}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span
-                        className="product-image-placeholder"
-                        style={weave ? { background: weave } : undefined}
-                        aria-hidden="true"
-                      />
-                    )}
-                    <span className={product.in_stock ? 'product-stock in' : 'product-stock out'}>
-                      {product.in_stock ? 'In stock' : 'Made to order'}
-                    </span>
-                  </span>
-
-                  <span className="product-card-body">
-                    <span className="product-brand">{product.brand?.name}</span>
-                    <h2>{product.name}</h2>
-
-                    {shown.length > 0 && (
-                      <span className="product-swatches" aria-hidden="true">
-                        {shown.map((colourway) => (
-                          <span
-                            key={colourway.sku}
-                            className="product-swatch-dot"
-                            style={{
-                              background:
-                                weaveBackground(colourway.hex_tones) || 'var(--surface-deep)',
-                            }}
-                            title={colourway.name}
-                          />
-                        ))}
-                        {extra > 0 && <span className="product-swatch-dot is-more">+{extra}</span>}
+        {visible.length === 0 ? (
+          <p className="library-empty">
+            Nothing matches those filters.{' '}
+            <button type="button" className="library-clear" onClick={clearFilters}>
+              Clear all
+            </button>
+          </p>
+        ) : (
+          <ul className="product-grid">
+            {visible.map((product) => {
+              const price = priceInfo(product)
+              const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
+              const shown = product.colourways || []
+              const extra = (product.colourway_count || 0) - shown.length
+              return (
+                <li key={product.slug} className="product-card">
+                  <a href={`/products/${product.slug}`}>
+                    <span className="product-media">
+                      {product.image_url ? (
+                        <img
+                          className="product-image"
+                          src={product.image_url}
+                          alt={product.name}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span
+                          className="product-image-placeholder"
+                          style={weave ? { background: weave } : undefined}
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className={product.in_stock ? 'product-stock in' : 'product-stock out'}>
+                        {product.in_stock ? 'In stock' : 'Made to order'}
                       </span>
-                    )}
-
-                    <span className="sr-only">
-                      {product.colourway_count} colourway
-                      {product.colourway_count === 1 ? '' : 's'}
                     </span>
 
-                    <span className="product-specs">
-                      {[productTypeLabel(product.product_type), product.composition, product.width]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </span>
+                    <span className="product-card-body">
+                      <span className="product-brand">{product.brand?.name}</span>
+                      <h2>{product.name}</h2>
 
-                    <span className={price.muted ? 'product-price muted' : 'product-price'}>
-                      {price.label && <span className="detail-price-label">{price.label} </span>}
-                      {price.text}
-                      {price.indicative && <span className="indicative-note">Indicative</span>}
+                      {shown.length > 0 && (
+                        <span className="product-swatches" aria-hidden="true">
+                          {shown.map((colourway) => (
+                            <span
+                              key={colourway.sku}
+                              className="product-swatch-dot"
+                              style={{
+                                background:
+                                  weaveBackground(colourway.hex_tones) || 'var(--surface-deep)',
+                              }}
+                              title={colourway.name}
+                            />
+                          ))}
+                          {extra > 0 && <span className="product-swatch-dot is-more">+{extra}</span>}
+                        </span>
+                      )}
+
+                      <span className="sr-only">
+                        {product.colourway_count} colourway
+                        {product.colourway_count === 1 ? '' : 's'}
+                      </span>
+
+                      <span className="product-specs">
+                        {[productTypeLabel(product.product_type), product.composition, product.width]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+
+                      <span className={price.muted ? 'product-price muted' : 'product-price'}>
+                        {price.label && <span className="detail-price-label">{price.label} </span>}
+                        {price.text}
+                        {price.indicative && <span className="indicative-note">Indicative</span>}
+                      </span>
                     </span>
-                  </span>
-                </a>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }

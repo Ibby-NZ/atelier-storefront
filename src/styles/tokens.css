@@ -14,6 +14,7 @@
   --ink: #211c17; /* warm near-black — primary text & headlines */
   --ink-soft: #4a4138; /* bark — secondary text */
   --muted: #877c6b; /* stone — eyebrows / labels / meta / captions */
+  --muted-soft: #a99d8a; /* pale stone — facet counts, input placeholders */
   --line: #d8cdb8; /* greige — ALL 1px hairline borders & dividers */
   --accent: #7a2e2e; /* claret — SPARINGLY */
   --accent-soft: #9c4a43; /* claret hover */
@@ -293,6 +294,12 @@ main {
   display: block;
   min-height: 58vh;
   padding-block: var(--s8) var(--s10);
+}
+
+/* `<Layout bleed>` — the page owns the full width of <main> and supplies its
+   own containers and block padding (edge-to-edge bands). */
+.main-bleed {
+  padding-block: 0;
 }
 
 @media (max-width: 1024px) {

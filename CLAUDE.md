@@ -38,6 +38,20 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   optional `image` (og:image) and `type` (og:type). It emits canonical,
   Open Graph and Twitter tags built from `Astro.site` (see `SITE_URL` under Env)
   and keeps the `ALLOW_INDEXING` noindex behaviour.
+  - **`bleed`** (default false) drops the `.container` wrapper AND `<main>`'s
+    block padding (`.main-bleed` in tokens.css), handing the page the full width
+    of `<main>` so it can paint edge-to-edge bands. A bleed page must supply its
+    own `.container` inside each band — that is what keeps its content column
+    aligned with the header wordmark and the footer. `/products` is the first
+    user (the Maison linen page-header band); every other page is unchanged.
+  - **Agentation** (dev only): the annotation toolbar renders as
+    `{import.meta.env.DEV && <Agentation client:only="react" />}` just before
+    `</body>`. `import.meta.env.DEV` is false during `astro build`, so no
+    toolbar chunk is emitted into `dist/client` and no production page requests
+    it — verified by `ls dist/client/_astro | grep -i agent` coming back empty.
+    `client:only` because the toolbar is a React portal into `document.body`
+    with nothing to server-render. Installed as a devDependency; the deploy runs
+    a plain `npm ci` (dev deps included), so the import always resolves.
 - **Styling** is the hand-built Atelier design system, matching the platform
   design handoff (`~/Documents/atelier-platform-demo/design_handoff_atelier_platform/`
   — palette, type, component rules) and the CRM's interaction conventions. Plain
@@ -48,7 +62,8 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     `commerce` → `admin` → `editorial`. Add a new area as its own file and
     import it here rather than growing one giant sheet.
   - `tokens.css` holds the palette (`--paper --surface --surface-deep --ink
-    --ink-soft --muted --line --accent --accent-soft --brass --sage --clay`),
+    --ink-soft --muted --muted-soft --line --accent --accent-soft --brass
+    --sage --clay`),
     the type scale (`--t-*` UI, `--d-*` display), the spacing scale
     (`--s1`…`--s10`), container widths, radii, shadows and durations. **Use the
     tokens; do not hardcode a hex.**
@@ -129,6 +144,42 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     history entry.
   - Price rendering is the shared `priceInfo()` in **`src/lib/catalogue.js`**
     (see below); the island never re-implements FR-3.
+  - **Maison layout** (design: "Maison Library" in the Maison redesign handoff).
+    The page is `<Layout bleed>`: a full-bleed linen `.library-head` band, then
+    `.container.library-shell` around the island. The island itself is the
+    two-column grid — `16rem` sticky refine sidebar + results column — because
+    the facets and the grid share every piece of state.
+    - `FILTERS` gained a **`control`** field: `list` renders as a click-to-toggle
+      facet row with a live count (House, Type), `select` as an underline
+      dropdown under "More filters" (Application, Composition, Width, Price
+      band, Lead time). The URL keys and the filter semantics are unchanged, so
+      every existing deep link still resolves.
+    - `facetOptions()` counts each list option against the search term and every
+      **other** filter, never the facet's own selection — so picking a house does
+      not collapse the House list to one row, while the counts still track what
+      is on screen. An option that can no longer yield a result is dropped unless
+      it is the selected one (which must stay clickable to switch off).
+    - Facet rows are toggles (`onFacetToggle`): clicking the active row clears
+      it. The old removable `.facet-chip` row is gone — the sidebar shows active
+      state directly (claret text + claret dot), so chips were duplicate UI.
+    - Below 1024px the sidebar collapses behind a `.library-filters-toggle`
+      button (`filtersOpen` state, `aria-expanded`/`aria-controls`); above it the
+      CSS shows the sidebar regardless, so the state is inert there.
+  - **`.product-grid` / `.product-card` are shared with the homepage**
+    (`src/pages/index.astro`). The base card block in `library.css` is therefore
+    left alone and every Maison change (4/5 crop, squared corners, brass brand
+    eyebrow, 20px swatches, hover = border + shadow with **no** lift or zoom) is
+    scoped under `.product-library`. Restyling the home cards is a separate
+    screen in the handoff — do not "simplify" by folding the overrides into the
+    base rules.
+  - **Deviations from the mock, deliberate:** the content column is the site's
+    existing `--container` (84rem) rather than the handoff's 96rem, so it lines
+    up with the current header and footer (the Maison header/footer are separate
+    screens, not yet built); and Width stays in "More filters" even though the
+    mock lists only four selects — dropping it would silently remove a working
+    filter. Sidebar eyebrows and the card brand eyebrow are **brass**, per the
+    Maison token list — note this knowingly breaks the older "brass is never a
+    text colour" rule and is below WCAG AA at 11px.
 
 - **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` is
   `prerender = false`. It had `getStaticPaths` enumerating website-visible

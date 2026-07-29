@@ -451,6 +451,23 @@ a.card:hover {
   box-shadow: 0 0 0 2px var(--accent-wash);
 }
 
+/* Label + control pair for filter / sort UIs (the library sidebar's "More
+   filters" selects, the checkout shipping-zone picker). Kept here rather than
+   in library.css because `.filter` is not library-only. Declared AFTER the
+   control block above so the shorter 38px height wins. */
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 9rem;
+}
+
+.filter select {
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: var(--t-sm);
+}
+
 .field input[type="number"],
 .admin-qty-input {
   font-family: var(--font-mono);

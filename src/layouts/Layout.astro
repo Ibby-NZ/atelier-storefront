@@ -1,6 +1,7 @@
 ---
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
+import { Agentation } from 'agentation'
 import '../styles/global.css'
 
 const {
@@ -8,6 +9,11 @@ const {
   description = 'Fine textiles for makers and trade — fabrics, finished goods, and the houses behind them.',
   image,
   type = 'website',
+  // `bleed` hands the page the full width of <main>: no .container wrapper and
+  // no block padding, so a page can paint edge-to-edge bands (the Maison
+  // direction's linen page headers) and place its own containers inside them.
+  // Default false — every existing page keeps the centred container.
+  bleed = false,
 } = Astro.props
 
 // Staging is noindex by default; baked in at build time for prerendered pages.
@@ -23,8 +29,10 @@ const canonical = new URL(Astro.url.pathname, base).href
 const socialImage = image ? new URL(image, base).href : null
 
 const SITE_NAME = 'Atelier Textiles'
+// Fraunces starts at 300: the Maison direction sets large display italics at
+// that weight (see library.css `.library-head h1 em`).
 const FONTS =
-  'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap'
+  'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap'
 ---
 
 <!doctype html>
@@ -59,11 +67,22 @@ const FONTS =
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header />
-    <main id="main">
-      <div class="container">
-        <slot />
-      </div>
+    <main id="main" class={bleed ? 'main-bleed' : undefined}>
+      {
+        bleed ? (
+          <slot />
+        ) : (
+          <div class="container">
+            <slot />
+          </div>
+        )
+      }
     </main>
     <Footer />
+    {/* Agentation annotation toolbar — dev only. `import.meta.env.DEV` is false
+        in `astro build`, so the island is never rendered and no toolbar script
+        is requested by a production page. client:only because the toolbar is a
+        React portal into document.body with no server-renderable output. */}
+    {import.meta.env.DEV && <Agentation client:only="react" />}
   </body>
 </html>
