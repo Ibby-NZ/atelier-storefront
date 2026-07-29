@@ -9,10 +9,9 @@
  *   primitives.css  eyebrows, buttons, pills, tags, forms, cards, states
  *   chrome.css      skip link, editorial TopBar, gallery footer
  *   home.css        homepage hero, section rhythm, house strip
- *   library.css     browse toolbar + facets, product gallery grid
+ *   library.css     library page band, refine sidebar, product gallery grid
  *   product.css     product detail: gallery, price block, specs, colourways
  *   commerce.css    cart, checkout, orders, account, auth forms
- *   admin.css       back-office order queue + catalogue admin
  *   editorial.css   journal cards, long-form prose, brand pages
  *
  * Design language is the platform handoff (design_handoff_atelier_platform):
@@ -29,5 +28,4 @@
 @import "./library.css";
 @import "./product.css";
 @import "./commerce.css";
-@import "./admin.css";
 @import "./editorial.css";
