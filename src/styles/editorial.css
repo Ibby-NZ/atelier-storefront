@@ -420,3 +420,107 @@ a.post-card:hover h2 {
     font-size: 1rem;
   }
 }
+
+/* --- Contact page --------------------------------------------------------- */
+/* Wider than the prose measure so the details column and the enquiry form sit
+   side by side; the intro prose keeps the article measure. */
+.contact-page {
+  max-width: 58rem;
+}
+
+.contact-page > .prose {
+  max-width: var(--container-prose);
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--s8);
+  margin-top: var(--s7);
+  align-items: start;
+}
+
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+.contact-block > p {
+  margin: var(--s2) 0 0;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.contact-block a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.contact-block a:hover {
+  color: var(--accent-soft);
+}
+
+.contact-muted {
+  color: var(--muted);
+}
+
+.showroom-list,
+.social-list {
+  list-style: none;
+  margin: var(--s3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.showroom-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.showroom-list strong {
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.social-list {
+  flex-direction: row;
+  gap: var(--s5);
+}
+
+.social-list a {
+  font-size: var(--t-sm);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.social-list a:hover {
+  color: var(--accent-soft);
+}
+
+.contact-form-panel {
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: var(--s6);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  margin-top: var(--s4);
+}
+
+@media (max-width: 1024px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+    gap: var(--s6);
+  }
+}

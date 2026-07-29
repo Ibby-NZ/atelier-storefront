@@ -2,25 +2,83 @@
 export const prerender = true // storefront pages stay static; EmDash routes render on-demand
 import Layout from '../layouts/Layout.astro'
 import { getEntry, render } from 'astro:content'
+import ContactForm from '../components/ContactForm.jsx'
+import { CONTACT, SHOWROOMS, SHOWROOM_HOURS, SOCIAL } from '../lib/site.js'
 
-// Contact page, rendered from the `page` content collection (id "contact").
-// Static — a CMS can later edit the markdown body without a code change.
+// Contact page. The welcoming intro stays in the `page` content collection (id
+// "contact") so it can be edited without a code change; the contact details,
+// showrooms and the enquiry form come from src/lib/site.js + the ContactForm
+// island (posts to POST /contact, which stores + emails the enquiry).
 const entry = await getEntry('page', 'contact')
 const Content = entry ? (await render(entry)).Content : null
 const title = entry?.data.title ?? 'Contact'
 ---
 
-<Layout title={`${title} — Atelier Textiles`}>
-  <article class="content-page">
+<Layout
+  title={`${title} — Atelier Textiles`}
+  description="Contact Atelier Textiles for samples, trade enquiries, stock checks and cut requirements. Trade showrooms in Auckland, Wellington and Christchurch."
+>
+  <article class="content-page contact-page">
     <h1>{title}</h1>
     {
-      Content ? (
+      Content && (
         <div class="prose">
           <Content />
         </div>
-      ) : (
-        <p class="empty-state">This page has no content yet.</p>
       )
     }
+
+    <div class="contact-layout">
+      <section class="contact-details" aria-label="Contact details">
+        <div class="contact-block">
+          <h2 class="eyebrow">Get in touch</h2>
+          <p>
+            <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+          </p>
+          <p>
+            <a href={`tel:${CONTACT.phoneHref}`}>{CONTACT.phone}</a>
+            <span class="contact-muted"> · {CONTACT.freephone}</span>
+          </p>
+        </div>
+
+        <div class="contact-block">
+          <h2 class="eyebrow">Showrooms</h2>
+          <p class="contact-muted">Trade showrooms, {SHOWROOM_HOURS} (by appointment).</p>
+          <ul class="showroom-list">
+            {
+              SHOWROOMS.map((s) => (
+                <li>
+                  <strong>{s.city}</strong>
+                  <span>{s.name}</span>
+                  {s.lines.map((line) => (
+                    <span>{line}</span>
+                  ))}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="contact-block">
+          <h2 class="eyebrow">Follow</h2>
+          <ul class="social-list">
+            {
+              SOCIAL.map((link) => (
+                <li>
+                  <a href={link.href} target="_blank" rel="noopener noreferrer">
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </section>
+
+      <section class="contact-form-panel" aria-label="Send an enquiry">
+        <h2 class="eyebrow">Send an enquiry</h2>
+        <ContactForm client:load />
+      </section>
+    </div>
   </article>
 </Layout>

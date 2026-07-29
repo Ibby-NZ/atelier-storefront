@@ -316,7 +316,7 @@
 
 .footer-groups {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--s6);
 }
 
@@ -378,5 +378,70 @@
   .footer-groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--s5);
+  }
+}
+
+/* --- Footer contact + social + showrooms ---------------------------------- */
+.footer-contact {
+  margin: var(--s4) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footer-contact a {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.footer-contact a:hover {
+  color: var(--accent);
+}
+
+.footer-social {
+  margin: var(--s4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: var(--s4);
+}
+
+.footer-social a {
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.footer-social a:hover {
+  color: var(--accent);
+}
+
+.footer-showrooms ul {
+  gap: var(--s4);
+}
+
+.footer-showrooms li {
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.footer-showrooms strong {
+  display: block;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+/* The footer groups nav now holds four columns (three link groups + showrooms);
+   let it wrap rather than crush them on mid widths. */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .footer-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s6);
   }
 }
