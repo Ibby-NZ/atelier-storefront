@@ -19,6 +19,7 @@
   --accent: #7a2e2e; /* claret — SPARINGLY */
   --accent-soft: #9c4a43; /* claret hover */
   --brass: #a98b5d; /* metallic detail — fine strokes, never fills */
+  --brass-light: #cbb994; /* brass legible on espresso — dark bands only */
   --sage: #6f7a5a; /* positive / in stock */
   --clay: #b06a4f; /* warning / low / out of stock */
 
@@ -27,6 +28,7 @@
   --sage-line: #cbd3bc;
   --clay-line: #e2c9b8;
   --scrim: rgba(33, 28, 23, 0.5);
+  --line-dark: rgba(216, 205, 184, 0.22); /* hairline on an espresso band */
 
   /* --- Type families (system fallbacks keep the site legible if Google
          Fonts is blocked — staging sits behind Cloudflare + Basic Auth). --- */

@@ -297,6 +297,38 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   while `/auth/me` is in flight (guest is the common case, no layout jump). Log
   out calls `logout()` then reloads to `/` so every island re-reads state.
 
+- **Site chrome (Maison)** — `Header.astro` / `Footer.astro` / `chrome.css`,
+  built from `MaisonHeader.dc.html` and `MaisonFooter.dc.html`. The header is
+  an espresso announcement bar over a paper row: inline ATELIER TEXTILES
+  wordmark left, uppercase nav centre, Search + AccountNav + CartIndicator
+  right. The footer is an espresso band using the dark-ground tokens
+  (`--brass-light` for links, `--line-dark` for its one hairline).
+  - **The mega-menu is deliberately not a React island.** `src/lib/mega-menu.js`
+    is a DOM controller imported by a `<script>` in `Header.astro`. Its columns
+    are real links that must be in the served HTML for crawlers and no-JS
+    visitors, and an island would have moved them into a client bundle. The
+    logic lives in `lib/` rather than inline so ESLint still covers it (`.astro`
+    files are not linted).
+  - **The trigger is an `<a href="/products">`, not a `<button>`** — with JS off
+    or on a touch device it still navigates, so nothing calls `preventDefault`;
+    opening the panel is purely additive. Below 1025px the panel is
+    `display: none` and `initMegaMenu` returns before binding, so the trigger is
+    an ordinary link and `aria-expanded` never lies.
+  - The panel is `position: absolute` against `.site-header`. **Nothing between
+    the header and the panel may be positioned** or the full-width overlay
+    collapses to the nav item.
+  - Nav labels are the design's, not the routes': The Houses → `/brands`,
+    Journal → `/resources`, The Maison → `/story`. There is no Home item — the
+    wordmark is the way home. Mega-menu destinations use only filter keys
+    `ProductLibrary` actually reads (`product_type`, `application`), so no entry
+    can land on an empty grid.
+  - The announcement copy and the mega-menu feature card ("Carrousel — Pierre
+    Frey") are **hardcoded seasonal merchandising** with no CMS field behind
+    them; they are the two places in the chrome needing a hand edit each season.
+  - Footer departs from the mock with four link columns rather than three:
+    Showrooms, phone, email and social are real `src/lib/site.js` details that
+    postdate the mock, and dropping them to match it would lose content.
+
 - **`/admin/orders` (US-023)** — back-office order queue, a single `client:load`
   island `AdminOrders.jsx`. Because this is a static build with no server-side
   guard, the island IS the access gate: `fetchCurrentUser()` on mount → no user

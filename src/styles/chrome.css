@@ -1,11 +1,12 @@
 /*
- * Site chrome: skip link, editorial TopBar and the gallery footer.
+ * Site chrome: skip link, Maison header (announcement bar, wordmark, nav,
+ * mega-menu, utilities) and the espresso footer.
  *
- * The header reproduces the brand-world TopBar from the design handoff —
- * centred ATELIER / TEXTILES wordmark, centred uppercase nav, active link in
- * claret with a 2px underline that meets the header's own hairline, utilities
- * (account + cart) pinned right. Below 640px it reflows to wordmark + utilities
- * on one line with the nav on a scrollable row beneath. Pure CSS, no JS.
+ * Design source: MaisonHeader.dc.html and MaisonFooter.dc.html in the Maison
+ * redesign handoff. The header is a horizontal row — inline wordmark left,
+ * uppercase nav centre, utilities right — replacing the earlier centred
+ * wordmark with a stacked nav. Squared corners throughout, brass for fine
+ * detail, claret for the active item only.
  */
 
 /* --- Skip link ------------------------------------------------------------ */
@@ -29,21 +30,62 @@
   color: var(--paper);
 }
 
-/* --- Header --------------------------------------------------------------- */
+/* --- Header shell + announcement bar -------------------------------------- */
+/* The shell is the stacking context: the mega-menu must sit above every page
+   section, including the library's sticky sidebar. */
+.site-header-shell {
+  position: relative;
+  z-index: 50;
+}
+
+.site-announce {
+  margin: 0;
+  padding: 8px var(--gutter);
+  background: var(--ink);
+  color: var(--brass-light);
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.site-announce a {
+  color: var(--paper);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.site-announce a:hover {
+  color: var(--brass-light);
+}
+
+/* --- Header row ----------------------------------------------------------- */
+/* `position: relative` here, and nowhere between here and the panel, is what
+   makes the full-width mega-menu resolve against the header. */
 .site-header {
+  position: relative;
   background: var(--paper);
   border-bottom: var(--hair);
 }
 
 .site-header-inner {
-  position: relative;
-  padding-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s6);
+  min-height: 76px;
+  padding-block: 14px;
 }
 
-/* Wordmark */
+/* Wordmark — inline on one baseline, not the old stacked block. */
 .brand {
-  display: block;
-  text-align: center;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  white-space: nowrap;
   text-decoration: none;
   color: var(--ink);
 }
@@ -53,38 +95,32 @@
 }
 
 .brand-mark {
-  display: block;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
-  letter-spacing: 0.32em;
-  padding-left: 0.32em;
+  letter-spacing: 0.26em;
   color: var(--ink);
 }
 
 .brand-sub {
-  display: block;
-  margin-top: 4px;
   font-family: var(--font-ui);
   font-weight: 600;
-  font-size: 9.5px;
+  font-size: 9px;
   line-height: 1;
-  letter-spacing: 0.5em;
-  padding-left: 0.5em;
+  letter-spacing: 0.44em;
   color: var(--brass);
 }
 
-/* Nav */
+/* --- Nav ------------------------------------------------------------------ */
 .site-nav {
-  margin-top: 18px;
+  min-width: 0;
 }
 
 .site-nav ul {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 0 34px;
+  gap: var(--s1) 22px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -92,13 +128,14 @@
 
 .site-nav a {
   display: block;
-  padding-bottom: 12px;
+  padding: 10px 0;
   border-bottom: 2px solid transparent;
   font-family: var(--font-ui);
-  font-size: var(--t-sm);
-  font-weight: 500;
-  letter-spacing: 0.14em;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: var(--ink-soft);
   text-decoration: none;
   transition: color var(--quick), border-color var(--quick);
@@ -106,58 +143,64 @@
 
 .site-nav a:hover {
   color: var(--ink);
-  border-bottom-color: var(--line);
 }
 
 .site-nav a[aria-current="page"] {
   color: var(--accent);
-  font-weight: 600;
   border-bottom-color: var(--accent);
 }
 
-/* Utilities (account + cart islands) */
-.site-utils {
-  position: absolute;
-  inset-inline-end: var(--gutter);
-  top: 20px;
+.site-nav-mega {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 6px;
 }
 
+.site-nav-caret {
+  font-size: 0.55rem;
+  color: var(--brass);
+}
+
+/* The trigger reads as active while its panel is open, not only on /products. */
+.site-header.is-mega-open .site-nav-mega {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --- Utilities ------------------------------------------------------------ */
+.site-utils {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.site-util,
 .site-utils .account-nav,
 .site-utils .cart-indicator {
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
   font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  letter-spacing: 0.06em;
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--ink-soft);
   text-decoration: none;
+  transition: color var(--quick);
 }
 
-.site-utils a.account-nav,
-.site-utils .account-nav > a,
-.site-utils .cart-indicator {
-  border-bottom: var(--hair);
-  padding-bottom: 2px;
-  color: var(--ink-soft);
-  text-decoration: none;
-  transition: color var(--quick), border-color var(--quick);
-}
-
+.site-util:hover,
 .site-utils a.account-nav:hover,
 .site-utils .account-nav > a:hover,
 .site-utils .cart-indicator:hover {
   color: var(--accent);
-  border-bottom-color: var(--accent);
 }
 
 .site-utils .cart-indicator strong {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: var(--t-xs);
+  font-size: var(--t-eyebrow);
   color: var(--accent);
 }
 
@@ -166,21 +209,20 @@
 }
 
 .account-logout {
-  padding: 0 0 2px;
+  padding: 0;
   border: 0;
-  border-bottom: var(--hair);
   background: none;
   color: var(--muted);
   font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  letter-spacing: 0.06em;
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: color var(--quick), border-color var(--quick);
+  transition: color var(--quick);
 }
 
 .account-logout:hover:not(:disabled) {
   color: var(--accent);
-  border-bottom-color: var(--accent);
 }
 
 .account-logout:disabled {
@@ -201,50 +243,167 @@
   color: var(--ink);
 }
 
+/* --- Mega-menu ------------------------------------------------------------ */
+/* Hidden by default and only ever shown at desktop width; below that the
+   trigger is an ordinary link to the library and mega-menu.js never binds. */
+.site-mega {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 40;
+  background: var(--paper);
+  border-bottom: var(--hair);
+  box-shadow: var(--shadow-panel);
+}
+
+@media (min-width: 1025px) {
+  .site-header.is-mega-open .site-mega {
+    display: block;
+  }
+}
+
+.site-mega-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.4fr;
+  gap: var(--s7);
+  padding-block: var(--s7);
+}
+
+.site-mega-heading {
+  margin: 0 0 var(--s4);
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.site-mega-col ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-mega-col a {
+  font-family: var(--font-display);
+  font-size: var(--d-xs);
+  color: var(--ink);
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.site-mega-col a:hover {
+  color: var(--accent);
+}
+
+/* The "All houses" link is a quiet underlined utility, not a display link. */
+.site-mega-col a.site-mega-all {
+  font-family: var(--font-ui);
+  font-size: var(--t-sm);
+  color: var(--muted);
+  border-bottom: var(--hair);
+  padding-bottom: 2px;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.site-mega-col a.site-mega-all:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.site-mega-feature {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-mega-feature-media {
+  display: block;
+  aspect-ratio: 16 / 10;
+  border: var(--hair);
+  transition: border-color var(--quick);
+}
+
+.site-mega-feature:hover .site-mega-feature-media {
+  border-color: var(--brass);
+}
+
+.site-mega-feature-eyebrow {
+  display: block;
+  margin-top: var(--s3);
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.site-mega-feature-title {
+  display: block;
+  margin-top: var(--s1);
+  font-family: var(--font-display);
+  font-size: var(--d-sm);
+  color: var(--ink);
+  transition: color var(--quick);
+}
+
+.site-mega-feature:hover .site-mega-feature-title {
+  color: var(--accent);
+}
+
+/* --- Header responsive ---------------------------------------------------- */
 @media (max-width: 1024px) {
+  .site-header-inner {
+    gap: var(--s3) var(--s5);
+  }
+
   .site-nav ul {
-    gap: 0 24px;
+    gap: 0 18px;
+  }
+
+  .site-nav-caret {
+    display: none;
   }
 
   .brand-mark {
-    font-size: 22px;
-    letter-spacing: 0.28em;
-    padding-left: 0.28em;
+    font-size: 20px;
+    letter-spacing: 0.24em;
   }
 }
 
 @media (max-width: 640px) {
-  .site-header-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--s3);
-    padding-top: 14px;
+  .site-announce {
+    letter-spacing: 0.12em;
   }
 
-  .brand {
-    text-align: left;
+  .site-header-inner {
+    justify-content: space-between;
+    padding-block: 12px;
   }
 
   .brand-mark {
     font-size: 18px;
     letter-spacing: 0.22em;
-    padding-left: 0.22em;
   }
 
   .brand-sub {
     font-size: 8px;
     letter-spacing: 0.38em;
-    padding-left: 0.38em;
   }
 
   .site-utils {
-    position: static;
     order: 2;
     gap: var(--s3);
   }
 
+  /* Nav drops to its own scrollable row beneath the wordmark and utilities. */
   .site-nav {
     order: 3;
     flex-basis: 100%;
@@ -260,41 +419,46 @@
   }
 
   .site-nav a {
-    white-space: nowrap;
     padding-bottom: 10px;
-    font-size: var(--t-xs);
   }
 }
 
 /* --- Footer --------------------------------------------------------------- */
+/* Espresso band. Every colour in here is a dark-ground token: paper for the
+   wordmark and tagline, light brass for links, stone for headings and fine
+   print, and --line-dark for the one hairline. */
 .site-footer {
   margin-top: var(--s10);
-  border-top: var(--hair);
-  background: var(--surface);
-  color: var(--ink-soft);
+  background: var(--ink);
+  color: var(--brass-light);
 }
 
 .site-footer .container {
-  padding-block: var(--s8) var(--s6);
+  padding-block: var(--s9) var(--s6);
 }
 
 .footer-top {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
   gap: var(--s8);
   align-items: start;
 }
 
 .footer-brand .brand-mark {
-  font-size: 21px;
+  display: block;
+  font-size: 22px;
   letter-spacing: 0.26em;
   padding-left: 0.26em;
+  color: var(--paper);
 }
 
 .footer-brand .brand-sub {
+  display: block;
+  margin-top: 5px;
   font-size: 8px;
   letter-spacing: 0.44em;
   padding-left: 0.44em;
+  color: var(--brass);
 }
 
 .footer-line {
@@ -303,8 +467,8 @@
   font-style: italic;
   font-size: var(--d-xs);
   line-height: 1.4;
-  color: var(--ink);
-  max-width: 20ch;
+  color: var(--paper);
+  max-width: 22ch;
 }
 
 .footer-place {
@@ -320,6 +484,10 @@
   gap: var(--s6);
 }
 
+.footer-heading {
+  color: var(--muted);
+}
+
 .footer-group ul {
   margin: var(--s4) 0 0;
   padding: 0;
@@ -331,13 +499,13 @@
 
 .footer-group a {
   font-size: var(--t-sm);
-  color: var(--ink-soft);
+  color: var(--brass-light);
   text-decoration: none;
   transition: color var(--quick);
 }
 
 .footer-group a:hover {
-  color: var(--accent);
+  color: var(--paper);
 }
 
 .footer-base {
@@ -348,7 +516,7 @@
   gap: var(--s4);
   margin-top: var(--s8);
   padding-top: var(--s5);
-  border-top: var(--hair);
+  border-top: 1px solid var(--line-dark);
 }
 
 .footer-copy,
@@ -363,24 +531,6 @@
   font-style: italic;
 }
 
-@media (max-width: 1024px) {
-  .footer-top {
-    grid-template-columns: 1fr;
-    gap: var(--s7);
-  }
-}
-
-@media (max-width: 640px) {
-  .site-footer {
-    margin-top: var(--s8);
-  }
-
-  .footer-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s5);
-  }
-}
-
 /* --- Footer contact + social + showrooms ---------------------------------- */
 .footer-contact {
   margin: var(--s4) 0 0;
@@ -391,13 +541,13 @@
 
 .footer-contact a {
   font-size: var(--t-sm);
-  color: var(--ink-soft);
+  color: var(--brass-light);
   text-decoration: none;
   transition: color var(--quick);
 }
 
 .footer-contact a:hover {
-  color: var(--accent);
+  color: var(--paper);
 }
 
 .footer-social {
@@ -418,7 +568,7 @@
 }
 
 .footer-social a:hover {
-  color: var(--accent);
+  color: var(--brass-light);
 }
 
 .footer-showrooms ul {
@@ -428,20 +578,34 @@
 .footer-showrooms li {
   font-size: var(--t-xs);
   line-height: 1.5;
-  color: var(--ink-soft);
+  color: var(--brass-light);
 }
 
 .footer-showrooms strong {
   display: block;
-  color: var(--ink);
+  color: var(--paper);
   letter-spacing: 0.02em;
 }
 
-/* The footer groups nav now holds four columns (three link groups + showrooms);
-   let it wrap rather than crush them on mid widths. */
-@media (min-width: 641px) and (max-width: 1024px) {
+/* --- Footer responsive ---------------------------------------------------- */
+@media (max-width: 1024px) {
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: var(--s7);
+  }
+
   .footer-groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--s6);
+  }
+}
+
+@media (max-width: 640px) {
+  .site-footer {
+    margin-top: var(--s8);
+  }
+
+  .footer-groups {
+    gap: var(--s5);
   }
 }

@@ -2,56 +2,146 @@
 import CartIndicator from './CartIndicator.jsx'
 import AccountNav from './AccountNav.jsx'
 
-// Editorial brand-world TopBar (design handoff): centred ATELIER / TEXTILES
-// wordmark, centred uppercase nav whose active item is claret with a 2px
-// underline meeting the header hairline, and utilities pinned right. Cart and
-// account are React islands (live state); the rest are plain links.
-// aria-current marks the active page for a11y and styling.
+// Maison header (design: MaisonHeader.dc.html).
 //
-// Responsive without JS: below 640px the CSS reflows this same markup to
-// wordmark + utilities on one line with the nav on a scrollable row beneath
-// (see src/styles/chrome.css).
+// Espresso announcement bar, then a paper header row: inline ATELIER TEXTILES
+// wordmark left, uppercase nav centre, utilities right. "Products" opens a
+// full-width mega-menu on hover or focus (src/lib/mega-menu.js).
+//
+// The wordmark is the only route home — the design drops the Home nav item —
+// and the nav labels are the design's own ("The Houses" for /brands, "The
+// Maison" for /story). Cart and account stay React islands because they carry
+// live state; everything else is static markup so the mega-menu's links are in
+// the served HTML.
 const links = [
-  { href: '/', label: 'Home' },
-  { href: '/products', label: 'Products' },
-  { href: '/brands', label: 'Brands' },
-  { href: '/resources', label: 'Resources' },
-  { href: '/story', label: 'Story' },
+  { href: '/brands', label: 'The Houses' },
+  { href: '/resources', label: 'Journal' },
+  { href: '/story', label: 'The Maison' },
   { href: '/contact', label: 'Contact' },
 ]
 
+// Mega-menu columns. Every destination is a real route with a real filter key
+// that ProductLibrary reads from the URL — no invented facets, so none of these
+// can land on an empty grid.
+const byType = [
+  { href: '/products?product_type=fabric', label: 'Fabrics' },
+  { href: '/products?product_type=finished_good', label: 'Finished goods' },
+]
+
+const byApplication = [
+  { href: '/products?application=Upholstery', label: 'Upholstery' },
+  { href: '/products?application=Drapery', label: 'Drapery' },
+  { href: '/products?application=Wallcovering', label: 'Wallcovering' },
+  { href: '/products?application=Outdoor', label: 'Outdoor' },
+]
+
+// The four houses named in the design. Slugs match the seeded catalogue.
+const houses = [
+  { href: '/brands/pierre-frey', label: 'Pierre Frey' },
+  { href: '/brands/casamance', label: 'Casamance' },
+  { href: '/brands/dedar', label: 'Dedar' },
+  { href: '/brands/rubelli', label: 'Rubelli' },
+]
+
+// Seasonal merchandising, hardcoded exactly as the design specifies. Both this
+// and the announcement bar copy are the two places in the chrome that need a
+// hand edit each season — there is no CMS field behind them yet.
+const FEATURE = {
+  eyebrow: 'New this season',
+  title: 'Carrousel — Pierre Frey',
+  href: '/brands/pierre-frey',
+}
+
 const current = Astro.url.pathname
-const isActive = (href) =>
-  href === '/' ? current === '/' : current.startsWith(href)
+const isActive = (href) => current.startsWith(href.split('?')[0])
+const productsActive = current.startsWith('/products')
 ---
 
-<header class="site-header">
-  <div class="container site-header-inner">
-    <a class="brand" href="/" aria-label="Atelier Textiles — home">
-      <span class="brand-mark">ATELIER</span>
-      <span class="brand-sub">TEXTILES</span>
-    </a>
+<div class="site-header-shell">
+  <p class="site-announce">
+    New season — Carrousel by Pierre Frey has arrived ·
+    <a href="/products">Request a cutting</a>
+  </p>
 
-    <nav class="site-nav" aria-label="Primary">
-      <ul>
-        {
-          links.map((link) => (
-            <li>
-              <a
-                href={link.href}
-                aria-current={isActive(link.href) ? 'page' : undefined}
-              >
-                {link.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
+  <header class="site-header" data-mega-root>
+    <div class="container site-header-inner">
+      <a class="brand" href="/" aria-label="Atelier Textiles — home">
+        <span class="brand-mark">ATELIER</span>
+        <span class="brand-sub">TEXTILES</span>
+      </a>
 
-    <div class="site-utils">
-      <AccountNav client:load />
-      <CartIndicator client:load />
+      <nav class="site-nav" aria-label="Primary">
+        <ul>
+          <li>
+            <a
+              class="site-nav-mega"
+              href="/products"
+              data-mega-trigger
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-current={productsActive ? 'page' : undefined}
+            >
+              Products<span class="site-nav-caret" aria-hidden="true">▾</span>
+            </a>
+          </li>
+          {
+            links.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  data-mega-dismiss
+                  aria-current={isActive(link.href) ? 'page' : undefined}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="site-utils">
+        <a class="site-util" href="/products" data-mega-dismiss>Search</a>
+        <AccountNav client:load />
+        <CartIndicator client:load />
+      </div>
     </div>
-  </div>
-</header>
+
+    <div class="site-mega" data-mega-panel>
+      <div class="container site-mega-inner">
+        <div class="site-mega-col">
+          <p class="site-mega-heading">By type</p>
+          <ul>
+            {byType.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+          </ul>
+        </div>
+
+        <div class="site-mega-col">
+          <p class="site-mega-heading">By application</p>
+          <ul>
+            {byApplication.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+          </ul>
+        </div>
+
+        <div class="site-mega-col">
+          <p class="site-mega-heading">The houses</p>
+          <ul>
+            {houses.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+            <li><a class="site-mega-all" href="/brands">All houses →</a></li>
+          </ul>
+        </div>
+
+        <a class="site-mega-feature" href={FEATURE.href}>
+          <span class="site-mega-feature-media weave" aria-hidden="true"></span>
+          <span class="site-mega-feature-eyebrow">{FEATURE.eyebrow}</span>
+          <span class="site-mega-feature-title">{FEATURE.title}</span>
+        </a>
+      </div>
+    </div>
+  </header>
+</div>
+
+<script>
+  import { initMegaMenu } from '../lib/mega-menu.js'
+  initMegaMenu()
+</script>

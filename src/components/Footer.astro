@@ -1,9 +1,13 @@
 ---
-// Editorial gallery footer: wordmark + brand line on the left, link groups on
-// the right, a hairline base rule carrying the copyright and the standing
-// "Indicative" note. The existing /story, /contact and /order-lookup links are
-// preserved (order-lookup is the only route a guest has to reach their order).
-// Contact/showroom/social details come from src/lib/site.js (single source).
+// Maison footer (design: MaisonFooter.dc.html): espresso band, paper wordmark
+// stack with the italic tagline and address line, link columns in light brass,
+// and a bottom bar over a hairline-on-dark carrying the copyright and the
+// standing "Indicative" note.
+//
+// Departs from the mock in one way, deliberately: the mock has three link
+// columns, this has four. Showrooms, phone, email and social are real details
+// from src/lib/site.js and dropping them to match a mock that predates them
+// would lose content, not tidy it.
 import { CONTACT, SHOWROOMS, SOCIAL } from '../lib/site.js'
 
 const year = new Date().getFullYear()
@@ -12,28 +16,34 @@ const groups = [
   {
     heading: 'The Collection',
     links: [
-      { href: '/products', label: 'Products' },
-      { href: '/brands', label: 'Brands' },
-      { href: '/resources', label: 'Resources' },
+      { href: '/products?product_type=fabric', label: 'Fabrics' },
+      { href: '/products?product_type=finished_good', label: 'Finished goods' },
+      { href: '/brands', label: 'The houses' },
     ],
   },
   {
     heading: 'The Studio',
     links: [
+      { href: '/resources', label: 'Journal' },
       { href: '/story', label: 'Story' },
       { href: '/contact', label: 'Contact' },
-      { href: '/trade-application', label: 'Trade application' },
     ],
   },
   {
-    heading: 'Your Account',
+    heading: 'Trade',
     links: [
-      { href: '/account', label: 'My account' },
+      { href: '/trade-application', label: 'Apply for trade' },
+      { href: '/login', label: 'Trade login' },
       { href: '/order-lookup', label: 'Order lookup' },
-      { href: '/cart', label: 'Cart' },
+      { href: '/account', label: 'My account' },
     ],
   },
 ]
+
+// The head office address, as one line, matching the design's placement under
+// the tagline.
+const [head] = SHOWROOMS
+const addressLine = `${head.lines.join(', ')} — Aotearoa New Zealand`
 ---
 
 <footer class="site-footer">
@@ -43,7 +53,7 @@ const groups = [
         <span class="brand-mark">ATELIER</span>
         <span class="brand-sub">TEXTILES</span>
         <p class="footer-line">Curators of global design excellence.</p>
-        <p class="footer-place">Parnell, Auckland — Aotearoa New Zealand</p>
+        <p class="footer-place">{addressLine}</p>
         <p class="footer-contact">
           <a href={`tel:${CONTACT.phoneHref}`}>{CONTACT.phone}</a>
           <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
