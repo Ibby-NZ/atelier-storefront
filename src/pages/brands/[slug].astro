@@ -3,11 +3,18 @@ export const prerender = false // live: API brand + EmDash/markdown editorial ov
 import { getCollection, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
 import Layout from '../../layouts/Layout.astro'
-import { apiFetch, ApiError } from '../../lib/api.js'
+import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
 import { getEmdashBrandPage } from '../../lib/emdash.js'
+import { countWord, foundedYear } from '../../lib/houses.js'
 
-// One brand page, resolved per request so a brand created in /admin/brands or a
-// page published in the EmDash CMS appears without a rebuild.
+// One brand page, Maison direction (design: "Maison Brand"), resolved per
+// request so a brand created in /admin/brands or a page published in the EmDash
+// CMS appears without a rebuild.
+//
+// Section order is the handoff's: full-bleed 58vh banner, the intro column
+// beside the facts list, the collection tiles, then the espresso related-reading
+// band. The page is `bleed` so the banner and the espresso band paint edge to
+// edge; each section carries its own `.container`.
 const { slug } = Astro.params
 
 // The brand itself comes from the live catalogue API. apiFetch (not safeFetch)
@@ -51,6 +58,34 @@ const relatedPosts = (await getCollection('post'))
   .filter((post) => (post.data.brands ?? []).includes(slug))
   .sort((a, b) => b.data.date - a.data.date)
 
+// The facts list replaces the design's mock rows (Founded / Archive / Made in /
+// Held at Atelier) with the four we can actually source: the founded year stated
+// in the house's own story, the country, how many designs of theirs we hold, and
+// how we hold them. "Archive: 25,000+ documents" is Pierre Frey copy with no
+// field behind it, so it is not invented for every house.
+//
+// The count is a safeFetch: a page must still render when the API is down, and
+// this brand may be editorial-only.
+const { data: held } = await safeFetch(
+  `/catalogue/products?brand=${encodeURIComponent(slug)}&limit=1`
+)
+const designCount = held?.meta?.total ?? null
+const founded = foundedYear(brand ?? { story: blurb })
+
+const facts = [
+  founded ? { label: 'Founded', value: String(founded) } : null,
+  brand?.country ? { label: 'Made in', value: brand.country } : null,
+  designCount ? { label: 'Designs held', value: `${designCount}` } : null,
+  { label: 'Held at Atelier', value: 'By the metre, cut to order' },
+].filter(Boolean)
+
+// The banner eyebrow: "The Maisons · France · est. 1935".
+const heroEyebrow = ['The Maisons', brand?.country, founded ? `est. ${founded}` : null]
+  .filter(Boolean)
+  .join(' · ')
+
+const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
+
 // Only a genuine miss 404s: the API answered and has no such brand, AND no
 // editorial page exists in either source. An API outage renders whatever
 // editorial we have (offline-safe), and an editorial page for a slug the API
@@ -62,92 +97,113 @@ if (notFound) {
 }
 ---
 
-<Layout title={`${name} — Atelier Textiles`}>
-  <p class="breadcrumb"><a href="/brands">← All brands</a></p>
-
+<Layout title={`${name} — Atelier Textiles`} bleed>
   {
     notFound ? (
-      <section class="brand-header">
-        <h1>Brand not found</h1>
+      <div class="container brand-missing">
+        <p class="breadcrumb">
+          <a href="/brands">← All houses</a>
+        </p>
+        <h1>House not found</h1>
         <p class="empty-state">We could not find that house.</p>
-      </section>
+      </div>
     ) : (
-      <section class="brand-header">
-        {heroImage ? (
-          <div class="brand-slideshow">
-            {slideshow.map((src, i) => (
-              <img
-                src={src}
-                alt={`${name} collection image ${i + 1}`}
-                loading={i === 0 ? 'eager' : 'lazy'}
-              />
-            ))}
+      <>
+        <section
+          class:list={['brand-hero', 'bleed-hero', { weave: !heroImage }]}
+          style={heroImage ? `background-image: url(${heroImage})` : undefined}
+        >
+          <div class="bleed-hero-body">
+            <div class="container">
+              <p class="bleed-hero-eyebrow">{heroEyebrow}</p>
+              <h1>{name}</h1>
+            </div>
           </div>
-        ) : (
-          <div class="brand-slideshow brand-slideshow--empty" aria-hidden="true" />
-        )}
-        <h1>{name}</h1>
-        {brand?.country && <p class="brand-meta">{brand.country}</p>}
-        {blurb && <p class="brand-blurb">{blurb}</p>}
-        <p><a class="btn" href={`/products?brand=${slug}`}>Shop {name}</a></p>
-      </section>
-    )
-  }
+        </section>
 
-  {
-    !notFound && cards.length > 0 && (
-      <section class="brand-collections">
-        <h2>Collections</h2>
-        <div class="card-grid">
-          {cards.map((card) => (
-            <a class="card collection-card" href={card.link}>
-              {card.featuredImage && (
-                <img src={card.featuredImage} alt={card.heading} loading="lazy" />
-              )}
-              <h3>{card.heading}</h3>
-              <p>{card.description}</p>
+        <section class="container brand-intro">
+          <div class="brand-intro-body">
+            <div class="brass-rule" />
+            {blurb && <p class="brand-lede">{blurb}</p>}
+            {story && (
+              <div class="brand-copy">
+                <PortableText value={story} />
+              </div>
+            )}
+            {Body && (
+              <div class="brand-copy">
+                <Body />
+              </div>
+            )}
+            <a class="btn btn-lg" href={`/products?brand=${slug}`}>
+              Shop {name}
             </a>
-          ))}
-        </div>
-      </section>
-    )
-  }
+          </div>
 
-  {
-    story && (
-      <section class="brand-body prose">
-        <PortableText value={story} />
-      </section>
-    )
-  }
+          <dl class="spec-rows brand-facts">
+            {facts.map((fact) => (
+              <div>
+                <dt>{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
 
-  {
-    Body && (
-      <section class="brand-body prose">
-        <Body />
-      </section>
-    )
-  }
+        {cards.length > 0 && (
+          <section class="brand-collections">
+            <div class="container">
+              <p class="eyebrow-brass">This season</p>
+              <h2>
+                {countWord(cards.length)}{' '}
+                <em>{cards.length === 1 ? 'collection' : 'collections'}</em>
+              </h2>
+              <div class="brand-collection-grid">
+                {cards.map((card) => (
+                  <a class="brand-collection" href={card.link}>
+                    <span class="scrim-tile brand-collection-media">
+                      {card.featuredImage ? (
+                        <img src={card.featuredImage} alt="" loading="lazy" />
+                      ) : (
+                        <span class="scrim-tile-media weave" aria-hidden="true" />
+                      )}
+                      <span class="scrim-tile-label">{card.heading}</span>
+                    </span>
+                    <span class="brand-collection-note">{card.description}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
-  {
-    !notFound && relatedPosts.length > 0 && (
-      <section class="brand-posts">
-        <h2>Related reading</h2>
-        <ul class="post-list">
-          {relatedPosts.map((post) => (
-            <li>
-              <a href={`/resources/${post.id}`}>{post.data.title}</a>
-              <span class="post-date">
-                {post.data.date.toLocaleDateString('en-NZ', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+        {relatedPosts.length > 0 && (
+          <section class="band-dark brand-reading">
+            <div class="container">
+              <div class="band-dark-head">
+                <h2>
+                  Related <em>reading</em>
+                </h2>
+                <a class="band-dark-link" href="/resources">
+                  The journal
+                </a>
+              </div>
+              <ul class="index-list">
+                {relatedPosts.map((post) => (
+                  <li>
+                    <a href={`/resources/${post.id}`}>
+                      <span class="index-name brand-reading-title">{post.data.title}</span>
+                      <span class="index-meta brand-reading-date">
+                        {dateFormat.format(post.data.date)}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+      </>
     )
   }
 </Layout>

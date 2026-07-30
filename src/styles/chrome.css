@@ -433,6 +433,14 @@
   color: var(--brass-light);
 }
 
+/* A `bleed` page paints its own bands edge to edge and owns its own bottom
+   spacing. Without this the margin above becomes a 6rem paper strip between the
+   page's last band and the footer — and where that last band is itself espresso
+   (the brand page's related reading), a bright seam between two dark bands. */
+.main-bleed + .site-footer {
+  margin-top: 0;
+}
+
 .site-footer .container {
   padding-block: var(--s9) var(--s6);
 }

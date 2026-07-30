@@ -42,20 +42,60 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     block padding (`.main-bleed` in tokens.css), handing the page the full width
     of `<main>` so it can paint edge-to-edge bands. A bleed page must supply its
     own `.container` inside each band — that is what keeps its content column
-    aligned with the header wordmark and the footer. `/products` is the first
-    user (the Maison linen page-header band); every other page is unchanged.
-  - **Agentation** (dev only): the annotation toolbar renders as
-    `{import.meta.env.DEV && <Agentation client:only="react" />}` just before
-    `</body>`. `import.meta.env.DEV` is false during `astro build`, so no
-    toolbar chunk is emitted into `dist/client` and no production page requests
-    it — verified by `ls dist/client/_astro | grep -i agent` coming back empty.
+    aligned with the header wordmark and the footer. Users: `/` (hero, tile wall,
+    espresso maisons band), `/products` (linen page-header band) and
+    `/brands/[slug]` (banner + espresso related reading). Every other page keeps
+    the centred container.
+    - `.main-bleed + .site-footer` zeroes the footer's `margin-top`. That 6rem
+      margin is right for a paper page ending in body copy, but on a bleed page
+      it becomes a paper strip under the last band — and where that band is
+      itself espresso (the brand page), a bright seam between two dark bands.
+  - **Agentation** (dev always, deployment opt-in): the annotation toolbar
+    renders just before `</body>` as
+    `{(import.meta.env.DEV || import.meta.env.PUBLIC_AGENTATION === 'true') && <Agentation client:only="react" />}`.
+    It was `import.meta.env.DEV` alone, which meant it could never appear on the
+    Basic-Auth staging site — the one place reviewers actually look at the real
+    build. `PUBLIC_AGENTATION=true` turns it on there; unset at public launch and
+    Vite dead-codes the branch so shoppers get no widget. **BUILD TIME** (every
+    page is `prerender = true`), so it belongs in the launch checklist beside
+    `SITE_URL`/`ALLOW_INDEXING` and a change needs a rebuild, not a pm2 restart.
     `client:only` because the toolbar is a React portal into `document.body`
-    with nothing to server-render. Installed as a devDependency; the deploy runs
-    a plain `npm ci` (dev deps included), so the import always resolves.
-- **Styling** is the hand-built Atelier design system, matching the platform
-  design handoff (`~/Documents/atelier-platform-demo/design_handoff_atelier_platform/`
-  — palette, type, component rules) and the CRM's interaction conventions. Plain
-  CSS, no framework, no build step beyond Astro.
+    with nothing to server-render. It is a **runtime `dependency`**, not a
+    devDependency — it now ships in the production render path, so a deploy that
+    ever runs `npm ci --omit=dev` would otherwise fail the build.
+  - **Do not verify the toolbar's absence by filename.** The old note claimed
+    `ls dist/client/_astro | grep -i agent` came back empty; it does, but only
+    because Astro names the chunk after the package entry (`index.mjs` →
+    `index.<hash>.js`). Astro collects `client:*` directives by **static template
+    scan**, so the ~420 kB toolbar chunk is emitted into `dist/client/_astro/`
+    even when the runtime branch is dead — it is simply never requested. Grep
+    chunk *contents* (`grep -ril agentation dist`), and confirm no server chunk
+    references `Agentation` (`grep -rl Agentation dist/server`) — that second
+    check is the one that proves it never renders.
+- **Styling** is the hand-built Atelier design system. The direction is the
+  **Maison redesign** (`~/Documents/atelier-platform-demo/Atelier-storefront redesign (1).zip`
+  → `design_handoff_maison_redesign/`: Home, Product Library, Product Detail,
+  Brand, plus shared Header and Footer as `.dc.html` prototypes). It supersedes
+  the earlier platform handoff (`design_handoff_atelier_platform/`), which is
+  still the reference for anything the Maison set does not cover (cart, checkout,
+  auth, journal, contact). Plain CSS, no framework, no build step beyond Astro.
+  - **Maison globals, adopted in `tokens.css`/`primitives.css`** — these are the
+    reason the whole site reads as one design rather than four redesigned pages:
+    `--container: 96rem` + `--gutter: 3rem` (the mocks' `max-width:96rem;
+    padding:0 3rem` section frame, header and footer included), radii `0`
+    (`--r-sm/--r-md/--r-chip` are kept as names but all resolve to 0 — squared
+    corners everywhere), and `.btn` = 48px (`.btn-lg` 50px), uppercase Inter 600
+    13px / .12em, outlined ink inverting to ink-on-paper on hover, or filled
+    claret. `.btn-paper` is the on-photograph variant; `.link-cta` /
+    `.link-cta-paper` the underlined uppercase text action beside it.
+  - **Shared Maison figures live in `primitives.css`**, because more than one
+    screen uses each: `.brass-rule` (the 34px opener), `.eyebrow-brass` /
+    `.eyebrow-wide` (.26em tracking), `.bleed-hero` (+`-body/-eyebrow/-lede/-cta`,
+    a full-bleed background image with a bottom scrim and absolutely positioned
+    copy), `.band-dark` (+`-head/-link`, espresso band), `.index-list` /
+    `.index-name` / `.index-meta` (hairline rows, restyled automatically inside
+    `.band-dark`), `.scrim-tile` (+`-label`) and `.spec-rows` (label left, mono
+    value right). Reach for these before writing a new block.
   - `src/styles/global.css` is the **only** file the layout imports; it is just
     the `@import` manifest, in cascade order:
     `tokens` → `primitives` → `chrome` → `home` → `library` → `product` →
@@ -111,6 +151,13 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   - `toneList`, `productTypeLabel`, `isFabric`.
 - `src/lib/money.js` `formatMoney(cents, currency)` stays the only money
   formatter.
+- **`src/lib/houses.js`** — house presentation for the Maison screens.
+  `foundedYear(brand)` parses "Founded 1935" / "Established 2006" out of
+  `brand.story` (the API has no founded column and inventing a date table would
+  contradict the client's own copy); `houseMeta(brand)` builds
+  `"France · est. 1935"`, degrading to the country alone; `countWord(n)` spells
+  counts to twelve for the redesign's headings ("Six *colourways*", "Three
+  *collections*") and falls back to digits past that.
 
 ## Pages
 
@@ -165,20 +212,16 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     - Below 1024px the sidebar collapses behind a `.library-filters-toggle`
       button (`filtersOpen` state, `aria-expanded`/`aria-controls`); above it the
       CSS shows the sidebar regardless, so the state is inert there.
-  - **`.product-grid` / `.product-card` are shared with the homepage**
-    (`src/pages/index.astro`). The base card block in `library.css` is therefore
-    left alone and every Maison change (4/5 crop, squared corners, brass brand
-    eyebrow, 20px swatches, hover = border + shadow with **no** lift or zoom) is
-    scoped under `.product-library`. Restyling the home cards is a separate
-    screen in the handoff — do not "simplify" by folding the overrides into the
-    base rules.
-  - **Deviations from the mock, deliberate:** the content column is the site's
-    existing `--container` (84rem) rather than the handoff's 96rem, so it lines
-    up with the current header and footer (the Maison header/footer are separate
-    screens, not yet built); and Width stays in "More filters" even though the
-    mock lists only four selects — dropping it would silently remove a working
-    filter. Sidebar eyebrows and the card brand eyebrow are **brass**, per the
-    Maison token list — note this knowingly breaks the older "brass is never a
+  - **`.product-card` is the library's alone.** It used to be shared with the
+    homepage, so the Maison treatment was scoped under `.product-library` over an
+    untouched base block. The Maison homepage leads with editorial bands instead
+    of a product grid, so that split is gone: the base rules in `library.css`
+    *are* the Maison card (4/5 crop, squared, brass brand eyebrow, 20px swatches,
+    hover = border + shadow with **no** lift or zoom).
+  - **Deviations from the mock, deliberate:** Width stays in "More filters" even
+    though the mock lists only four selects — dropping it would silently remove a
+    working filter. Sidebar eyebrows and the card brand eyebrow are **brass**, per
+    the Maison token list — note this knowingly breaks the older "brass is never a
     text colour" rule and is below WCAG AA at 11px.
 
 - **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` is
@@ -206,17 +249,54 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     preselects that SKU.
   - Add to cart stores the selected colourway's SKU, name and image (see Cart).
   - Price rendering is the shared `priceInfo()` in `src/lib/catalogue.js`.
+  - **Maison layout** (design: "Maison Product"): `1.15fr / 1fr` with a 4.5rem
+    gutter; a squared 4/5 hero over 64px thumbnails; on the right a brass rule, a
+    single brass `Fabric · {House}` eyebrow (the house is no longer a second line
+    under the title), the display name with its **last word in italic**
+    (`splitDisplayName` — a one-word name stays upright, since italicising the
+    whole thing reads as a different product), the selected colourway, the claret
+    mono price with `/ metre` for cloth, the action row (`Request order` +
+    underlined `Request a cutting`) and the spec sheet as shared `.spec-rows`.
+    The range repeats below under a brass "The range" eyebrow and a spelled-out
+    count ("Six *colourways*", `countWord()`).
+  - **The hero crossfade needs no second `<img>`**: `previousHero` is a ref
+    written in an effect (after paint), so during the render that changes the
+    hero it still holds the outgoing image — painted as `.detail-hero-frame`'s
+    background while the incoming `<img>` (keyed by src, so React remounts it)
+    fades in over the top. Reading the ref in render is deliberate; writing it
+    there would break under StrictMode's double render.
 
 - **`/` (home)** — merchandising, built at build time from the live catalogue
   via `safeFetch` (never throws → the API being down yields empty sections and a
-  successful build, which is the rule for every storefront page). Sections:
-  editorial hero, "Ready to ship" (finished goods with a *visible* retail price —
-  the only things card checkout can actually take money for), "The cloth"
-  (fabrics, routed to the request flow), a house strip, and the three newest
-  journal posts. The build-time fetch is anonymous, so **no trade pricing is ever
-  baked into the homepage** — trade figures only appear on the live islands.
-  "See all" links hand off to the library with real filter keys
-  (`/products?product_type=fabric`), which `ProductLibrary` reads from the URL.
+  successful build, which is the rule for every storefront page). The build-time
+  fetch is anonymous, so **no trade pricing is ever baked into the homepage** —
+  trade figures only appear on the live islands.
+  - **Maison section order** (design: "Redesign A Maison"), `<Layout bleed>`:
+    full-bleed 74vh collection hero → four-tile category wall → collection story
+    (two columns) → espresso maisons index → journal. The old product grids
+    ("Ready to ship", "The cloth") are gone: the Maison home is editorial, and
+    the library is where designs are browsed.
+  - **Three seasonal constants are hand-edited, by design**: `HERO`, `STORY` and
+    `CATEGORIES` in the frontmatter, alongside `Header.astro`'s `FEATURE` and
+    announcement copy. There is no CMS field behind a season yet, and those five
+    places are the whole list. Every `href` is a real route with a real filter key
+    (`/products?product_type=fabric`, `?application=Wallcovering`,
+    `?brand=atelier-textiles-nz`) that `ProductLibrary` reads from the URL, so no
+    tile can land on an empty grid.
+  - **Photography is claimed, not just picked.** `claimImage(predicate)` tracks
+    which `image_url`s are already spoken for, so the hero, the story and the four
+    tiles get six *different* photographs; without it a 48-row catalogue lands the
+    same image in every block, which looks like the design from a distance and
+    nothing like it up close. Hero and story claim first (the design names them).
+  - The maisons band lists the twelve international houses we hold the **most
+    designs** from, counted off the already-fetched catalogue (48 rows against a
+    100 limit, so the counts are exact) — alphabetical order buried Pierre Frey
+    and Rubelli below houses with one design each.
+  - `est. YYYY` beside a house comes from `foundedYear()` in `src/lib/houses.js`,
+    which reads the year out of the house's **own story text** ("Founded 1935…").
+    Only 3 of 27 stories state one; the rest show their country alone, which is
+    what the design degrades to. A hardcoded date table was rejected: it would
+    drift from, and could contradict, the client's own copy.
 
 - **`/404`** — `src/pages/404.astro`, static, routes back to the library, contact
   and order lookup.
@@ -429,6 +509,23 @@ blurb falls back CMS → markdown → `brand.story`; slideshow/cards CMS → mar
 → empty. Body copy is the CMS `story` rendered with `<PortableText>` from
 `emdash/ui`, or the markdown body via `render()`. Related-post links point at
 `/resources/<id>`.
+
+**Maison layout** (design: "Maison Brand"), `<Layout bleed>`: full-bleed 58vh
+banner (`slideshow[0]`, else the weave) with an eyebrow of
+`The Maisons · {country} · est. {year}` → `1.3fr / 1fr` intro, the blurb set as a
+Fraunces lede over the body copy with an outlined `Shop {name}` beside the facts
+list → 4/5 collection tiles with scrim labels and a description under each →
+espresso related-reading band using the shared `.index-list`.
+- `slideshow[1..]` is no longer rendered as a scrolling gallery (the design has
+  one banner). Nothing is lost on the seeded page: the collection cards carry the
+  same three images as their `featuredImage`.
+- The **facts list** is `Founded` / `Made in` / `Designs held` / `Held at
+  Atelier`, not the mock's rows. Founded comes from `foundedYear()` (the story
+  text, see home above) and is omitted when the story states none; `Designs held`
+  is `meta.total` from a `safeFetch` of `/catalogue/products?brand=<slug>&limit=1`
+  — a safeFetch because this page must render with the API down and the brand may
+  be editorial-only. The mock's "Archive: 25,000+ documents" is Pierre Frey copy
+  with no field behind it, so it is not invented for every house.
 
 **404 rule:** `!brand && !apiDown && !emPage && !mdPage`. So an API 404 with an
 editorial page still renders (preserving the old `getStaticPaths` UNION

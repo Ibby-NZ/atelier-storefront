@@ -1,10 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
 import { addToCart } from '../lib/cart.js'
 import { priceInfo, productTypeLabel, weaveBackground, isFabric } from '../lib/catalogue.js'
+import { countWord } from '../lib/houses.js'
 
-// Product detail island (US-018). Fetches GET /catalogue/products/:slug for live
-// availability and (for approved trade users) trade pricing.
+// Product detail island (US-018), Maison direction (design: "Maison Product").
+// Fetches GET /catalogue/products/:slug for live availability and (for approved
+// trade users) trade pricing.
+//
+// Maison layout: 1.15fr/1fr, a 4/5 squared hero over 64px colourway thumbnails,
+// and on the right a brass rule, a "Fabric · {House}" eyebrow, the display name
+// with its last word in italic, the selected colourway block, the claret mono
+// price, the action row, and the spec sheet as hairline rows. The colourway range
+// repeats below as labelled tiles.
 //
 // The colourway is the thing actually bought — every SKU on this page belongs to
 // a colourway, not the product — so selecting one drives the whole page: the
@@ -39,6 +47,15 @@ function defaultColourway(colourways) {
   return colourways.find((colourway) => colourway.in_stock) || colourways[0]
 }
 
+// The redesign sets the last word of the display name in italic ("Ranfurly
+// *Bouclé*"). A single-word name stays upright: italicising the whole thing
+// reads as a different product rather than as an accent.
+function splitDisplayName(name) {
+  const words = String(name ?? '').trim().split(/\s+/)
+  if (words.length < 2) return { head: name ?? '', tail: '' }
+  return { head: words.slice(0, -1).join(' '), tail: words[words.length - 1] }
+}
+
 export default function ProductDetail({ slug }) {
   const [product, setProduct] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ready | error
@@ -46,6 +63,12 @@ export default function ProductDetail({ slug }) {
   const [selectedSku, setSelectedSku] = useState(null)
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(0) // how many were just added, 0 = nothing
+
+  // The hero crossfades on a colourway change (design: ~.5s). The outgoing image
+  // is painted as the frame's background while the incoming <img> fades in over
+  // it, so no second <img> and no extra state are needed — a ref written after
+  // render is exactly "the previous render's hero".
+  const previousHero = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -80,6 +103,22 @@ export default function ProductDetail({ slug }) {
     [colourways]
   )
 
+  // Hero follows the selection, then any imaged colourway, then the hi-res asset.
+  const heroImage = useMemo(
+    () =>
+      selected?.image_url ||
+      colourways.find((colourway) => colourway.image_url)?.image_url ||
+      product?.hi_res_asset_url ||
+      null,
+    [selected, colourways, product]
+  )
+
+  // Written after paint, so during the render that changes the hero the ref
+  // still holds the outgoing image.
+  useEffect(() => {
+    previousHero.current = heroImage
+  }, [heroImage])
+
   // Changing colourway invalidates the "added to cart" confirmation — it refers
   // to a specific SKU.
   const chooseColourway = (sku) => {
@@ -99,17 +138,15 @@ export default function ProductDetail({ slug }) {
 
   const price = priceInfo(product)
   const fabric = isFabric(product)
+  const displayName = splitDisplayName(product.name)
   const specs = SPEC_FIELDS.filter(
     (field) => product[field.key] != null && product[field.key] !== ''
   )
 
-  // Hero follows the selection, then any imaged colourway, then the hi-res asset.
-  const heroImage =
-    selected?.image_url ||
-    colourways.find((colourway) => colourway.image_url)?.image_url ||
-    product.hi_res_asset_url ||
-    null
   const heroWeave = weaveBackground(selected?.hex_tones ?? colourways[0]?.hex_tones)
+  // The effect above writes this after paint, so here it is still the hero the
+  // previous commit showed — the one to hold under the incoming image.
+  const outgoingHero = previousHero.current
 
   // Fabrics are requested per colourway, so carry the selection to the form.
   const requestHref = `/order-request?product=${encodeURIComponent(product.slug)}${
@@ -151,19 +188,31 @@ export default function ProductDetail({ slug }) {
       <div className="detail-grid">
         <div className="detail-media">
           <div className="detail-gallery">
-            {heroImage ? (
-              <img
-                className="detail-hero"
-                src={heroImage}
-                alt={selected ? `${product.name} — ${selected.name}` : product.name}
-              />
-            ) : (
-              <div
-                className="detail-hero detail-hero-placeholder"
-                style={heroWeave ? { background: heroWeave } : undefined}
-                aria-hidden="true"
-              />
-            )}
+            <div
+              className="detail-hero-frame"
+              style={
+                outgoingHero
+                  ? { backgroundImage: `url(${outgoingHero})` }
+                  : heroWeave
+                    ? { background: heroWeave }
+                    : undefined
+              }
+            >
+              {heroImage ? (
+                <img
+                  key={heroImage}
+                  className="detail-hero"
+                  src={heroImage}
+                  alt={selected ? `${product.name} — ${selected.name}` : product.name}
+                />
+              ) : (
+                <div
+                  className="detail-hero detail-hero-placeholder"
+                  style={heroWeave ? { background: heroWeave } : undefined}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
 
             {colourways.length > 1 && (
               <div className="detail-thumbs" role="group" aria-label="Colourways">
@@ -200,9 +249,16 @@ export default function ProductDetail({ slug }) {
         </div>
 
         <div className="detail-info">
-          <p className="detail-type">{productTypeLabel(product.product_type)}</p>
-          <h1 className="detail-name">{product.name}</h1>
-          <p className="detail-brand">{product.brand?.name}</p>
+          <div className="brass-rule"></div>
+          <p className="detail-type">
+            {[productTypeLabel(product.product_type), product.brand?.name]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <h1 className="detail-name">
+            {displayName.head}
+            {displayName.tail && <em> {displayName.tail}</em>}
+          </h1>
 
           {selected && (
             <p className="detail-colourway-name">
@@ -214,6 +270,7 @@ export default function ProductDetail({ slug }) {
           <p className={price.muted ? 'detail-price muted' : 'detail-price'}>
             {price.label && <span className="detail-price-label">{price.label} </span>}
             {price.text}
+            {!price.muted && fabric && <span className="detail-price-unit">/ metre</span>}
             {price.retail && <s className="detail-price-retail">{price.retail}</s>}
             {price.indicative && <span className="indicative-note">Indicative</span>}
           </p>
@@ -273,8 +330,11 @@ export default function ProductDetail({ slug }) {
               </>
             ) : anyInStock ? (
               <>
-                <a className="btn btn-primary" href={requestHref}>
+                <a className="btn btn-primary btn-lg" href={requestHref}>
                   Request order
+                </a>
+                <a className="link-cta" href="/contact">
+                  Request a cutting
                 </a>
                 <p className="purchase-note">
                   Cut to order by the metre. We confirm stock and batch shading before
@@ -283,8 +343,11 @@ export default function ProductDetail({ slug }) {
               </>
             ) : (
               <>
-                <a className="btn btn-primary" href={`${requestHref}&backorder=1`}>
+                <a className="btn btn-primary btn-lg" href={`${requestHref}&backorder=1`}>
                   Request backorder
+                </a>
+                <a className="link-cta" href="/contact">
+                  Request a cutting
                 </a>
                 <p className="purchase-note">
                   Currently out of stock.{' '}
@@ -297,7 +360,7 @@ export default function ProductDetail({ slug }) {
           </div>
 
           {specs.length > 0 && (
-            <dl className="detail-specs">
+            <dl className="detail-specs spec-rows">
               {specs.map((field) => (
                 <div key={field.key}>
                   <dt>{field.label}</dt>
@@ -310,7 +373,10 @@ export default function ProductDetail({ slug }) {
       </div>
 
       <section className="detail-colourways">
-        <h2>Colourways</h2>
+        <p className="eyebrow-brass">The range</p>
+        <h2>
+          {countWord(colourways.length)} <em>{colourways.length === 1 ? 'colourway' : 'colourways'}</em>
+        </h2>
         {colourways.length ? (
           <ul className="swatch-grid">
             {colourways.map((colourway) => {

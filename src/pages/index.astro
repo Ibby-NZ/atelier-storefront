@@ -3,15 +3,21 @@ export const prerender = true // storefront pages stay static; EmDash routes ren
 import { getCollection } from 'astro:content'
 import Layout from '../layouts/Layout.astro'
 import { safeFetch } from '../lib/api.js'
-import { priceInfo, weaveBackground } from '../lib/catalogue.js'
+import { countWord, houseMeta } from '../lib/houses.js'
 
-// Home is merchandising, built at build time from the live catalogue. Everything
-// here degrades to an empty section when the API is down (safeFetch never
-// throws), so the build always succeeds — the storefront is a static build and
-// must never depend on the API being up to compile.
+// Home, Maison direction (design: "Redesign A Maison"). Section order is the
+// handoff's, verbatim: full-bleed collection hero, category tile wall,
+// collection story, espresso maisons band, journal, footer.
 //
-// The fetch is anonymous, so no trade pricing is ever baked into these cards;
-// trade figures only appear on the live islands (/products, product detail).
+// Built at build time from the live catalogue. Everything degrades to an empty
+// section when the API is down (safeFetch never throws), so the build always
+// succeeds — the storefront is a static build and must never depend on the API
+// being up to compile. The fetch is anonymous, so no trade pricing is ever baked
+// into this page; trade figures only appear on the live islands.
+//
+// The page is `bleed`: the hero, tile wall and espresso band all paint edge to
+// edge and carry their own `.container`, which keeps their copy aligned with the
+// site header and footer.
 
 const { data: catalogue } = await safeFetch('/catalogue/products?limit=100')
 const products = catalogue?.products ?? []
@@ -19,25 +25,110 @@ const products = catalogue?.products ?? []
 const { data: brandList } = await safeFetch('/catalogue/brands')
 const brands = brandList?.brands ?? []
 
-// Shoppable now: a finished good with a visible price and a photograph. These
-// are the only things a card checkout can actually take money for, so they lead.
-const shoppable = products
-  .filter(
-    (product) =>
-      product.product_type === 'finished_good' &&
-      !product.price_hidden &&
-      product.retail_price_cents != null
-  )
-  .slice(0, 4)
+// Seasonal merchandising. Hardcoded, exactly as the design specifies, and for
+// the same reason as Header.astro's FEATURE and announcement bar: there is no
+// CMS field behind a season yet. These three constants plus those two are the
+// whole hand-edit list each season.
+const HERO = {
+  eyebrow: 'Collection · New for 2026',
+  title: 'Carrousel,',
+  titleEm: 'by Pierre Frey',
+  lede: "Maison Caspari's watercolour animals, revisited at near life-size — whimsical designs that evoke the merry-go-round, printed on cloth in France.",
+  href: '/products?brand=pierre-frey',
+  cta: 'Discover the collection',
+  brand: 'pierre-frey',
+}
 
-// The cloth itself — cut to order, so these route to the request flow. Prefer
-// designs we have a photograph for.
-const fabrics = products
-  .filter((product) => product.product_type === 'fabric')
-  .sort((a, b) => Number(Boolean(b.image_url)) - Number(Boolean(a.image_url)))
-  .slice(0, 3)
+const STORY = {
+  eyebrow: 'Collection story',
+  title: 'Cappuccino —',
+  titleEm: 'quiet confidence',
+  titleRest: 'in cloth',
+  body: 'Warm neutrals, subtle contrasts and striking plays of light across prints and weaves. Free-spirited motifs — anemones, toucans, kiwis — on timeless grounds that sit comfortably in both classic and contemporary interiors.',
+  note: 'Available by the metre. Request a cutting to see the hand and colour in person.',
+  cta: 'Explore Cappuccino',
+  href: '/products?brand=pierre-frey',
+  brand: 'pierre-frey',
+}
 
-const houses = brands.filter((brand) => brand.is_international).slice(0, 12)
+// "At the heart of the house" — the four ways into the catalogue. Every href is
+// a real route with a filter key ProductLibrary reads from the URL, so none of
+// these tiles can land on an empty grid. `match` picks the tile's photograph out
+// of the catalogue.
+const CATEGORIES = [
+  {
+    label: 'Fabrics',
+    href: '/products?product_type=fabric',
+    match: (product) => product.product_type === 'fabric',
+  },
+  {
+    label: 'Wallcovering',
+    href: '/products?application=Wallcovering',
+    match: (product) => (product.application ?? '').includes('Wallcovering'),
+  },
+  {
+    label: 'Finished goods',
+    href: '/products?product_type=finished_good',
+    match: (product) => product.product_type === 'finished_good',
+  },
+  {
+    label: 'The workroom',
+    href: '/products?brand=atelier-textiles-nz',
+    match: (product) => product.brand?.slug === 'atelier-textiles-nz',
+  },
+]
+
+// Photography for the hero, the story and the four tiles, drawn from the
+// catalogue. First imaged product matching the predicate, else any imaged
+// product not already spoken for, else null (the block falls back to the
+// woven-tone placeholder).
+//
+// The claims are tracked: six blocks drawing from one small catalogue otherwise
+// land on the same photograph six times, which is what "adopting the design"
+// looks like from a distance and nothing like it up close. Hero and story claim
+// first because the design names them.
+const imaged = products.filter((product) => product.image_url)
+const claimed = new Set()
+
+function claimImage(predicate) {
+  const free = (product) => !claimed.has(product.image_url)
+  const match =
+    imaged.find((product) => predicate(product) && free(product)) ??
+    imaged.find(free) ??
+    imaged.find(predicate) ??
+    imaged[0]
+  if (!match) return null
+  claimed.add(match.image_url)
+  return match.image_url
+}
+
+const heroImage = claimImage((product) => product.brand?.slug === HERO.brand)
+const storyImage = claimImage((product) => product.brand?.slug === STORY.brand)
+
+const tiles = CATEGORIES.map((category) => ({
+  ...category,
+  image: claimImage(category.match),
+}))
+
+// The maisons index: international houses only (the workroom is not a "maison"),
+// the twelve we hold the most designs from, with the design's "Country · est.
+// YYYY" meta. `products` is the whole website-visible catalogue (48 rows against
+// a 100 limit), so the counts are exact rather than a sample — and ordering by
+// them means the band leads with the houses a shopper can actually browse
+// instead of whoever happens to sort first alphabetically.
+//
+// `est. YYYY` is only shown for houses whose own story states a year (see
+// lib/houses.js); the rest show their country alone, as the design degrades to.
+const designsPerHouse = products.reduce((counts, product) => {
+  const key = product.brand?.slug
+  return key ? { ...counts, [key]: (counts[key] ?? 0) + 1 } : counts
+}, {})
+
+const houses = brands
+  .filter((brand) => brand.is_international)
+  .map((brand) => ({ ...brand, meta: houseMeta(brand), held: designsPerHouse[brand.slug] ?? 0 }))
+  .sort((a, b) => b.held - a.held || a.name.localeCompare(b.name))
+  .slice(0, 12)
 
 const posts = (await getCollection('post'))
   .sort((a, b) => b.data.date - a.data.date)
@@ -49,166 +140,108 @@ const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
 <Layout
   title="Atelier Textiles — Curators of global design excellence"
   description="Fine fabrics and finished goods for makers and trade, sourced from houses across Aotearoa and beyond."
+  bleed
 >
-  <section class="home-hero">
-    <div class="home-hero-body">
-      <p class="home-hero-eyebrow">Parnell, Auckland</p>
-      <h1>Curators of global <em>design excellence</em></h1>
-      <p>
-        Fine cloth and finished goods, gathered from houses across Europe and made
-        here in Aotearoa. Browse the library, request a cutting, or order direct.
-      </p>
-      <div class="home-cta">
-        <a class="btn btn-primary" href="/products">Enter the library</a>
-        <a class="btn" href="/trade-application">Apply for trade</a>
+  <section
+    class:list={['home-hero', 'bleed-hero', { weave: !heroImage }]}
+    style={heroImage ? `background-image: url(${heroImage})` : undefined}
+  >
+    <div class="bleed-hero-body">
+      <div class="container">
+        <p class="bleed-hero-eyebrow">{HERO.eyebrow}</p>
+        <h1>{HERO.title} <em>{HERO.titleEm}</em></h1>
+        <p class="bleed-hero-lede">{HERO.lede}</p>
+        <div class="bleed-hero-cta">
+          <a class="btn btn-paper" href={HERO.href}>{HERO.cta}</a>
+          <a class="link-cta-paper" href="/contact">Request a cutting</a>
+        </div>
       </div>
     </div>
-    <div class="home-hero-media" aria-hidden="true">
+  </section>
+
+  <section class="home-categories">
+    <div class="container">
+      <p class="eyebrow-wide home-categories-eyebrow">At the heart of the house</p>
+    </div>
+    <div class="home-tile-wall">
       {
-        products.find((product) => product.image_url) ? (
-          <img
-            src={products.find((product) => product.image_url).image_url}
-            alt=""
-            loading="eager"
-          />
-        ) : (
-          <span class="product-image-placeholder" />
-        )
+        tiles.map((tile) => (
+          <a class="scrim-tile" href={tile.href}>
+            {tile.image ? (
+              <img src={tile.image} alt="" loading="lazy" />
+            ) : (
+              <span class="scrim-tile-media weave" aria-hidden="true" />
+            )}
+            <span class="scrim-tile-label">{tile.label}</span>
+          </a>
+        ))
       }
     </div>
   </section>
 
-  {
-    shoppable.length > 0 && (
-      <section class="home-section">
-        <div class="home-section-head">
-          <p class="home-eyebrow">Ready to ship</p>
-          <h2>Finished goods</h2>
-          <a href="/products?product_type=finished_good">See all</a>
-        </div>
-        <ul class="product-grid home-featured">
-          {shoppable.map((product) => {
-            const price = priceInfo(product)
-            const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
-            return (
-              <li class="product-card">
-                <a href={`/products/${product.slug}`}>
-                  <span class="product-media">
-                    {product.image_url ? (
-                      <img
-                        class="product-image"
-                        src={product.image_url}
-                        alt={product.name}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span
-                        class="product-image-placeholder"
-                        style={weave ? `background: ${weave}` : undefined}
-                      />
-                    )}
-                  </span>
-                  <span class="product-card-body">
-                    <span class="product-brand">{product.brand?.name}</span>
-                    <h3>{product.name}</h3>
-                    <span class="product-price">
-                      {price.text}
-                      <span class="indicative-note">Indicative</span>
-                    </span>
-                  </span>
-                </a>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-    )
-  }
-
-  {
-    fabrics.length > 0 && (
-      <section class="home-section">
-        <div class="home-section-head">
-          <p class="home-eyebrow">Cut to order</p>
-          <h2>The cloth</h2>
-          <a href="/products?product_type=fabric">See all</a>
-        </div>
-        <ul class="product-grid home-featured">
-          {fabrics.map((product) => {
-            const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
-            return (
-              <li class="product-card">
-                <a href={`/products/${product.slug}`}>
-                  <span class="product-media">
-                    {product.image_url ? (
-                      <img
-                        class="product-image"
-                        src={product.image_url}
-                        alt={product.name}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span
-                        class="product-image-placeholder"
-                        style={weave ? `background: ${weave}` : undefined}
-                      />
-                    )}
-                  </span>
-                  <span class="product-card-body">
-                    <span class="product-brand">{product.brand?.name}</span>
-                    <h3>{product.name}</h3>
-                    <span class="product-specs">
-                      {[product.composition, product.width].filter(Boolean).join(' · ')}
-                    </span>
-                    <span class="product-price muted">Sign in for trade pricing</span>
-                  </span>
-                </a>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-    )
-  }
+  <section class="container home-story">
+    <div class="home-story-media">
+      {
+        storyImage ? (
+          <img src={storyImage} alt="" loading="lazy" />
+        ) : (
+          <span class="weave" aria-hidden="true" />
+        )
+      }
+    </div>
+    <div class="home-story-body">
+      <div class="brass-rule"></div>
+      <p class="eyebrow-wide">{STORY.eyebrow}</p>
+      <h2>{STORY.title} <em>{STORY.titleEm}</em> {STORY.titleRest}</h2>
+      <p class="home-story-copy">{STORY.body}</p>
+      <p class="home-story-note">{STORY.note}</p>
+      <a class="btn" href={STORY.href}>{STORY.cta}</a>
+    </div>
+  </section>
 
   {
     houses.length > 0 && (
-      <section class="home-section">
-        <div class="home-section-head">
-          <p class="home-eyebrow">The houses we represent</p>
-          <h2>Our makers</h2>
-          <a href="/brands">All houses</a>
+      <section class="band-dark home-maisons">
+        <div class="container">
+          <div class="band-dark-head">
+            <div>
+              <p class="eyebrow-brass">The maisons</p>
+              <h2>
+                {countWord(houses.length)} houses, <em>one address</em>
+              </h2>
+            </div>
+            <a class="band-dark-link" href="/brands">All houses</a>
+          </div>
+          <ul class="index-list">
+            {houses.map((house) => (
+              <li>
+                <a href={`/brands/${house.slug}`}>
+                  <span class="index-name">{house.name}</span>
+                  {house.meta && <span class="index-meta">{house.meta}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul class="brand-strip">
-          {houses.map((brand) => (
-            <li class="brand-strip-item">
-              <a href={`/brands/${brand.slug}`}>
-                {brand.name}
-                {brand.country && <span>{brand.country}</span>}
-              </a>
-            </li>
-          ))}
-        </ul>
       </section>
     )
   }
 
   {
     posts.length > 0 && (
-      <section class="home-section">
-        <div class="home-section-head">
-          <p class="home-eyebrow">The Atelier Journal</p>
+      <section class="container home-journal">
+        <div class="section-head">
           <h2>Notes from the mill</h2>
           <a href="/resources">Read the journal</a>
         </div>
-        <ul class="post-list">
+        <ul class="journal-grid">
           {posts.map((post) => (
-            <li class="post-card">
+            <li class="journal-card">
               <a href={`/resources/${post.id}`}>
-                {post.data.hero && (
-                  <span class="post-media">
-                    <img class="post-hero" src={post.data.hero} alt="" loading="lazy" />
-                  </span>
+                {post.data.hero ? (
+                  <img src={post.data.hero} alt="" loading="lazy" />
+                ) : (
+                  <span class="journal-card-media weave" aria-hidden="true" />
                 )}
                 <h3>{post.data.title}</h3>
                 <p class="post-date">{dateFormat.format(post.data.date)}</p>
@@ -221,11 +254,13 @@ const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
   }
 
   {
-    products.length === 0 && (
-      <p class="error-state">
-        The catalogue is unavailable right now. Please try again shortly, or
-        <a href="/contact"> get in touch</a>.
-      </p>
+    products.length === 0 && brands.length === 0 && (
+      <div class="container home-outage">
+        <p class="error-state">
+          The catalogue is unavailable right now. Please try again shortly, or
+          <a href="/contact"> get in touch</a>.
+        </p>
+      </div>
     )
   }
 </Layout>

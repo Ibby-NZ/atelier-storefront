@@ -54,7 +54,12 @@
   --d-md: 1.4375rem; /* 23px — product & design names */
   --d-lg: 1.75rem; /* 28px — section headlines */
   --d-xl: clamp(2rem, 1.4rem + 2.6vw, 2.875rem); /* 32→46 page headlines */
-  --d-2xl: clamp(2.25rem, 1.2rem + 4.6vw, 4.25rem); /* 36→68 hero */
+  --d-2xl: clamp(2.5rem, 1.8rem + 3vw, 4rem); /* 40→64 band headlines */
+  /* Full-bleed image heroes. The Maison redesign sets these on top of a
+     photograph, so they run larger than any headline on paper: the home hero to
+     5.5rem, the brand banner to 5rem (handoff "Type patterns"). */
+  --d-hero: clamp(3rem, 2rem + 5vw, 5.5rem);
+  --d-hero-brand: clamp(3rem, 2rem + 4.5vw, 5rem);
 
   /* --- Spacing scale --- */
   --s1: 0.25rem;
@@ -68,16 +73,23 @@
   --s9: 4.5rem;
   --s10: 6rem;
 
-  /* --- Layout --- */
-  --container: 84rem; /* 1344px — gallery width */
+  /* --- Layout ---
+     96rem / 3rem is the Maison redesign's section frame: every mock lays its
+     content out in `max-width:96rem; padding:0 3rem`, header and footer
+     included, so the shell has to match or nothing else lines up with it. */
+  --container: 96rem; /* 1536px — section frame */
   --container-narrow: 46rem; /* forms, summaries */
   --container-prose: 41.25rem; /* ~660px — article measure */
-  --gutter: 3.5rem;
+  --gutter: 3rem;
 
-  /* --- Surface detail --- */
-  --r-sm: 3px;
-  --r-md: 4px;
-  --r-chip: 5px;
+  /* --- Surface detail ---
+     Squared corners everywhere: the Maison direction replaces the earlier 3–4px
+     radii ("Border radius: 0 everywhere" in the handoff). The three names are
+     kept so the ~40 call sites stay readable, and so a future direction can put
+     a radius back in one place. */
+  --r-sm: 0;
+  --r-md: 0;
+  --r-chip: 0;
   --hair: 1px solid var(--line);
   --shadow-lift: 0 16px 36px rgba(33, 28, 23, 0.13);
   --shadow-panel: 0 24px 60px rgba(33, 28, 23, 0.3);
@@ -336,9 +348,7 @@ main {
   .product-card:hover .product-media,
   .product-card:hover .product-image,
   .post-card:hover img,
-  .card:hover,
-  .collection-card:hover,
-  .home-hero-media:hover {
+  .card:hover {
     transform: none !important;
   }
 }

@@ -67,51 +67,9 @@ a.post-card:hover h2 {
   white-space: nowrap;
 }
 
-/* --- Post list ------------------------------------------------------------
-   Two shapes share this class: a hairline-ruled "related reading" list, and a
-   gallery of `.post-card`s on the homepage. The card variant is detected with
-   :has() — without support the cards simply stack, which still reads fine. */
-.post-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: var(--hair);
-}
-
-.post-list li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s4);
-  padding: var(--s4) 0;
-  border-bottom: var(--hair);
-}
-
-.post-list a {
-  font-family: var(--font-display);
-  font-size: var(--t-body);
-  color: var(--ink);
-  text-decoration: none;
-  transition: color var(--quick);
-}
-
-.post-list a:hover {
-  color: var(--accent);
-}
-
-.post-list:has(.post-card) {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s7) var(--s6);
-  border-top: 0;
-}
-
-.post-list li.post-card {
-  display: block;
-  padding: 0;
-  border-bottom: 0;
-}
-
+/* The homepage's journal gallery is `.journal-grid` (home.css) and the brand
+   page's related reading is the shared `.index-list` (primitives.css); the old
+   dual-purpose `.post-list` is gone with them. */
 .post-card > a {
   display: block;
   color: inherit;
@@ -139,18 +97,6 @@ a.post-card:hover h2 {
   aspect-ratio: 4 / 3;
   object-fit: cover;
   margin: 0 0 var(--s4);
-}
-
-@media (max-width: 1024px) {
-  .post-list:has(.post-card) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .post-list:has(.post-card) {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* --- Story ---------------------------------------------------------------- */
@@ -312,41 +258,167 @@ a.post-card:hover h2 {
   color: var(--accent);
 }
 
-/* --- Brand pages ---------------------------------------------------------- */
-.brand-header {
-  margin: 0 0 var(--s9);
+/* --- Brand page (Maison) -------------------------------------------------- */
+/* Design: "Maison Brand" — full-bleed 58vh banner, intro column beside the facts
+   list, 4/5 collection tiles, espresso related-reading band. The banner, the
+   band, the index rows, the scrim tiles and the spec rows are all shared figures
+   from primitives.css; only the geometry below is brand-page-specific. */
+
+/* The not-found body still needs the block padding a `bleed` page gives up. */
+.brand-missing {
+  padding-block: var(--s8) var(--s10);
+  max-width: 34rem;
 }
 
-.brand-slideshow {
-  display: flex;
-  gap: var(--s3);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin: 0 0 var(--s7);
-  padding-bottom: var(--s2);
+.brand-hero {
+  height: 58vh;
+  min-height: 26rem;
 }
 
-.brand-slideshow img {
-  flex: 0 0 auto;
-  height: 22rem;
-  width: auto;
-  object-fit: cover;
-  border: var(--hair);
-  border-radius: var(--r-md);
+/* The banner scrim is a touch lighter than the home hero's: there is one line of
+   type over it, not four. */
+.brand-hero::after {
+  background: linear-gradient(
+    to top,
+    rgba(33, 28, 23, 0.6),
+    rgba(33, 28, 23, 0.05) 55%
+  );
 }
 
-.brand-slideshow--empty {
-  display: block;
-  height: 16rem;
-  border: var(--hair);
-  border-radius: var(--r-md);
+.brand-hero .bleed-hero-body .container {
+  padding-bottom: var(--s8);
 }
 
-.brand-header h1 {
+.brand-hero h1 {
+  font-size: var(--d-hero-brand);
+}
+
+.brand-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--s10);
+  align-items: start;
+  padding-block: 4.5rem;
+}
+
+.brand-intro-body {
+  min-width: 0;
+}
+
+/* The house blurb, set as a Fraunces lede rather than body copy. */
+.brand-lede {
   margin: 0;
-  font-size: var(--d-xl);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  line-height: 1.5;
+  color: var(--ink);
+  text-wrap: pretty;
 }
 
+.brand-copy {
+  margin-top: 1.75rem;
+  font-size: var(--t-prose);
+  line-height: 1.78;
+  color: var(--ink-soft);
+}
+
+.brand-copy > p {
+  margin: 0 0 1.25rem;
+}
+
+.brand-intro-body .btn {
+  margin-top: 2.25rem;
+}
+
+/* --- Collections --------------------------------------------------------- */
+.brand-collections {
+  border-top: var(--hair);
+}
+
+.brand-collections > .container {
+  padding-block: 4.5rem var(--s10);
+}
+
+.brand-collections h2 {
+  margin: var(--s3) 0 2.5rem;
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.brand-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.5rem;
+}
+
+.brand-collection {
+  display: block;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Taller than the shared 3/4 tile, and framed — these sit on paper, not in a
+   hairline grid wall like the homepage's category tiles. */
+.brand-collection-media {
+  aspect-ratio: 4 / 5;
+  border: var(--hair);
+  transition: border-color var(--slow), box-shadow var(--slow);
+}
+
+.brand-collection:hover .brand-collection-media {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-lift);
+}
+
+.brand-collection-media .scrim-tile-label {
+  padding: var(--s5);
+  background: linear-gradient(to top, rgba(33, 28, 23, 0.5), transparent 40%);
+}
+
+.brand-collection-note {
+  display: block;
+  margin-top: var(--s4);
+  font-size: var(--t-base);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* --- Related reading ----------------------------------------------------- */
+.brand-reading > .container {
+  padding-block: var(--s9);
+}
+
+.brand-reading .band-dark-head {
+  margin-bottom: var(--s6);
+}
+
+.brand-reading h2 {
+  margin: 0;
+  font-size: var(--d-lg);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.brand-reading .index-list a {
+  padding-block: 1.25rem;
+}
+
+.brand-reading-title {
+  font-size: var(--d-sm);
+}
+
+/* A date, not a country · year label: mono, no tracking. */
+.brand-reading-date {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* --- Brands index card --------------------------------------------------- */
 .brand-meta {
   margin: var(--s3) 0 0;
   font-size: var(--t-eyebrow);
@@ -356,60 +428,35 @@ a.post-card:hover h2 {
   color: var(--muted);
 }
 
-.brand-blurb {
-  max-width: 46rem;
-  margin: var(--s5) 0 0;
-  font-size: var(--t-body);
-  line-height: 1.7;
-  color: var(--ink-soft);
-}
-
-.brand-header .btn {
-  margin-top: var(--s5);
-}
-
-.brand-collections,
-.brand-posts,
-.brand-body {
-  margin: var(--s9) 0 0;
-  padding-top: var(--s6);
-  border-top: var(--hair);
-}
-
-.brand-collections > h2,
-.brand-posts > h2 {
-  margin: 0 0 var(--s6);
-  font-size: var(--d-lg);
-}
-
-.brand-body {
-  max-width: var(--container-prose);
-}
-
-.collection-card img {
-  width: 100%;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
-  margin: calc(var(--s5) * -1) calc(var(--s5) * -1) var(--s4);
-  width: calc(100% + var(--s5) * 2);
-  max-width: none;
-  border-bottom: var(--hair);
-  border-radius: var(--r-md) var(--r-md) 0 0;
-}
-
 .brand-card .brand-meta {
   margin: 0 0 var(--s3);
 }
 
-@media (max-width: 640px) {
-  .brand-slideshow img {
-    height: 14rem;
+@media (max-width: 1024px) {
+  .brand-hero {
+    height: auto;
+    min-height: 24rem;
   }
 
-  .brand-collections,
-  .brand-posts,
-  .brand-body {
-    margin-top: var(--s7);
+  .brand-intro {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s7);
+    padding-block: var(--s8);
+  }
+
+  .brand-collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-collection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-reading .index-list a {
+    flex-direction: column;
+    gap: var(--s2);
   }
 
   .post .prose > p:first-of-type::first-letter {
