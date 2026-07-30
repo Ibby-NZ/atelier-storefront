@@ -79,10 +79,18 @@ const FONTS =
       }
     </main>
     <Footer />
-    {/* Agentation annotation toolbar — dev only. `import.meta.env.DEV` is false
-        in `astro build`, so the island is never rendered and no toolbar script
-        is requested by a production page. client:only because the toolbar is a
-        React portal into document.body with no server-renderable output. */}
-    {import.meta.env.DEV && <Agentation client:only="react" />}
+    {/* Agentation annotation toolbar. Always on under `astro dev`; on a built
+        deployment it renders only when PUBLIC_AGENTATION=true, which is how the
+        Basic-Auth staging site collects visual feedback on the real build.
+        Vite statically replaces both operands at build time, so with the flag
+        unset the branch is dead code and a public launch ships no toolbar —
+        leave it unset in the launch checklist next to ALLOW_INDEXING.
+        BUILD-TIME, like SITE_URL/ALLOW_INDEXING: every storefront page is
+        `prerender = true`, so flipping the flag needs a rebuild, not a restart.
+        client:only because the toolbar is a React portal into document.body
+        with no server-renderable output. */}
+    {(import.meta.env.DEV || import.meta.env.PUBLIC_AGENTATION === 'true') && (
+      <Agentation client:only="react" />
+    )}
   </body>
 </html>
