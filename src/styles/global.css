@@ -13,6 +13,7 @@
  *   product.css     product detail: gallery, price block, specs, colourways
  *   commerce.css    cart, checkout, orders, account, auth forms
  *   editorial.css   journal cards, long-form prose, brand pages
+ *   houses.css      brands index: focus strip, house directory, sourcing band
  *
  * Design language is the platform handoff (design_handoff_atelier_platform):
  * warm paper ground, 1px greige hairlines instead of heavy cards, claret used
@@ -29,3 +30,4 @@
 @import "./product.css";
 @import "./commerce.css";
 @import "./editorial.css";
+@import "./houses.css";

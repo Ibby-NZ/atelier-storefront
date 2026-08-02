@@ -105,3 +105,49 @@ export function weaveBackground(hexTones) {
 
 /** A fabric is cut to order; everything else is bought off the shelf. */
 export const isFabric = (product) => product?.product_type === 'fabric'
+
+/**
+ * A one-line prose summary of a product, built from whatever specification
+ * fields it actually carries. This is the product page's meta description and
+ * its Open Graph description — writing it from the same fields the page shows
+ * means every product gets a real description with nothing to hand-author, and
+ * a sparse product simply yields a shorter sentence rather than a broken one
+ * with "undefined" in it.
+ *
+ * NEVER includes a price: an international house hides its retail figure from
+ * the page (FR-3), and a description is served to everyone, signed in or not.
+ *
+ * @param {object|null} product
+ * @returns {string}
+ */
+export function productSummary(product) {
+  if (!product) return ''
+
+  const house = product.brand?.name
+  const opening = house ? `${product.name} by ${house}` : product.name
+
+  // What it is, then what it is made of, as ONE clause — "upholstery fabric in
+  // 100% linen" — because "fabric, in 100% linen" reads as a list of two things.
+  // Width follows as its own clause.
+  const kind = [product.application?.toLowerCase(), isFabric(product) ? 'fabric' : null]
+    .filter(Boolean)
+    .join(' ')
+
+  const composition = product.composition
+    ? kind
+      ? `${kind} in ${product.composition}`
+      : product.composition
+    : kind
+
+  const details = [
+    composition || null,
+    product.width ? `${product.width} wide` : null,
+  ].filter(Boolean)
+
+  const body = details.length ? `${opening} — ${details.join(', ')}.` : `${opening}.`
+  const close = isFabric(product)
+    ? 'Cut to order by the metre at Atelier Textiles.'
+    : 'Available at Atelier Textiles.'
+
+  return `${body} ${close}`
+}

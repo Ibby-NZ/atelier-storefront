@@ -2,18 +2,132 @@
 export const prerender = false // on-demand so a newly created product resolves without a rebuild
 import Layout from '../../layouts/Layout.astro'
 import ProductDetail from '../../components/ProductDetail.jsx'
+import { apiFetch, ApiError } from '../../lib/api.js'
+import { productSummary, isFabric } from '../../lib/catalogue.js'
 
-// Product detail page (US-018). Rendered on demand rather than prerendered:
-// staff create products through /admin/products at runtime, and a prerendered
-// route set would 404 every new slug until the next deploy.
+// Product detail page (US-018) — the single template EVERY product renders
+// through. There is one route (`/products/[slug]`) and one component, so a
+// product needs no page of its own: the fields below are filled from whatever
+// GET /catalogue/products/:slug returns for that slug, and a product missing a
+// field simply omits it rather than rendering a gap.
 //
-// Nothing is fetched here — the interactive detail (live availability, trade
-// pricing behind the auth cookie) is a client:load React island that fetches
-// GET /catalogue/products/:slug per request and renders its own not-found
-// state, so this page never needs the API at build OR at request time.
+// Rendered on demand rather than prerendered: staff create products through the
+// CRM at runtime, and a prerendered route set would 404 every new slug until the
+// next deploy.
+//
+// The page used to fetch NOTHING and hand the slug straight to a client:load
+// island. That worked for a shopper with JavaScript, but it meant every product
+// on the site shared one title ("Product — Atelier Textiles") and one
+// description, had no share image, and answered 200 for a slug that does not
+// exist — so a mistyped or retired product URL looked like a blank page rather
+// than a 404. The product is now resolved here as well, which fixes all four and
+// gives the island its data on the first paint instead of after a round trip.
 const { slug } = Astro.params
+
+// apiFetch, not safeFetch: the two failure modes need different handling. A 404
+// means "no such product" and must answer 404. Anything else means the API is
+// unreachable from the server, which must NOT 404 a product that really exists —
+// the island retries from the browser, which may well reach it.
+let product = null
+let apiDown = false
+try {
+  const body = await apiFetch(`/catalogue/products/${encodeURIComponent(slug)}`)
+  product = body?.product ?? null
+} catch (err) {
+  if (!(err instanceof ApiError) || err.status !== 404) apiDown = true
+}
+
+const notFound = !product && !apiDown
+if (notFound) {
+  Astro.response.status = 404
+}
+
+// This request carries no auth cookie, so `product` never holds trade pricing —
+// the island refetches from the browser, where the cookie exists, and that is
+// what reveals a trade figure. Nothing trade-only is baked into this HTML.
+const houseName = product?.brand?.name ?? null
+const title = product
+  ? [product.name, houseName, 'Atelier Textiles'].filter(Boolean).join(' — ')
+  : 'Product not found — Atelier Textiles'
+
+const description = product
+  ? productSummary(product)
+  : 'This product could not be found.'
+
+// Share image: the first colourway with a photograph, else the hi-res asset.
+const socialImage =
+  product?.colourways?.find((colourway) => colourway.image_url)?.image_url ??
+  product?.hi_res_asset_url ??
+  undefined
+
+// Structured data, built from the same fields. `offers` is included ONLY when a
+// retail price is actually public (FR-3): an international house hides its
+// figure from every shopper, and this markup is served to everyone.
+const priceVisible = Boolean(
+  product && !product.price_hidden && product.retail_price_cents != null
+)
+
+const productLd = product
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description,
+      ...(houseName ? { brand: { '@type': 'Brand', name: houseName } } : {}),
+      ...(socialImage ? { image: socialImage } : {}),
+      ...(product.composition ? { material: product.composition } : {}),
+      ...(product.colourways?.length
+        ? { sku: product.colourways[0].sku, color: product.colourways.map((c) => c.name) }
+        : {}),
+      ...(priceVisible
+        ? {
+            offers: {
+              '@type': 'Offer',
+              price: (product.retail_price_cents / 100).toFixed(2),
+              priceCurrency: product.currency ?? 'NZD',
+              availability: product.colourways?.some((colourway) => colourway.in_stock)
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+              ...(isFabric(product) ? { eligibleQuantity: { '@type': 'QuantitativeValue', unitCode: 'MTR' } } : {}),
+            },
+          }
+        : {}),
+    }
+  : null
+
+// `</script>` inside any string value would close this tag early, so every `<`
+// is escaped. The values come from the database via staff input, so this is not
+// optional.
+const productLdJson = productLd
+  ? JSON.stringify(productLd).replace(/</g, '\\u003c')
+  : null
 ---
 
-<Layout title="Product — Atelier Textiles" description="Product details, colourways, and availability.">
-  <ProductDetail client:load slug={slug} />
+<Layout title={title} description={description} image={socialImage} type="product">
+  {
+    notFound ? (
+      <div class="not-found">
+        <p class="breadcrumb">
+          <a href="/products">← The Library</a>
+        </p>
+        <h1>Design not found</h1>
+        <p>
+          We could not find that design. It may have been retired, or the address
+          may be mistyped.
+        </p>
+        <div class="cta-row">
+          <a class="btn" href="/products">
+            Browse the library
+          </a>
+          <a class="link-cta" href="/contact">
+            Ask us to source it
+          </a>
+        </div>
+      </div>
+    ) : (
+      <ProductDetail client:load slug={slug} initialProduct={product} />
+    )
+  }
+
+  {productLdJson && <script type="application/ld+json" set:html={productLdJson} is:inline />}
 </Layout>

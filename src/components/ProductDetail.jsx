@@ -8,6 +8,13 @@ import { countWord } from '../lib/houses.js'
 // Fetches GET /catalogue/products/:slug for live availability and (for approved
 // trade users) trade pricing.
 //
+// `initialProduct` is the same product already resolved server-side by
+// products/[slug].astro. It is a SEED, not a replacement for the fetch: the
+// server request carries no auth cookie, so it can never contain trade pricing,
+// and stock moves. Seeding it means the server renders the real product markup
+// (rather than "Loading product…") and the browser then refreshes it in place
+// with the shopper's own view. The fetch is therefore still unconditional.
+//
 // Maison layout: 1.15fr/1fr, a 4/5 squared hero over 64px colourway thumbnails,
 // and on the right a brass rule, a "Fabric · {House}" eyebrow, the display name
 // with its last word in italic, the selected colourway block, the claret mono
@@ -56,13 +63,19 @@ function splitDisplayName(name) {
   return { head: words.slice(0, -1).join(' '), tail: words[words.length - 1] }
 }
 
-export default function ProductDetail({ slug }) {
-  const [product, setProduct] = useState(null)
-  const [status, setStatus] = useState('loading') // loading | ready | error
+export default function ProductDetail({ slug, initialProduct = null }) {
+  const [product, setProduct] = useState(initialProduct)
+  // Seeded pages start ready, so there is no loading flash and the server's
+  // markup matches the client's first render (a mismatch would fail hydration).
+  const [status, setStatus] = useState(initialProduct ? 'ready' : 'loading')
   const [error, setError] = useState('')
-  const [selectedSku, setSelectedSku] = useState(null)
+  const [selectedSku, setSelectedSku] = useState(
+    () => defaultColourway(initialProduct?.colourways)?.sku ?? null
+  )
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(0) // how many were just added, 0 = nothing
+
+  const seeded = Boolean(initialProduct)
 
   // The hero crossfades on a colourway change (design: ~.5s). The outgoing image
   // is painted as the frame's background while the incoming <img> fades in over
@@ -78,18 +91,30 @@ export default function ProductDetail({ slug }) {
         // Detail endpoint wraps the product in an envelope: { product: {...} }.
         const loaded = body?.product ?? null
         setProduct(loaded)
-        setSelectedSku(defaultColourway(loaded?.colourways)?.sku ?? null)
+        // Keep the shopper's chosen colourway across the refresh; only fall
+        // back to the default when that SKU is no longer listed.
+        setSelectedSku((current) =>
+          loaded?.colourways?.some((colourway) => colourway.sku === current)
+            ? current
+            : defaultColourway(loaded?.colourways)?.sku ?? null
+        )
         setStatus('ready')
       })
       .catch((err) => {
         if (!active) return
+        // A seeded page is already showing the real product. A failed refresh
+        // means stock and trade pricing may be stale — it does not mean the
+        // product is gone, so it must not replace a working page with an error.
+        if (seeded) return
         setError(err instanceof ApiError ? err.message : 'Unable to load this product.')
         setStatus('error')
       })
     return () => {
       active = false
     }
-  }, [slug])
+    // `seeded`, not `initialProduct` itself: a boolean is a stable dependency,
+    // where an object prop would re-run this effect on any identity change.
+  }, [slug, seeded])
 
   const colourways = useMemo(() => product?.colourways ?? [], [product])
 

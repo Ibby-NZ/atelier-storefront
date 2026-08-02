@@ -3,18 +3,31 @@ export const prerender = false // merges live EmDash CMS posts with markdown bas
 import Layout from '../../layouts/Layout.astro'
 import { getCollection } from 'astro:content'
 import { listEmdashPosts } from '../../lib/emdash.js'
+import { excerptFromBody } from '../../lib/journal.js'
 
-// Resources / journal index. Newsletters become posts (meeting decision). The
-// list is the UNION of the markdown `post` collection (the shipped baseline) and
-// posts authored in the EmDash CMS (US-026). Markdown wins on slug collisions so
-// the baseline stays authoritative; EmDash is additive. Rendered on demand so
-// the CMS is queried live — `listEmdashPosts` never throws, so an empty/absent
-// CMS just yields the markdown posts.
+// Resources / journal index, Maison direction. Newsletters become posts (meeting
+// decision). Like the brands index, this page was left on the old generic
+// `.card-grid` when the redesign landed; it is rebuilt here from the same shared
+// figures — brass rule, `.section-head`, `.journal-grid` — that the homepage's
+// journal band already uses, so the two stay in step.
+//
+// The newest post leads as a two-column feature; the rest fall into the
+// three-across gallery. With a single post the gallery simply does not render,
+// which is the state the site ships in today.
+//
+// The list is the UNION of the markdown `post` collection (the shipped baseline)
+// and posts authored in the EmDash CMS (US-026). Markdown wins on slug
+// collisions so the baseline stays authoritative; EmDash is additive. Rendered
+// on demand so the CMS is queried live — `listEmdashPosts` never throws, so an
+// empty/absent CMS just yields the markdown posts.
 const markdownPosts = (await getCollection('post')).map((post) => ({
   id: post.id,
   title: post.data.title,
   date: post.data.date,
   hero: post.data.hero ?? null,
+  // Frontmatter wins; otherwise the post's own opening paragraph stands in, so
+  // the shipped baseline post reads properly without being edited.
+  excerpt: post.data.excerpt ?? excerptFromBody(post.body),
 }))
 
 const emdashPosts = await listEmdashPosts()
@@ -24,38 +37,82 @@ const posts = [...markdownPosts, ...emdashPosts.filter((p) => !seen.has(p.id))].
   (a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0),
 )
 
-const formatDate = (date) =>
-  date
-    ? date.toLocaleDateString('en-NZ', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : ''
+const [lead, ...rest] = posts
+
+// One formatter for the page rather than a fresh Intl instance per date.
+const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
+const formatDate = (date) => (date ? dateFormat.format(date) : '')
 ---
 
-<Layout title="Resources — Atelier Textiles">
-  <section class="page-intro">
-    <p class="page-eyebrow">The Atelier Journal</p>
+<Layout
+  title="Journal — Atelier Textiles"
+  description="Collection stories, house notes and news from the maisons we represent."
+  image={lead?.hero ?? undefined}
+  bleed
+>
+  <section class="container journal-head">
+    <div class="brass-rule"></div>
+    <p class="eyebrow-wide">The Atelier Journal</p>
     <h1>Notes &amp; <em>stories</em></h1>
-    <p>Journal, collection stories and news from the houses we represent.</p>
+    <p class="journal-lede">
+      Collection stories, house notes and news from the maisons we represent.
+    </p>
   </section>
 
-  {posts.length === 0 && <p class="empty-state">No posts yet.</p>}
+  {
+    posts.length === 0 && (
+      <div class="container journal-state">
+        <p class="empty-state">No posts yet.</p>
+      </div>
+    )
+  }
 
-  <section class="card-grid">
-    {
-      posts.map((post) => (
-        <a class="card post-card" href={`/resources/${post.id}`}>
-          {post.hero && (
-            <span class="post-media">
-              <img class="post-hero" src={post.hero} alt={post.title} loading="lazy" />
-            </span>
-          )}
-          <h2>{post.title}</h2>
-          {post.date && <span class="post-date">{formatDate(post.date)}</span>}
+  {
+    lead && (
+      <section class="container journal-lead">
+        <a class="journal-lead-card" href={`/resources/${lead.id}`}>
+          <span class="journal-lead-media">
+            {lead.hero ? (
+              <img src={lead.hero} alt="" />
+            ) : (
+              <span class="journal-lead-weave weave" aria-hidden="true" />
+            )}
+          </span>
+          <span class="journal-lead-body">
+            <span class="eyebrow-brass">Latest</span>
+            <span class="journal-lead-title">{lead.title}</span>
+            {lead.date && <span class="post-date">{formatDate(lead.date)}</span>}
+            {lead.excerpt && <span class="journal-lead-excerpt">{lead.excerpt}</span>}
+            <span class="link-cta journal-lead-cta">Read the story</span>
+          </span>
         </a>
-      ))
-    }
-  </section>
+      </section>
+    )
+  }
+
+  {
+    rest.length > 0 && (
+      <section class="container journal-more">
+        <div class="section-head">
+          <h2>More from <em>the journal</em></h2>
+          <a href="/brands">The houses</a>
+        </div>
+        <ul class="journal-grid">
+          {rest.map((post) => (
+            <li class="journal-card">
+              <a href={`/resources/${post.id}`}>
+                {post.hero ? (
+                  <img src={post.hero} alt="" loading="lazy" />
+                ) : (
+                  <span class="journal-card-media weave" aria-hidden="true" />
+                )}
+                <h3>{post.title}</h3>
+                {post.date && <p class="post-date">{formatDate(post.date)}</p>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </Layout>

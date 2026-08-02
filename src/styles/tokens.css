@@ -345,10 +345,10 @@ main {
     scroll-behavior: auto !important;
   }
 
+  /* `.post-card` and `.card` are gone with the pre-Maison card grids; the
+     library's product cards are the only figure left that moves on hover. */
   .product-card:hover .product-media,
-  .product-card:hover .product-image,
-  .post-card:hover img,
-  .card:hover {
+  .product-card:hover .product-image {
     transform: none !important;
   }
 }

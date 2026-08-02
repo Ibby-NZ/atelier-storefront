@@ -27,6 +27,10 @@ const brandPage = defineCollection({
 })
 
 // Journal / newsletter posts. `brands` tags relate a post to brand pages.
+// `excerpt` is the standfirst on the journal index; it is OPTIONAL because
+// lib/journal.js falls back to the post's own opening paragraph, so a file that
+// omits it still reads properly on the index (matches the EmDash post shape,
+// which always carries an excerpt).
 const post = defineCollection({
   loader: glob({ base: './src/content/posts', pattern: '**/*.md' }),
   schema: z.object({
@@ -34,6 +38,7 @@ const post = defineCollection({
     date: z.coerce.date(),
     brands: z.array(z.string()).default([]),
     hero: z.string().optional(),
+    excerpt: z.string().optional(),
   }),
 })
 

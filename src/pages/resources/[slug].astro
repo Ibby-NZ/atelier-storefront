@@ -4,6 +4,8 @@ import Layout from '../../layouts/Layout.astro'
 import { getEntry, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
 import { getEmdashPost } from '../../lib/emdash.js'
+import { excerptFromBody } from '../../lib/journal.js'
+import { safeFetch } from '../../lib/api.js'
 
 // One journal post. The markdown `post` collection is the baseline and wins on
 // slug collisions; a slug with no markdown entry falls back to a post authored
@@ -23,14 +25,34 @@ const found = mdPost ?? emPost
 const title = mdPost?.data.title ?? emPost?.title ?? 'Not found'
 const date = mdPost?.data.date ?? emPost?.date ?? null
 const hero = mdPost?.data.hero ?? emPost?.hero ?? null
-const brands = mdPost?.data.brands ?? []
+const brandSlugs = mdPost?.data.brands ?? []
+
+// The standfirst doubles as the page's meta description, so a post is
+// shareable without anyone writing a second summary.
+const excerpt = mdPost
+  ? mdPost.data.excerpt ?? excerptFromBody(mdPost.body)
+  : emPost?.excerpt ?? ''
+
+// A tag showed the raw slug ("pierre-frey"). The house names come from the
+// catalogue API; safeFetch never throws, so a missing/unavailable API just
+// leaves the tag on its slug rather than failing the page. Skipped entirely
+// when the post tags no houses.
+const { data: brandList } = brandSlugs.length
+  ? await safeFetch('/catalogue/brands')
+  : { data: null }
+
+const brandNames = (brandList?.brands ?? []).reduce(
+  (names, brand) => ({ ...names, [brand.slug]: brand.name }),
+  {}
+)
+
+const brands = brandSlugs.map((houseSlug) => ({
+  slug: houseSlug,
+  name: brandNames[houseSlug] ?? houseSlug,
+}))
 
 const formattedDate = date
-  ? date.toLocaleDateString('en-NZ', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+  ? new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' }).format(date)
   : ''
 
 if (!found) {
@@ -38,28 +60,43 @@ if (!found) {
 }
 ---
 
-<Layout title={`${title} — Atelier Textiles`}>
-  <p class="breadcrumb"><a href="/resources">← All resources</a></p>
-
+<Layout
+  title={`${title} — Atelier Textiles`}
+  description={excerpt || 'Collection stories and house notes from Atelier Textiles.'}
+  image={hero ?? undefined}
+  type="article"
+>
   {
-    !found && (
+    !found ? (
+      <div class="not-found">
+        <p class="breadcrumb">
+          <a href="/resources">← The journal</a>
+        </p>
+        <h1>Story not found</h1>
+        <p>
+          That post could not be found. It may have been moved or is no longer
+          published.
+        </p>
+        <a class="btn" href="/resources">
+          Read the journal
+        </a>
+      </div>
+    ) : (
       <article class="post">
-        <p class="empty-state">That post could not be found.</p>
-      </article>
-    )
-  }
+        <p class="breadcrumb">
+          <a href="/resources">← The journal</a>
+        </p>
 
-  {
-    found && (
-      <article class="post">
         <header class="post-header">
+          <div class="brass-rule" />
+          <p class="eyebrow-wide">The Atelier Journal</p>
           <h1>{title}</h1>
           {formattedDate && <span class="post-date">{formattedDate}</span>}
           {brands.length > 0 && (
             <p class="post-brands">
-              {brands.map((b) => (
-                <a class="tag" href={`/brands/${b}`}>
-                  {b}
+              {brands.map((brand) => (
+                <a class="tag" href={`/brands/${brand.slug}`}>
+                  {brand.name}
                 </a>
               ))}
             </p>
@@ -82,6 +119,12 @@ if (!found) {
             )
           }
         </div>
+
+        <footer class="post-footer">
+          <a class="link-cta" href="/resources">
+            More from the journal
+          </a>
+        </footer>
       </article>
     )
   }

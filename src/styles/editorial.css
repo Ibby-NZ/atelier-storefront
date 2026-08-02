@@ -7,57 +7,12 @@
  * a narrow ~660px measure for long-form reading with a claret drop cap.
  */
 
-/* --- Post cards ----------------------------------------------------------- */
-.post-card {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-}
-
-a.post-card:hover {
-  background: none;
-  border: 0;
-  transform: none;
-  box-shadow: none;
-}
-
-/* No overflow wrapper exists around journal thumbnails, so the hover is a
-   whisper-soft lift rather than the reference's image zoom (see the handoff
-   note about adding a `.post-media` wrapper). */
-.post-card img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  margin: 0 0 var(--s4);
-  border: var(--hair);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  transition: transform var(--slow), box-shadow var(--slow),
-    border-color var(--slow);
-}
-
-a.post-card:hover img,
-.post-card > a:hover img {
-  transform: translateY(-4px);
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
-}
-
-.post-card h2 {
-  margin: 0 0 var(--s3);
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: var(--d-md);
-  line-height: 1.14;
-  color: var(--ink);
-  transition: color var(--quick);
-}
-
-a.post-card:hover h2 {
-  color: var(--accent);
-}
-
+/* --- Post meta ------------------------------------------------------------ */
+/* Shared by the journal index, the homepage's journal band and the story
+   header. The old `.post-card` block that used to sit here went with the
+   generic `.card-grid` index it styled — the journal gallery is now the
+   homepage's `.journal-grid` / `.journal-card` (home.css), so there is one
+   card figure instead of two that drifted apart. */
 .post-date {
   display: block;
   font-family: var(--font-mono);
@@ -67,36 +22,136 @@ a.post-card:hover h2 {
   white-space: nowrap;
 }
 
-/* The homepage's journal gallery is `.journal-grid` (home.css) and the brand
-   page's related reading is the shared `.index-list` (primitives.css); the old
-   dual-purpose `.post-list` is gone with them. */
-.post-card > a {
-  display: block;
+/* --- Journal index (/resources) ------------------------------------------- */
+/* The page is `bleed`, so every section owns its own block padding. */
+.journal-head {
+  padding-block: var(--s9) var(--s7);
+}
+
+.journal-head h1 {
+  margin: var(--s3) 0 0;
+  font-weight: 400;
+  font-size: var(--d-xl);
+  line-height: 1.02;
+}
+
+.journal-lede {
+  margin: var(--s5) 0 0;
+  max-width: 34rem;
+  font-size: var(--t-prose);
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.journal-state {
+  padding-block: var(--s6) var(--s9);
+}
+
+/* --- Lead feature --------------------------------------------------------- */
+.journal-lead {
+  padding-bottom: var(--s9);
+}
+
+.journal-lead-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--s9);
+  align-items: center;
   color: inherit;
   text-decoration: none;
 }
 
-.post-card h2,
-.post-card h3 {
-  margin: 0 0 var(--s3);
+.journal-lead-media {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  border: var(--hair);
+  background: var(--surface);
+  transition: border-color var(--slow), box-shadow var(--slow);
+}
+
+.journal-lead-media img,
+.journal-lead-weave {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Maison hover: the frame moves, the type only takes claret. */
+.journal-lead-card:hover .journal-lead-media {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-lift);
+}
+
+.journal-lead-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s4);
+  min-width: 0;
+}
+
+.journal-lead-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--d-md);
-  line-height: 1.14;
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
   color: var(--ink);
+  text-wrap: balance;
   transition: color var(--quick);
 }
 
-.post-card > a:hover h2,
-.post-card > a:hover h3 {
+.journal-lead-card:hover .journal-lead-title {
   color: var(--accent);
 }
 
-/* A hero image reused inside a card is a card thumbnail, not a page hero. */
-.post-card .post-hero {
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  margin: 0 0 var(--s4);
+.journal-lead-excerpt {
+  max-width: 34rem;
+  font-size: var(--t-prose);
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+/* The CTA is a span inside the card's own anchor (an <a> cannot nest), so its
+   hover has to be driven by the card rather than by `.link-cta:hover`. */
+.journal-lead-cta {
+  margin-top: var(--s2);
+}
+
+.journal-lead-card:hover .journal-lead-cta {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --- Rest of the gallery -------------------------------------------------- */
+.journal-more {
+  padding-block: var(--s7) var(--s10);
+  border-top: var(--hair);
+}
+
+.journal-more .section-head {
+  margin-bottom: var(--s6);
+}
+
+@media (max-width: 1024px) {
+  .journal-head {
+    padding-block: var(--s7) var(--s6);
+  }
+
+  .journal-lead-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s6);
+  }
+
+  .journal-lead {
+    padding-bottom: var(--s8);
+  }
+
+  .journal-more {
+    padding-block: var(--s6) var(--s9);
+  }
 }
 
 /* --- Story ---------------------------------------------------------------- */
@@ -112,9 +167,16 @@ a.post-card:hover h2 {
   border-bottom: var(--hair);
 }
 
+/* The story header opens on the direction's brass rule + eyebrow, like every
+   other block in the redesign. */
+.post-header .eyebrow-wide {
+  margin-bottom: var(--s4);
+}
+
 .post-header h1,
 .content-page > h1 {
   margin: 0 0 var(--s4);
+  font-weight: 400;
   font-size: var(--d-xl);
   line-height: 1.05;
 }
@@ -132,6 +194,13 @@ a.post-card:hover h2 {
   border: var(--hair);
   border-radius: var(--r-md);
   background: var(--surface);
+}
+
+/* Way back out of the article. */
+.post-footer {
+  margin-top: var(--s8);
+  padding-top: var(--s5);
+  border-top: var(--hair);
 }
 
 /* --- Prose ---------------------------------------------------------------- */
@@ -418,19 +487,8 @@ a.post-card:hover h2 {
   text-transform: none;
 }
 
-/* --- Brands index card --------------------------------------------------- */
-.brand-meta {
-  margin: var(--s3) 0 0;
-  font-size: var(--t-eyebrow);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.brand-card .brand-meta {
-  margin: 0 0 var(--s3);
-}
+/* The brands index lives in houses.css — it is a page of its own now, not a
+   card variant, so `.brand-card` / `.brand-meta` went with the `.card-grid`. */
 
 @media (max-width: 1024px) {
   .brand-hero {
