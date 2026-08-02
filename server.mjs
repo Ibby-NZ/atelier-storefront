@@ -101,7 +101,7 @@ if (misconfigured) {
 app.use('/', express.static(clientDir))
 app.use(ssrHandler)
 
-const port = Number(process.env.PORT) || 4321
+const port = Number(process.env.PORT) || 3041
 app.listen(port, () => {
   console.log(
     `atelier-store on :${port} `
