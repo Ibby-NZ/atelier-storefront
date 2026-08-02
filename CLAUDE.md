@@ -228,14 +228,34 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   `prerender = false`. It had `getStaticPaths` enumerating website-visible
   slugs; that was deleted when staff gained product create/edit at runtime
   (`/admin/products`), because a prerendered route set 404s every new slug until
-  the next deploy. The page frontmatter now does NO fetching at all — it only
-  reads `Astro.params.slug` — so it needs the API neither at build nor at
-  request time. The live detail is a
-  `client:load` island `ProductDetail.jsx` fetching `GET /catalogue/products/:slug`
-  per request — necessary because availability and trade pricing are per-request
-  (auth cookie). **Gotcha:** that endpoint wraps the product in an envelope
-  `{ product: {...} }` (unlike the LIST endpoint which returns `{ products, meta }`);
-  read `body.product`.
+  the next deploy. **This is the one template every product renders through** —
+  one route, one component, all fields filled from the API response, so a product
+  never needs a page of its own and a sparse product omits a field rather than
+  rendering a gap. The live detail is a `client:load` island `ProductDetail.jsx`
+  fetching `GET /catalogue/products/:slug` per request — necessary because
+  availability and trade pricing are per-request (auth cookie). **Gotcha:** that
+  endpoint wraps the product in an envelope `{ product: {...} }` (unlike the LIST
+  endpoint which returns `{ products, meta }`); read `body.product`.
+  - **The frontmatter fetches the product too** (it briefly did not, and that is
+    what this paragraph used to say). Server-side resolution is what gives each
+    product a real `<title>`, a description (`productSummary` in
+    `src/lib/catalogue.js`, built from the same spec fields the page shows), an
+    `og:image`, JSON-LD, and a genuine **404** — without it every product shared
+    one title and an unknown slug answered 200 with a blank page. It uses
+    `apiFetch` (not `safeFetch`) for the same reason `/brands/[slug]` does: a 404
+    means "no such product" and must 404, while any other failure means the API is
+    unreachable *from the server* and must NOT 404 a product that exists — the
+    island retries from the browser, which may well reach it.
+  - **The fetched product is passed to the island as `initialProduct` — a SEED,
+    not a replacement for its fetch.** The server request carries no auth cookie,
+    so it can never hold trade pricing, and stock moves; the island still fetches
+    unconditionally. Seeding it means the page server-renders the real product
+    instead of "Loading product…", and a failed refresh keeps the working page
+    rather than replacing it with an error. Server and client both first render
+    from `initialProduct`, so hydration matches. **No trade figure is ever baked
+    into this HTML**, and the JSON-LD `offers` block appears only where a retail
+    price is actually public (FR-3) — present on a house product, absent on an
+    international one.
   - **The colourway is the unit of purchase** — every SKU belongs to a colourway,
     not to the product — so selection drives the whole page: hero image,
     displayed SKU, stock state, and what the primary action acts on. Selection
