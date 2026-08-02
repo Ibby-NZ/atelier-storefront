@@ -1,9 +1,9 @@
-import { defineConfig } from 'astro/config'
-import { loadEnv } from 'vite'
-import react from '@astrojs/react'
-import node from '@astrojs/node'
-import emdash, { local } from 'emdash/astro'
-import { sqlite } from 'emdash/db'
+import { defineConfig } from "astro/config";
+import { loadEnv } from "vite";
+import react from "@astrojs/react";
+import node from "@astrojs/node";
+import emdash, { local } from "emdash/astro";
+import { sqlite } from "emdash/db";
 
 // Storefront config. React powers the interactive islands (filters, cart,
 // forms); everything else ships as static HTML. Dev server port kept off the
@@ -21,7 +21,11 @@ import { sqlite } from 'emdash/db'
 // http://localhost:4321 at build time, which is wrong the moment the site is
 // indexable — so SITE_URL belongs in the launch checklist next to
 // ALLOW_INDEXING (both are build-time, both need a rebuild to take effect).
-const { SITE_URL } = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '')
+const { SITE_URL } = loadEnv(
+  process.env.NODE_ENV ?? "development",
+  process.cwd(),
+  "",
+);
 
 export default defineConfig({
   site: SITE_URL || undefined,
@@ -32,15 +36,15 @@ export default defineConfig({
   // Express to put a Basic Auth gate in front of EVERYTHING, prerendered pages
   // included — standalone would serve those before any auth could run.
   // Consequence: `npm start` runs server.mjs, and `astro preview` is unavailable.
-  output: 'server',
-  adapter: node({ mode: 'middleware' }),
+  output: "server",
+  adapter: node({ mode: "middleware" }),
   integrations: [
     react(),
     emdash({
-      database: sqlite({ url: 'file:./data/emdash.db' }),
+      database: sqlite({ url: "file:./data/emdash.db" }),
       storage: local({
-        directory: './data/uploads',
-        baseUrl: '/_emdash/api/media/file',
+        directory: "./data/uploads",
+        baseUrl: "/_emdash/api/media/file",
       }),
     }),
   ],
@@ -48,4 +52,4 @@ export default defineConfig({
     port: 4321,
     host: true,
   },
-})
+});

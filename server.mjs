@@ -102,10 +102,25 @@ app.use('/', express.static(clientDir))
 app.use(ssrHandler)
 
 const port = Number(process.env.PORT) || 3041
-app.listen(port, () => {
+const server = app.listen(port)
+
+server.on('listening', () => {
   console.log(
     `atelier-store on :${port} `
     + `(auth ${misconfigured ? 'MISCONFIGURED — serving 503' : authDisabled ? 'DISABLED' : 'on'}, `
     + `indexing ${allowIndexing ? 'allowed' : 'blocked'})`
   )
+})
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(
+      `Port ${port} is already in use — another storefront process is probably `
+      + `still running. Stop it (e.g. \`fuser -k ${port}/tcp\`) or set PORT to a `
+      + 'different value.'
+    )
+  } else {
+    console.error(err)
+  }
+  process.exit(1)
 })
