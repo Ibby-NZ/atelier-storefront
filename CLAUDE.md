@@ -622,10 +622,17 @@ espresso related-reading band using the shared `.index-list`.
   editorial** (`collectionTiles` in `src/lib/collections.js`, pure + tested):
   `safeFetch('/catalogue/collections?brand=')` supplies the tiles. **The gate is
   BRAND-level, not per collection** (client's rule, re-confirmed on the
-  manuel-canovas feedback): the section renders when the house itself has
+  manuel-canovas feedback and again on the 4 Aug 2026 roster): the section
+  renders when the house itself has
   reachable products (`brandHasProducts` = the facts list's `designCount > 0`),
   and then EVERY live collection tiles — memberships are mostly still unassigned
-  in the CRM, and a per-collection `product_count > 0` gate hid whole houses. A
+  in the CRM, and a per-collection `product_count > 0` gate hid whole houses.
+  Nothing under the house means NO section at all, heading included — which is
+  what the fourteen represented-only houses the API now seeds (Alpaka, Armani
+  Casa, Le Crin, … — houses Atelier represents but holds nothing from) rely on:
+  each renders its banner, facts list and "Visit {name}" button and stops there.
+  de Le Cuona and No.9 Thompson are in the same position with collections but no
+  products. A
   stocked collection links `/products?brand=&collection=`; a memberless one
   falls back to `/products?brand=` so a tile never lands on an empty grid. Tile
   copy/photo precedence: EmDash/markdown card (matched by its `collection` slug
