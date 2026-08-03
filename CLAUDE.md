@@ -224,10 +224,18 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     two-column grid — `16rem` sticky refine sidebar + results column — because
     the facets and the grid share every piece of state.
     - `FILTERS` gained a **`control`** field: `list` renders as a click-to-toggle
-      facet row with a live count (House, Type), `select` as an underline
-      dropdown under "More filters" (Application, Composition, Width, Price
-      band, Lead time). The URL keys and the filter semantics are unchanged, so
-      every existing deep link still resolves.
+      facet row with a live count (House, Collection, Type), `select` as an
+      underline dropdown under "More filters" (Application, Composition, Width,
+      Price band, Lead time). The URL keys and the filter semantics are
+      unchanged, so every existing deep link still resolves.
+    - **`collection`** filters on `product.collection?.slug` (label from
+      `.name`) — the key the brand-page collection tiles deep-link with
+      (`/products?brand=&collection=`). Slugs are unique per brand, not
+      globally, so the slug-only match mirrors the API's documented "pair it
+      with brand" posture; the tiles always pass both. Most products carry no
+      collection (membership is staff-assigned in the CRM) and `facetLists`
+      drops an empty facet, so the list only appears once collections are in
+      use.
     - `facetOptions()` counts each list option against the search term and every
       **other** filter, never the facet's own selection — so picking a house does
       not collapse the House list to one row, while the counts still track what
@@ -564,9 +572,31 @@ blurb falls back CMS → markdown → `brand.story`; slideshow/cards CMS → mar
 **Maison layout** (design: "Maison Brand"), `<Layout bleed>`: full-bleed 58vh
 banner (`slideshow[0]`, else the weave) with an eyebrow of
 `The Maisons · {country} · est. {year}` → `1.3fr / 1fr` intro, the blurb set as a
-Fraunces lede over the body copy with an outlined `Shop {name}` beside the facts
+Fraunces lede over the body copy with an outlined `Visit {name}` beside the facts
 list → 4/5 collection tiles with scrim labels and a description under each →
 espresso related-reading band using the shared `.index-list`.
+- **The intro button is the house's own website** (`brand.website_url`, staff-set
+  in the CRM's Houses & collections screen), opened in a new tab; no URL on file
+  → no button. It replaced `Shop {name}` (client decision, page feedback Aug
+  2026) — the shop path now lives in the collection tiles below, so a house with
+  products but no collections assigned has no direct shop link from this page
+  until staff group its products in the CRM.
+- **The collection tiles are driven by the live catalogue, decorated by
+  editorial** (`collectionTiles` in `src/lib/collections.js`, pure + tested):
+  `safeFetch('/catalogue/collections?brand=')` supplies the tiles. **The gate is
+  BRAND-level, not per collection** (client's rule, re-confirmed on the
+  manuel-canovas feedback): the section renders when the house itself has
+  reachable products (`brandHasProducts` = the facts list's `designCount > 0`),
+  and then EVERY live collection tiles — memberships are mostly still unassigned
+  in the CRM, and a per-collection `product_count > 0` gate hid whole houses. A
+  stocked collection links `/products?brand=&collection=`; a memberless one
+  falls back to `/products?brand=` so a tile never lands on an empty grid. Tile
+  copy/photo precedence: EmDash/markdown card (matched by its `collection` slug
+  field, else by heading == collection name case-insensitive) → the API
+  collection's own `description`/`image_url` (seeded from the atelier.co.nz
+  snapshot, CRM-editable) → name over the weave. An unmatched card renders
+  nothing — editorial cannot invent a shop destination; `card.link` is
+  legacy/unused here.
 - `slideshow[1..]` is no longer rendered as a scrolling gallery (the design has
   one banner). Nothing is lost on the seeded page: the collection cards carry the
   same three images as their `featuredImage`.
@@ -628,6 +658,19 @@ markdown collections (above) remain the shipped baseline.
 - **Config:** `emdash({ database: sqlite({ url: 'file:./data/emdash.db' }),
   storage: local({ directory: './data/uploads', ... }) })`. `data/` and
   `emdash-env.d.ts` are gitignored — local content is never committed.
+- **Passkeys need `SITE_URL` set at RUN time behind a proxy.** No `siteUrl` is
+  passed to `emdash()`, so its origin resolution is
+  `config.siteUrl → process.env.EMDASH_SITE_URL → process.env.SITE_URL →
+  url.origin`. With Cloudflare/nginx terminating TLS, that last fallback is the
+  *internal* `http://<host>` while the browser signs `https://<host>`, so
+  `verifyRegistrationResponse` throws `Invalid origin: … not in […]` and the
+  admin shows the generic **"Failed to verify admin setup"**. The real error is
+  only in the process log (`[SETUP_VERIFY_ERROR]`). Note the two lifecycles:
+  Astro's `site` reads `SITE_URL` at build time (canonical/og:url), EmDash reads
+  `process.env` at run time and **caches it**, so a passkey fix is `.env` +
+  restart, while canonical URLs additionally need a rebuild. Registration
+  succeeding but verification failing points at the scheme specifically — a
+  wrong *host* would have made the browser refuse `credentials.create()` first.
 - **Live collection:** `src/live.config.js` registers the `_emdash` loader.
 - **Schema lives in `.emdash/seed.json`** (committed), applied with
   `npm run seed:cms` (`emdash seed --database ./data/emdash.db --uploads-dir
@@ -669,7 +712,13 @@ markdown collections (above) remain the shipped baseline.
   Both are `prerender = false`. **Brand pages invert that precedence** (EmDash
   wins) — rationale in the US-024 section above.
 - **`brand_pages` entry slug MUST equal the atelier-api brand slug** — that is
-  the only key joining CMS editorial to the live catalogue brand.
+  the only key joining CMS editorial to the live catalogue brand. A
+  `collection_cards` row's **`collection` sub-field joins the same way at the
+  collection level**: it must equal the collection's slug (shown as its "web
+  address" in the CRM's Houses & collections screen). The card then decorates
+  the live tile (image + description) on `/brands/[slug]`; the tile's existence
+  and link are the API's (see `lib/collections.js`). `link` remains only as the
+  pre-join legacy field.
 - **Admin:** http://localhost:4321/_emdash/admin (first run → `/setup`,
   passkey auth). Dev-only headless bootstrap + API token:
   `GET /_emdash/api/setup/dev-bypass?token=1`.

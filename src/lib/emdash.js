@@ -64,6 +64,9 @@ export const normaliseBrandPage = (entry) => {
     blurb: data.blurb ?? '',
     slideshow: slideshowRows.map((row) => rowMedia(row, 'image')).filter(Boolean),
     collectionCards: cardRows.map((row) => ({
+      // The join key to a live catalogue collection (its slug within this
+      // brand) — see lib/collections.js collectionTiles.
+      collection: row?.collection ?? '',
       heading: row?.heading ?? '',
       description: row?.description ?? '',
       link: row?.link ?? '',

@@ -16,9 +16,13 @@ const brandPage = defineCollection({
     collectionCards: z
       .array(
         z.object({
+          // Join key to a live catalogue collection (its slug within this
+          // brand). Cards decorate the API-driven tiles; `link` is legacy and
+          // unused by the brand page once a `collection` matches.
+          collection: z.string().optional(),
           heading: z.string(),
           description: z.string(),
-          link: z.string(),
+          link: z.string().optional(),
           featuredImage: z.string().optional(),
         }),
       )

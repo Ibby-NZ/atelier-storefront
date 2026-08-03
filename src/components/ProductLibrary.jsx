@@ -35,6 +35,13 @@ const PAGE_LIMIT = 100
 // filters". Order here is the order controls render in.
 const FILTERS = [
   { key: 'brand', label: 'House', type: 'brand', control: 'list' },
+  // Value is the collection SLUG (the brand-page tiles deep-link with it).
+  // Slugs are unique per brand, not globally — matching on the slug alone
+  // mirrors the API's `collection` filter, whose documented posture is "pair
+  // it with brand"; the tiles always do. Most products carry no collection
+  // (membership is staff-assigned in the CRM), and facetLists drops an empty
+  // facet, so this list simply doesn't render until collections are in use.
+  { key: 'collection', label: 'Collection', type: 'collection', control: 'list' },
   { key: 'product_type', label: 'Type', type: 'enum', control: 'list' },
   { key: 'application', label: 'Application', type: 'text', control: 'select' },
   { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
@@ -99,10 +106,12 @@ function writeUrlState(selection, query, sort) {
   )
 }
 
-// A product's value for a given filter key. brand collapses to slug (the value)
-// but keeps the name for the label; everything else is a plain string column.
+// A product's value for a given filter key. brand and collection collapse to
+// their slug (the value) but keep the name for the label; everything else is a
+// plain string column.
 function productValue(product, key) {
   if (key === 'brand') return product.brand?.slug || ''
+  if (key === 'collection') return product.collection?.slug || ''
   return product[key] == null ? '' : String(product[key])
 }
 
@@ -116,6 +125,7 @@ function optionsFor(products, filter) {
     if (!value || seen.has(value)) continue
     let label = value
     if (filter.type === 'brand') label = product.brand?.name || value
+    else if (filter.type === 'collection') label = product.collection?.name || value
     else if (filter.type === 'enum') label = PRODUCT_TYPE_LABELS[value] || value
     seen.set(value, label)
   }

@@ -4,6 +4,7 @@ import { getCollection, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
 import Layout from '../../layouts/Layout.astro'
 import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
+import { collectionTiles } from '../../lib/collections.js'
 import { getEmdashBrandPage } from '../../lib/emdash.js'
 import { countWord, foundedYear } from '../../lib/houses.js'
 
@@ -72,6 +73,23 @@ const { data: held } = await safeFetch(
 const designCount = held?.meta?.total ?? null
 const founded = foundedYear(brand ?? { story: blurb })
 
+// The collections grid is driven by the live catalogue and only decorated by
+// the editorial cards above. The gate is BRAND-level — the section shows when
+// Atelier holds products under the house (designCount, already fetched for the
+// facts list), whether or not memberships are assigned yet; a memberless
+// collection's tile falls back to the house grid so it never lands empty (see
+// lib/collections.js). safeFetch because this page must render with the API
+// down — the section degrades away, like the facts that depend on the API.
+const { data: collectionsBody } = await safeFetch(
+  `/catalogue/collections?brand=${encodeURIComponent(slug)}`
+)
+const tiles = collectionTiles({
+  collections: collectionsBody?.collections ?? [],
+  cards,
+  brandSlug: slug,
+  brandHasProducts: (designCount ?? 0) > 0,
+})
+
 const facts = [
   founded ? { label: 'Founded', value: String(founded) } : null,
   brand?.country ? { label: 'Made in', value: brand.country } : null,
@@ -135,9 +153,21 @@ if (notFound) {
                 <Body />
               </div>
             )}
-            <a class="btn btn-lg" href={`/products?brand=${slug}`}>
-              Shop {name}
-            </a>
+            {
+              // The intro action sends the reader to the house's own site (the
+              // client's rule); the shop path lives in the collection tiles
+              // below. No website on file -> no button, not a dead link.
+              brand?.website_url && (
+                <a
+                  class="btn btn-lg"
+                  href={brand.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Visit {name}
+                </a>
+              )
+            }
           </div>
 
           <dl class="spec-rows brand-facts">
@@ -150,26 +180,28 @@ if (notFound) {
           </dl>
         </section>
 
-        {cards.length > 0 && (
+        {tiles.length > 0 && (
           <section class="brand-collections">
             <div class="container">
               <p class="eyebrow-brass">This season</p>
               <h2>
-                {countWord(cards.length)}{' '}
-                <em>{cards.length === 1 ? 'collection' : 'collections'}</em>
+                {countWord(tiles.length)}{' '}
+                <em>{tiles.length === 1 ? 'collection' : 'collections'}</em>
               </h2>
               <div class="brand-collection-grid">
-                {cards.map((card) => (
-                  <a class="brand-collection" href={card.link}>
+                {tiles.map((tile) => (
+                  <a class="brand-collection" href={tile.href}>
                     <span class="scrim-tile brand-collection-media">
-                      {card.featuredImage ? (
-                        <img src={card.featuredImage} alt="" loading="lazy" />
+                      {tile.image ? (
+                        <img src={tile.image} alt="" loading="lazy" />
                       ) : (
                         <span class="scrim-tile-media weave" aria-hidden="true" />
                       )}
-                      <span class="scrim-tile-label">{card.heading}</span>
+                      <span class="scrim-tile-label">{tile.heading}</span>
                     </span>
-                    <span class="brand-collection-note">{card.description}</span>
+                    {tile.description && (
+                      <span class="brand-collection-note">{tile.description}</span>
+                    )}
                   </a>
                 ))}
               </div>

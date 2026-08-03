@@ -45,9 +45,15 @@
         {
           "slug": "collection_cards",
           "label": "Collection Cards",
+          "description": "Editorial dressing for the live catalogue collections on the brand page. Collection is the join key: it must equal the collection's web address (slug) in the CRM's Houses & collections screen. A matching card decorates that tile (image + description); the tile itself, its link and whether it shows at all come from the live catalogue — only collections that actually hold products appear.",
           "type": "repeater",
           "validation": {
             "subFields": [
+              {
+                "slug": "collection",
+                "label": "Collection (catalogue web address)",
+                "type": "string"
+              },
               {
                 "slug": "heading",
                 "label": "Heading",
