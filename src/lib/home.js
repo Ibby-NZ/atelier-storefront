@@ -72,6 +72,33 @@ export function collectionBySlug(collections = [], slug) {
 }
 
 /**
+ * The house line above a collection's name, or null when it would repeat it.
+ *
+ * The hero stacks the house over the collection ("de Le Cuona" / "Nature's
+ * Opera"), which reads as one thought — unless the house is already the first
+ * word of the collection, and then it reads as a stutter: "Larsen / Larsen
+ * 2024", "Manuel Canovas / Manuel Canovas 2024". Two of the three collections
+ * the client features are named that way, so this is the common case rather
+ * than an edge one.
+ *
+ * Only a PREFIX counts. A house named anywhere else in the title is doing
+ * different work ("India Mahdavi's True Velvet Collection" is a Pierre Frey
+ * collection, and dropping the house there would leave the tile unattributed).
+ *
+ * @param {string|null|undefined} collectionName
+ * @param {string|null|undefined} houseName
+ * @returns {string|null}
+ */
+export function houseLabel(collectionName, houseName) {
+  const house = String(houseName ?? '').trim()
+  if (!house) return null
+  const name = String(collectionName ?? '')
+    .trim()
+    .toLowerCase()
+  return name.startsWith(house.toLowerCase()) ? null : house
+}
+
+/**
  * Photographs for the bands that carry no collection of their own — the two
  * shop banners and the two dark bands.
  *

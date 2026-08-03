@@ -6,16 +6,27 @@ import Layout from '../../layouts/Layout.astro'
 import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
 import { collectionTiles } from '../../lib/collections.js'
 import { getEmdashBrandPage } from '../../lib/emdash.js'
-import { countWord, foundedYear } from '../../lib/houses.js'
+import { foundedYear } from '../../lib/houses.js'
 
-// One brand page, Maison direction (design: "Maison Brand"), resolved per
-// request so a brand created in /admin/brands or a page published in the EmDash
-// CMS appears without a rebuild.
+// One house page, 2026 direction, resolved per request so a brand created in
+// /admin/brands or a page published in the EmDash CMS appears without a
+// rebuild.
 //
-// Section order is the handoff's: full-bleed 58vh banner, the intro column
-// beside the facts list, the collection tiles, then the espresso related-reading
-// band. The page is `bleed` so the banner and the espresso band paint edge to
-// edge; each section carries its own `.container`.
+// It renders BOTH of the Figma's house frames, because they are the same page
+// drawn twice:
+//   - "Brand Page" (9350:479) — a full-bleed photographic banner with the
+//     header floating over it, the country as a badge above the house name.
+//   - "Product Page" (9350:788) — identical from the intro down; the banner is
+//     replaced by an umber title band. It is not a product-detail screen: the
+//     tiles below it are still collections and the copy is still a house blurb.
+// The switch is simply whether the house has banner photography, which is what
+// the two frames differ on. Fourteen of the houses the API seeds are
+// represented-only and have no imagery at all, so the band variant is the one
+// most of the directory actually renders.
+//
+// Then: the intro column beside the facts rows, the full-bleed collection tile
+// wall, and the related-reading band. The page is `bleed`, and `overlay`
+// whenever there is a banner for the header to float over.
 const { slug } = Astro.params
 
 // The brand itself comes from the live catalogue API. apiFetch (not safeFetch)
@@ -90,17 +101,17 @@ const tiles = collectionTiles({
   brandHasProducts: (designCount ?? 0) > 0,
 })
 
+// The mock's three rows are Made in / Designs held / Held at Atelier. Founded
+// is kept ahead of them where the house's own story states a year — it is real,
+// sourced copy and the mock's row list is not exhaustive. The mock's
+// "Archive: 25,000+ documents" is Pierre Frey copy with no field behind it, so
+// it is not invented for every house.
 const facts = [
   founded ? { label: 'Founded', value: String(founded) } : null,
   brand?.country ? { label: 'Made in', value: brand.country } : null,
   designCount ? { label: 'Designs held', value: `${designCount}` } : null,
   { label: 'Held at Atelier', value: 'By the metre, cut to order' },
 ].filter(Boolean)
-
-// The banner eyebrow: "The Maisons · France · est. 1935".
-const heroEyebrow = ['The Maisons', brand?.country, founded ? `est. ${founded}` : null]
-  .filter(Boolean)
-  .join(' · ')
 
 const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
 
@@ -115,10 +126,10 @@ if (notFound) {
 }
 ---
 
-<Layout title={`${name} — Atelier Textiles`} bleed>
+<Layout title={`${name} — Atelier Textiles`} bleed overlay={Boolean(heroImage) && !notFound}>
   {
     notFound ? (
-      <div class="container brand-missing">
+      <div class="container house-missing">
         <p class="breadcrumb">
           <a href="/brands">← All houses</a>
         </p>
@@ -127,107 +138,118 @@ if (notFound) {
       </div>
     ) : (
       <>
-        <section
-          class:list={['brand-hero', 'bleed-hero', { weave: !heroImage }]}
-          style={heroImage ? `background-image: url(${heroImage})` : undefined}
-        >
-          <div class="bleed-hero-body">
-            <div class="container">
-              <p class="bleed-hero-eyebrow">{heroEyebrow}</p>
-              <h1>{name}</h1>
+        {
+          // "Brand Page" (banner) or "Product Page" (band) — see the note at the
+          // top of the file. Same two lines of copy either way, so only the
+          // frame around them changes.
+          heroImage ? (
+            <section
+              class="photo-band house-banner"
+              style={`background-image: url(${heroImage})`}
+            >
+              <div class="photo-band-body">
+                <div class="container house-banner-copy">
+                  {brand?.country && <p class="badge-light">{brand.country}</p>}
+                  <h1 class="photo-band-title">{name}</h1>
+                </div>
+              </div>
+            </section>
+          ) : (
+            <section class="house-band">
+              <div class="container house-banner-copy">
+                {brand?.country && <p class="badge-light">{brand.country}</p>}
+                <h1 class="photo-band-title">{name}</h1>
+              </div>
+            </section>
+          )
+        }
+
+        <section class="house-intro">
+          <div class="container house-intro-inner">
+            <div class="house-intro-body">
+              {blurb && <p class="house-lede">{blurb}</p>}
+              {story && (
+                <div class="house-copy">
+                  <PortableText value={story} />
+                </div>
+              )}
+              {Body && (
+                <div class="house-copy">
+                  <Body />
+                </div>
+              )}
+
+              <div class="house-actions">
+                {
+                  // The house's own website (the client's rule). No URL on file
+                  // -> no action, not a dead link.
+                  brand?.website_url && (
+                    <a
+                      class="cta-underline"
+                      href={brand.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Visit website
+                    </a>
+                  )
+                }
+                {
+                  // The mock's second action, on the "Product Page" frame. Shown
+                  // only where the grid it lands on has something in it — the
+                  // same designCount that gates the tiles below.
+                  (designCount ?? 0) > 0 && (
+                    <a class="cta-underline" href={`/products?brand=${slug}`}>
+                      View all products
+                    </a>
+                  )
+                }
+              </div>
             </div>
-          </div>
-        </section>
 
-        <section class="container brand-intro">
-          <div class="brand-intro-body">
-            <div class="brass-rule" />
-            {blurb && <p class="brand-lede">{blurb}</p>}
-            {story && (
-              <div class="brand-copy">
-                <PortableText value={story} />
-              </div>
-            )}
-            {Body && (
-              <div class="brand-copy">
-                <Body />
-              </div>
-            )}
-            {
-              // The intro action sends the reader to the house's own site (the
-              // client's rule); the shop path lives in the collection tiles
-              // below. No website on file -> no button, not a dead link.
-              brand?.website_url && (
-                <a
-                  class="btn btn-lg"
-                  href={brand.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Visit {name}
-                </a>
-              )
-            }
+            <dl class="house-facts">
+              {facts.map((fact) => (
+                <div class="house-fact">
+                  <dt>{fact.label}</dt>
+                  <dd>{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-
-          <dl class="spec-rows brand-facts">
-            {facts.map((fact) => (
-              <div>
-                <dt>{fact.label}</dt>
-                <dd>{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
         </section>
 
         {tiles.length > 0 && (
-          <section class="brand-collections">
-            <div class="container">
-              <p class="eyebrow-brass">This season</p>
-              <h2>
-                {countWord(tiles.length)}{' '}
-                <em>{tiles.length === 1 ? 'collection' : 'collections'}</em>
-              </h2>
-              <div class="brand-collection-grid">
-                {tiles.map((tile) => (
-                  <a class="brand-collection" href={tile.href}>
-                    <span class="scrim-tile brand-collection-media">
-                      {tile.image ? (
-                        <img src={tile.image} alt="" loading="lazy" />
-                      ) : (
-                        <span class="scrim-tile-media weave" aria-hidden="true" />
-                      )}
-                      <span class="scrim-tile-label">{tile.heading}</span>
-                    </span>
-                    {tile.description && (
-                      <span class="brand-collection-note">{tile.description}</span>
-                    )}
-                  </a>
-                ))}
-              </div>
-            </div>
+          <section class="tile-wall house-collections">
+            {tiles.map((tile) => (
+              <a
+                class:list={['tile', { weave: !tile.image }]}
+                style={tile.image ? `background-image: url(${tile.image})` : undefined}
+                href={tile.href}
+              >
+                <span class="tile-body">
+                  <span class="tile-title">{tile.heading}</span>
+                  <span class="cta-underline cta-underline-light">View collection</span>
+                </span>
+              </a>
+            ))}
           </section>
         )}
 
         {relatedPosts.length > 0 && (
-          <section class="band-dark brand-reading">
+          <section class="house-reading">
             <div class="container">
-              <div class="band-dark-head">
-                <h2>
-                  Related <em>reading</em>
-                </h2>
-                <a class="band-dark-link" href="/resources">
+              <div class="house-reading-head">
+                <h2>Related reading</h2>
+                <a class="cta-underline cta-underline-light" href="/resources">
                   The journal
                 </a>
               </div>
-              <ul class="index-list">
+              <ul class="house-reading-list">
                 {relatedPosts.map((post) => (
                   <li>
                     <a href={`/resources/${post.id}`}>
-                      <span class="index-name brand-reading-title">{post.data.title}</span>
-                      <span class="index-meta brand-reading-date">
-                        {dateFormat.format(post.data.date)}
-                      </span>
+                      <span class="house-reading-title">{post.data.title}</span>
+                      <span class="house-reading-date">{dateFormat.format(post.data.date)}</span>
                     </a>
                   </li>
                 ))}

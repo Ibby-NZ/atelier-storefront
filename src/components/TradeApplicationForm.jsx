@@ -17,6 +17,13 @@ import { apiFetch, ApiError } from '../lib/api.js'
 // fields with `application.`). Single component (store ESLint has no React
 // plugin), so the repeated markup comes from plain helper functions, not
 // sub-components.
+//
+// Every choice control — both radio groups and all three checkboxes — is
+// `field field-checkbox`, never a bare `field-checkbox`. Both names are
+// load-bearing: `.field-checkbox` supplies the flex row, the control-to-text
+// gap and the option type; `.field` is the established convention (see
+// OrderRequestForm.jsx) and is what `.trade-form .field > span + .field-checkbox`
+// keys off. A bare class is what made "Yes" sit flush against its radio.
 
 const MIN_PASSWORD_LENGTH = 8
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -39,7 +46,12 @@ const TEXT_SECTIONS = [
     legend: 'Customer details',
     fields: [
       { key: 'business_name', label: 'Business name', autoComplete: 'organization' },
-      { key: 'registered_name', label: 'Registered name (if different)', optional: true },
+      {
+        key: 'registered_name',
+        label: 'Registered name',
+        optional: true,
+        hint: 'If it differs from the business name.',
+      },
       { key: 'postal_address', label: 'Postal address', textarea: true },
       { key: 'delivery_address', label: 'Delivery address', textarea: true },
       { key: 'landline_phone', label: 'Landline phone number', type: 'tel' },
@@ -216,12 +228,16 @@ export default function TradeApplicationForm() {
   // Plain render helpers (not components — see the ESLint note above).
   const textField = ({ key, label, type = 'text', autoComplete, optional, textarea, hint, span }) => (
     <label className={span ? 'field field-span' : 'field'} key={key}>
-      <span>{label}</span>
+      <span>
+        {label}
+        {optional && <span className="field-optional">optional</span>}
+      </span>
       {textarea ? (
         <textarea
           rows={2}
           value={form[key]}
           onChange={(e) => update(key, e.target.value)}
+          aria-invalid={fieldErrors[key] ? 'true' : undefined}
         />
       ) : (
         <input
@@ -230,6 +246,7 @@ export default function TradeApplicationForm() {
           value={form[key]}
           onChange={(e) => update(key, e.target.value)}
           required={!optional}
+          aria-invalid={fieldErrors[key] ? 'true' : undefined}
         />
       )}
       {hint && <span className="field-hint">{hint}</span>}
@@ -238,10 +255,16 @@ export default function TradeApplicationForm() {
   )
 
   const radioGroup = (key, label, options) => (
-    <div className="field" role="radiogroup" aria-label={label}>
+    <div
+      className="field"
+      role="radiogroup"
+      aria-label={label}
+      aria-invalid={fieldErrors[key] ? 'true' : undefined}
+      aria-describedby={fieldErrors[key] ? `${key}-error` : undefined}
+    >
       <span>{label}</span>
       {options.map(([value, text]) => (
-        <label className="field-checkbox" key={value}>
+        <label className="field field-checkbox" key={value}>
           <input
             type="radio"
             name={key}
@@ -251,16 +274,22 @@ export default function TradeApplicationForm() {
           <span>{text}</span>
         </label>
       ))}
-      {fieldErrors[key] && <span className="field-error">{fieldErrors[key]}</span>}
+      {fieldErrors[key] && (
+        <span className="field-error" id={`${key}-error`}>
+          {fieldErrors[key]}
+        </span>
+      )}
     </div>
   )
 
   const checkbox = (key, text) => (
-    <label className="field-checkbox">
+    <label className="field field-checkbox">
       <input
         type="checkbox"
         checked={form[key]}
         onChange={(e) => update(key, e.target.checked)}
+        aria-invalid={fieldErrors[key] ? 'true' : undefined}
+        aria-describedby={fieldErrors[key] ? `${key}-error` : undefined}
       />
       <span>{text}</span>
     </label>
@@ -291,8 +320,9 @@ export default function TradeApplicationForm() {
       )}
 
       <p className="auth-intro">
-        Apply for a trade account to access trade pricing. Approval is manual —
-        we review each application before enabling trade prices.
+        Apply for a trade account to access trade pricing. Approval is{' '}
+        <strong>manual</strong> — we review each application before enabling
+        trade prices. Every field is required unless marked optional.
       </p>
 
       <fieldset className="field-group">
@@ -332,7 +362,7 @@ export default function TradeApplicationForm() {
             type: 'email',
           })}
           <div className="field field-span">
-            <span>Would you like to:</span>
+            <span>Would you like to</span>
             {checkbox('wants_showroom_visit', 'Visit the showrooms')}
             {checkbox('wants_account_manager', 'Be contacted by an account manager')}
           </div>
@@ -379,10 +409,18 @@ export default function TradeApplicationForm() {
       <fieldset className="field-group">
         <legend>Consent</legend>
         <div className="field-grid">
-          <div className="field field-span">
-            {checkbox('terms_accepted', 'I agree to the Terms of Trade.')}
+          <div className="field field-span" role="group" aria-labelledby="terms-caption">
+            <span id="terms-caption">Terms of Trade</span>
+            {checkbox(
+              'terms_accepted',
+              <>
+                I agree to the <strong>Terms of Trade</strong>.
+              </>
+            )}
             {fieldErrors.terms_accepted && (
-              <span className="field-error">{fieldErrors.terms_accepted}</span>
+              <span className="field-error" id="terms_accepted-error">
+                {fieldErrors.terms_accepted}
+              </span>
             )}
           </div>
           {textField({

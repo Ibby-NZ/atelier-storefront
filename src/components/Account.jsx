@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
-import { fetchCurrentUser, accountLabel } from '../lib/auth.js'
+import { fetchCurrentUser, logout, accountLabel } from '../lib/auth.js'
 import { tradeStatusNote } from '../lib/account.js'
 import { orderCard } from '../lib/orderView.jsx'
 
@@ -16,6 +16,10 @@ import { orderCard } from '../lib/orderView.jsx'
 // and silent — the API just starts sending trade_price_cents one day — so
 // without this a trade account looks broken to the person waiting on it, and an
 // approved one is indistinguishable from a pending one.
+//
+// Log out lives HERE, not in the header. The 2026 chrome (Figma 3376:24) gives
+// the header a single 24px account icon with no room for a name or a button, so
+// this page is the only place a signed-in visitor can end their session.
 //
 // Single component (store ESLint has no React plugin); order markup lives in a
 // plain function called normally (orderCard(order)), not a JSX sub-component.
@@ -35,6 +39,14 @@ function tradeNote(user) {
 
 export default function Account() {
   const [state, setState] = useState({ status: 'loading', user: null, orders: [] })
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    await logout()
+    // Full reload so every island (header account icon, cart) re-reads state.
+    if (typeof window !== 'undefined') window.location.href = '/'
+  }
 
   useEffect(() => {
     let active = true
@@ -77,7 +89,12 @@ export default function Account() {
   if (state.status === 'error') {
     return (
       <div className="account">
-        <p className="account-greeting">Signed in as {accountLabel(state.user)}</p>
+        <div className="account-head">
+          <p className="account-greeting">Signed in as {accountLabel(state.user)}</p>
+          <button type="button" className="account-logout" onClick={handleLogout} disabled={loggingOut}>
+            {loggingOut ? 'Logging out…' : 'Log out'}
+          </button>
+        </div>
         {tradeNote(state.user)}
         <p className="form-error" role="alert">
           {state.error}
@@ -88,7 +105,12 @@ export default function Account() {
 
   return (
     <div className="account">
-      <p className="account-greeting">Signed in as {accountLabel(state.user)}</p>
+      <div className="account-head">
+        <p className="account-greeting">Signed in as {accountLabel(state.user)}</p>
+        <button type="button" className="account-logout" onClick={handleLogout} disabled={loggingOut}>
+          {loggingOut ? 'Logging out…' : 'Log out'}
+        </button>
+      </div>
       {tradeNote(state.user)}
 
       {state.orders.length === 0 ? (

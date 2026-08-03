@@ -2,17 +2,13 @@
  * Homepage, 2026 direction (design: Figma "Atelier Home page", node 7307:617).
  *
  * Six bands in a fixed order: a full-bleed collection hero, the two shop
- * banners, the latest-collections scroller, the espresso "Atelier" manifesto,
- * the featured collection, and the design-houses band.
+ * banners, the latest-collections scroller, the umber "Atelier" manifesto, the
+ * featured collection, and the design-houses band.
  *
- * This screen runs the client's OTHER design system — the Figma one: grotesk
- * display type instead of Fraunces, warm cream (`--shell`) instead of paper,
- * umber instead of espresso, ochre instead of claret, and an underlined text
- * action instead of the Maison `.btn`. That is why almost nothing here is
- * shared with primitives.css: the two directions do not have a figure in
- * common, and forcing one would have restyled every other page. The five
- * colours and the grotesk stack are named in tokens.css so this sheet stays
- * hex-free and the next screen redesigned to the direction can reuse them.
+ * The figures this page is BUILT from — the underlined action, the badge, the
+ * full-bleed photograph band and the tile wall — live in direction-2026.css,
+ * because the house pages and sign-in use them too. What is left here is the
+ * home's own geometry and nothing else.
  *
  * Deviations from the mock, deliberate:
  *  - The mock's 1280px frame with 72px padding becomes the site's own
@@ -23,215 +19,117 @@
  *    still bleeds off the right, which is the part that reads as a gallery.
  */
 
-/* --- Underlined text action ----------------------------------------------
-   The Figma "Button / Ghost": Inter medium over a 1.5px rule, no box, no
-   uppercase. Used six times on this page — as an <a> on its own, and as a
-   <span> inside the banner links, where the whole photograph is the anchor. */
-.cta-underline {
-  display: inline-block;
-  align-self: flex-start;
-  font-family: var(--font-ui);
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.4;
-  letter-spacing: 0;
-  text-transform: none;
-  text-decoration: none;
-  white-space: nowrap;
-  color: var(--umber);
-  padding-bottom: var(--s2);
-  border-bottom: 1.5px solid currentcolor;
-  transition: color var(--quick);
+/* --- Hero ----------------------------------------------------------------- */
+/* The mock's hero is 674px of photograph with the header floating over it (see
+   `.site-header--overlay` in chrome.css). 88vh holds that proportion on a
+   laptop with the header inside it, and the 34rem floor is taller than the
+   header, the headline, the description and the action stacked on a phone — so
+   there is no breakpoint override to keep in sync. */
+.home-hero {
+  height: 88vh;
+  min-height: 34rem;
 }
 
-.cta-underline-lg {
-  font-size: 1.125rem;
-}
-
-a.cta-underline:hover {
-  color: var(--ochre);
-}
-
-/* On a photograph. Bone rather than pure white, matching the Figma text token,
-   and the rule inherits it through `currentcolor`. */
-.cta-underline-light {
-  color: var(--bone);
-}
-
-a.cta-underline-light:hover,
-.home-banner:hover .cta-underline-light {
-  color: #fff;
-}
-
-/* --- Ochre label ---------------------------------------------------------
-   The Figma "Badge": the house name beside a collection, and the "Featured
-   collection" eyebrow. Sentence case, not the Maison uppercase eyebrow. */
-.home-badge {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: 0;
-  color: var(--ochre);
-}
-
-/* --- Full-bleed photograph band -------------------------------------------
-   Shared by the hero, the manifesto and the design-houses band. The image is a
-   background so the scrim can sit on top without a wrapper element. */
-.home-band {
-  position: relative;
-  overflow: hidden;
-  background-color: var(--shell);
-}
-
-/* Scoped off `.weave` so the woven stand-in keeps its own tile size when a
-   band has no photograph to show. */
-.home-band:not(.weave) {
-  background-size: cover;
-  background-position: center;
-}
-
-/* The scrim runs deeper than the mock's. The mock is drawn over commissioned
-   interiors that are already dark at the bottom of the frame; the live bands
-   take whatever the catalogue holds, and half of it is a pale product shot on
-   white linen. These values keep 16px bone copy at ~5:1 against the worst case
-   in the seeded catalogue rather than only against the mock's own photography. */
-.home-band::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.62),
-    rgba(0, 0, 0, 0.12) 58%
-  );
-}
-
-.home-band-title {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: clamp(2.25rem, 1.5rem + 2.6vw, 3.125rem); /* 36 → 50px */
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: #fff;
-  text-wrap: balance;
-}
-
-/* The house above the collection ("de Le Cuona" / "Nature's Opera") and the
-   pronunciation beside "Atelier" are the same figure: the same size, dropped to
-   60% so the line that matters reads first. */
-.home-band-title-sub {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.home-hero .home-band-title-sub {
+/* The house sits on its own line above the collection name. */
+.home-hero .photo-band-title-sub {
   display: block;
 }
 
-/* Copy hugs the bottom of the band, so the photograph stays the composition. */
-.home-band-body {
+/* The hero copy clears the floating header on a short viewport, and now also
+   leaves the rotator's bars a lane of their own below it — the copy is
+   bottom-anchored and the "View collection" action ends up exactly where the
+   bars sit otherwise. */
+.home-hero .photo-band-body {
+  padding-bottom: var(--s9);
+}
+
+/* --- Hero rotator ---------------------------------------------------------
+   The hero holds one slide per featured collection, stacked and crossfading
+   (see components/CollectionHero.astro). Each slide carries its OWN scrim
+   rather than sharing the band's, which is why the band's is switched off here:
+   a slide mid-fade sits at fractional opacity, which makes it a stacking
+   context, which drops its `z-index: 1` copy back underneath a band-level
+   scrim — the headline would dim on every rotation. */
+.home-hero.photo-band::after {
+  content: none;
+}
+
+.home-hero-slide {
   position: absolute;
-  z-index: 1; /* above ::after, which paints the scrim */
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding-bottom: var(--s6);
+  inset: 0;
+  opacity: 0;
+  /* Visibility, not display: the fade needs both slides painted, and the
+     off-slide still has to leave the tab order (`inert` covers the rest). The
+     0s delay holds it visible for the length of the fade, then hides it. */
+  visibility: hidden;
+  transition:
+    opacity 0.9s ease,
+    visibility 0s linear 0.9s;
 }
 
-.home-band-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s8);
+.home-hero-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.9s ease;
 }
 
-/* 24rem is the mock's 371px title box for both bands that use this row. It is a
-   basis rather than a width so the title still wraps on its own terms — what
-   matters is that "The World's Finest Design Houses" breaks into the design's
-   three lines instead of running the width of the band. */
-.home-band-row .home-band-title {
-  flex: 0 1 24rem;
+.home-hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.home-band-aside {
-  display: flex;
-  flex: 0 1 24rem;
-  flex-direction: column;
-  gap: var(--s5);
-}
-
-.home-band-aside p {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* --- Hero ----------------------------------------------------------------- */
-/* The mock's hero is 584px of photograph under the header. 74vh holds that
-   proportion on a laptop, and the 30rem floor is taller than the headline, the
-   description and the action stacked on a phone — so there is no breakpoint
-   override to keep in sync. */
-.home-hero {
-  height: 74vh;
-  min-height: 30rem;
-}
-
-/* --- Shop banners --------------------------------------------------------- */
-.home-banners {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s3);
-  padding: var(--s2);
-  background: var(--shell);
-}
-
-.home-banner {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  aspect-ratio: 8 / 9;
-  min-height: 24rem;
-  padding: var(--s7);
-  overflow: hidden;
-  text-decoration: none;
-  background-color: var(--surface);
-}
-
-.home-banner:not(.weave) {
-  background-size: cover;
-  background-position: center;
-}
-
-.home-banner::after {
+/* The band's own scrim, moved onto the slide — same values as
+   `.photo-band::after`, and for the same reason (see direction-2026.css). */
+.home-hero-slide::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.62),
-    rgba(0, 0, 0, 0) 52%
-  );
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12) 58%);
 }
 
-.home-banner-body {
-  position: relative;
-  z-index: 1;
+/* Bars rather than dots: the direction has no circles in it outside the cart
+   count. They sit on the container gutter, level with the copy's baseline
+   block, so the rotation is visible without competing with the headline. */
+.home-hero-controls {
+  position: absolute;
+  z-index: 2; /* above every slide, active or fading */
+  left: 0;
+  right: 0;
+  bottom: var(--s6);
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s6);
+  justify-content: flex-end;
 }
 
-.home-banner-title {
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: clamp(1.875rem, 1.3rem + 2vw, 2.5rem); /* 30 → 40px */
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: #fff;
+.home-hero-dots {
+  display: flex;
+  gap: var(--s3);
+}
+
+.home-hero-dot {
+  width: 2.5rem;
+  height: 2px;
+  padding: 0;
+  border: 0;
+  background: var(--bone-muted);
+  cursor: pointer;
+  transition: background-color var(--slow);
+}
+
+.home-hero-dot:hover {
+  background: var(--bone-soft);
+}
+
+.home-hero-dot.is-active {
+  background: #fff;
+}
+
+/* The global focus ring is claret, which disappears into a photograph. */
+.home-hero-dot:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 6px;
 }
 
 /* --- Latest collections --------------------------------------------------- */
@@ -252,7 +150,7 @@ a.cta-underline-light:hover,
   margin: 0;
   font-family: var(--font-grotesk);
   font-weight: 400;
-  font-size: clamp(1.875rem, 1.3rem + 2vw, 2.5rem);
+  font-size: var(--g-lg);
   line-height: 1.1;
   letter-spacing: -0.03em;
   color: var(--umber);
@@ -335,7 +233,7 @@ a.cta-underline-light:hover,
 
 /* A flat wash rather than the bottom gradient the other two bands use: the copy
    sits mid-band here, so there is nothing for a gradient to anchor to. */
-.home-manifesto::after {
+.home-manifesto.photo-band::after {
   background: rgba(0, 0, 0, 0.58);
 }
 
@@ -377,7 +275,7 @@ a.cta-underline-light:hover,
 .home-featured-media {
   aspect-ratio: 9 / 10;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid var(--shell-line-soft);
   background: var(--surface);
 }
 
@@ -399,7 +297,7 @@ a.cta-underline-light:hover,
   margin: 0;
   font-family: var(--font-grotesk);
   font-weight: 400;
-  font-size: clamp(2.25rem, 1.5rem + 2.6vw, 3.125rem);
+  font-size: var(--g-xl);
   line-height: 1.1;
   letter-spacing: -0.03em;
   color: var(--umber);
@@ -424,27 +322,6 @@ a.cta-underline-light:hover,
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .home-band-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--s5);
-  }
-
-  .home-band-row .home-band-title,
-  .home-band-aside {
-    flex: 0 1 auto;
-  }
-
-  .home-banners {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .home-banner {
-    aspect-ratio: 4 / 3;
-    min-height: 20rem;
-    padding: var(--s6);
-  }
-
   .home-collections {
     padding-block: var(--s9);
   }
@@ -467,20 +344,7 @@ a.cta-underline-light:hover,
 @media (max-width: 640px) {
   .home-hero {
     height: auto;
-    min-height: 28rem;
-  }
-
-  .home-band-body {
-    padding-bottom: var(--s5);
-  }
-
-  .home-banner {
-    aspect-ratio: 3 / 4;
-    padding: var(--s5);
-  }
-
-  .home-banner-body {
-    gap: var(--s5);
+    min-height: 32rem;
   }
 
   .home-collections {

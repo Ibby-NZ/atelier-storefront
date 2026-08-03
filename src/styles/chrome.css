@@ -1,12 +1,18 @@
 /*
- * Site chrome: skip link, Maison header (announcement bar, wordmark, nav,
- * mega-menu, utilities) and the espresso footer.
+ * Site chrome, 2026 direction: skip link, header and footer.
  *
- * Design source: MaisonHeader.dc.html and MaisonFooter.dc.html in the Maison
- * redesign handoff. The header is a horizontal row — inline wordmark left,
- * uppercase nav centre, utilities right — replacing the earlier centred
- * wordmark with a stacked nav. Squared corners throughout, brass for fine
- * detail, claret for the active item only.
+ * Design source: the Figma "Atelier" file — Header 3376:24 (Theme=Light, node
+ * 3376:4) and the footer at 7307:930, both drawn identically on all four
+ * frames. It replaced the Maison chrome (espresso announcement bar, inline
+ * wordmark, uppercase nav, full-width mega-menu, four-column footer), which is
+ * why nothing in this file is shared with the Maison pages any more: chrome is
+ * the one thing every page has in common, so it follows the newest direction
+ * and the page bodies catch up screen by screen.
+ *
+ * Geometry is the mock's, converted from its 1280px frame to the site's own
+ * `.container` (96rem / 3rem) so the wordmark, the page bands and the footer
+ * stay on one column: 32px above the row, 18px below, a 150px wordmark centred
+ * absolutely, 24px between every item on both sides.
  */
 
 /* --- Skip link ------------------------------------------------------------ */
@@ -16,604 +22,272 @@
   top: 0;
   z-index: 200;
   padding: 12px 18px;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--umber);
+  color: var(--bone);
   font-size: var(--t-sm);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-decoration: none;
-  border-radius: 0 0 var(--r-sm) 0;
 }
 
 .skip-link:focus {
   left: 0;
-  color: var(--paper);
+  color: var(--bone);
 }
 
-/* --- Header shell + announcement bar -------------------------------------- */
-/* The shell is the stacking context: the mega-menu must sit above every page
-   section, including the library's sticky sidebar. */
-.site-header-shell {
-  position: relative;
-  z-index: 50;
-}
-
-.site-announce {
-  margin: 0;
-  padding: 8px var(--gutter);
-  background: var(--ink);
-  color: var(--brass-light);
-  text-align: center;
-  font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  line-height: 1.4;
-}
-
-.site-announce a {
-  color: var(--paper);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-.site-announce a:hover {
-  color: var(--brass-light);
-}
-
-/* --- Header row ----------------------------------------------------------- */
-/* `position: relative` here, and nowhere between here and the panel, is what
-   makes the full-width mega-menu resolve against the header. */
+/* --- Header --------------------------------------------------------------- */
 .site-header {
   position: relative;
+  z-index: 50;
   background: var(--paper);
-  border-bottom: var(--hair);
+  border-bottom: 1px solid var(--shell-line-soft);
 }
 
 .site-header-inner {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s2) var(--s6);
-  min-height: 76px;
-  padding-block: 14px;
+  gap: var(--s5);
+  padding-block: var(--s6) 1.125rem; /* the mock's 32 / 18 */
 }
 
-/* Wordmark — inline on one baseline, not the old stacked block. */
-.brand {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s3);
-  white-space: nowrap;
-  text-decoration: none;
-  color: var(--ink);
-}
-
-.brand:hover {
-  color: var(--ink);
-}
-
-.brand-mark {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 22px;
-  line-height: 1;
-  letter-spacing: 0.26em;
-  color: var(--ink);
-}
-
-.brand-sub {
-  font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: 9px;
-  line-height: 1;
-  letter-spacing: 0.44em;
-  color: var(--brass);
+/* The overlay theme: the header floats over the first band of a bleed page (the
+   home hero, a house banner, the sign-in photograph) instead of sitting above
+   it. `position: absolute` rather than `fixed` — the mock's header scrolls away
+   with the hero, and a fixed bar would sit over the collection tiles below.
+   Nothing between <body> and here may be positioned or this collapses onto the
+   page ground. */
+.site-header--overlay {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  background: transparent;
+  border-bottom-color: transparent;
 }
 
 /* --- Nav ------------------------------------------------------------------ */
-.site-nav {
-  min-width: 0;
-}
-
 .site-nav ul {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s1) 22px;
+  align-items: center;
+  gap: var(--s5); /* 24px */
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.site-nav a {
-  display: block;
-  padding: 10px 0;
-  border-bottom: 2px solid transparent;
+.site-nav a,
+.site-util-link {
   font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--ink-soft);
+  font-size: var(--t-base); /* 14px */
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
   text-decoration: none;
-  transition: color var(--quick), border-color var(--quick);
+  white-space: nowrap;
+  color: var(--umber-soft);
+  transition: color var(--quick);
 }
 
-.site-nav a:hover {
+.site-nav a:hover,
+.site-util-link:hover {
+  color: var(--umber);
+}
+
+/* The current section, marked the way the direction marks anything: the
+   underlined action's rule, not a colour swap. */
+.site-nav a[aria-current="page"],
+.site-util-link[aria-current="page"] {
+  color: var(--umber);
+  border-bottom: 1.5px solid currentcolor;
+}
+
+/* --- Wordmark ------------------------------------------------------------- */
+/* Absolutely centred on the header, not on the space left between the two
+   flex groups — the mock centres it on the frame and the two sides are not
+   symmetrical. */
+.site-wordmark {
+  position: absolute;
+  left: 50%;
+  top: var(--s6);
+  transform: translateX(-50%);
+  display: block;
   color: var(--ink);
+  line-height: 0;
 }
 
-.site-nav a[aria-current="page"] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.site-nav-mega {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.site-nav-caret {
-  font-size: 0.55rem;
-  color: var(--brass);
-}
-
-/* The trigger reads as active while its panel is open, not only on /products. */
-.site-header.is-mega-open .site-nav-mega {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+.site-wordmark svg {
+  height: auto;
 }
 
 /* --- Utilities ------------------------------------------------------------ */
 .site-utils {
   display: flex;
   align-items: center;
-  gap: 16px;
-  white-space: nowrap;
+  gap: var(--s5);
 }
 
-.site-util,
-.site-utils .account-nav,
-.site-utils .cart-indicator {
+.site-icon {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--s2);
-  font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  text-decoration: none;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--umber-soft);
   transition: color var(--quick);
 }
 
-.site-util:hover,
-.site-utils a.account-nav:hover,
-.site-utils .account-nav > a:hover,
-.site-utils .cart-indicator:hover {
-  color: var(--accent);
+.site-icon:hover {
+  color: var(--umber);
 }
 
-.site-utils .cart-indicator strong {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: var(--t-eyebrow);
-  color: var(--accent);
+.site-icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
 }
 
-.account-nav-signed-in {
-  gap: var(--s3);
-}
-
-.account-logout {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color var(--quick);
-}
-
-.account-logout:hover:not(:disabled) {
-  color: var(--accent);
-}
-
-.account-logout:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-/* Standalone (non-header) fallback for the cart pill — the homepage uses the
-   same class for a service-status line. */
-.cart-indicator {
-  font-size: var(--t-sm);
-  color: var(--muted);
-}
-
-.cart-indicator strong {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  color: var(--ink);
-}
-
-/* --- Mega-menu ------------------------------------------------------------ */
-/* Hidden by default and only ever shown at desktop width; below that the
-   trigger is an ordinary link to the library and mega-menu.js never binds. */
-.site-mega {
-  display: none;
+/* The cart count. Ochre rather than claret: on this header claret belongs to
+   the Maison direction and would be the only warm-red pixel on the page. */
+.site-icon-count {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  z-index: 40;
-  background: var(--paper);
-  border-bottom: var(--hair);
-  box-shadow: var(--shadow-panel);
-}
-
-@media (min-width: 1025px) {
-  .site-header.is-mega-open .site-mega {
-    display: block;
-  }
-}
-
-.site-mega-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1.4fr;
-  gap: var(--s7);
-  padding-block: var(--s7);
-}
-
-.site-mega-heading {
-  margin: 0 0 var(--s4);
+  top: -4px;
+  right: -7px;
+  min-width: 15px;
+  padding: 0 3px;
+  border-radius: var(--r-pill);
+  background: var(--ochre);
+  color: var(--bone);
   font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--brass);
+  line-height: 15px;
+  text-align: center;
 }
 
-.site-mega-col ul {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* --- Overlay theme -------------------------------------------------------- */
+/* Everything reverses onto the photograph. `--shell` is the Figma's own
+   text/secondary on a dark ground, not plain white — the nav must sit under the
+   headline, not compete with it. */
+.site-header--overlay .site-nav a,
+.site-header--overlay .site-util-link,
+.site-header--overlay .site-icon {
+  color: var(--shell);
 }
 
-.site-mega-col a {
-  font-family: var(--font-display);
-  font-size: var(--d-xs);
-  color: var(--ink);
-  text-decoration: none;
-  transition: color var(--quick);
+.site-header--overlay .site-nav a:hover,
+.site-header--overlay .site-util-link:hover,
+.site-header--overlay .site-icon:hover,
+.site-header--overlay .site-nav a[aria-current="page"],
+.site-header--overlay .site-util-link[aria-current="page"] {
+  color: #fff;
 }
 
-.site-mega-col a:hover {
-  color: var(--accent);
-}
-
-/* The "All houses" link is a quiet underlined utility, not a display link. */
-.site-mega-col a.site-mega-all {
-  font-family: var(--font-ui);
-  font-size: var(--t-sm);
-  color: var(--muted);
-  border-bottom: var(--hair);
-  padding-bottom: 2px;
-  transition: color var(--quick), border-color var(--quick);
-}
-
-.site-mega-col a.site-mega-all:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.site-mega-feature {
-  display: block;
-  color: inherit;
-  text-decoration: none;
-}
-
-.site-mega-feature-media {
-  display: block;
-  aspect-ratio: 16 / 10;
-  border: var(--hair);
-  transition: border-color var(--quick);
-}
-
-.site-mega-feature:hover .site-mega-feature-media {
-  border-color: var(--brass);
-}
-
-.site-mega-feature-eyebrow {
-  display: block;
-  margin-top: var(--s3);
-  font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.site-mega-feature-title {
-  display: block;
-  margin-top: var(--s1);
-  font-family: var(--font-display);
-  font-size: var(--d-sm);
-  color: var(--ink);
-  transition: color var(--quick);
-}
-
-.site-mega-feature:hover .site-mega-feature-title {
-  color: var(--accent);
-}
-
-/* --- Header responsive ---------------------------------------------------- */
-@media (max-width: 1024px) {
-  .site-header-inner {
-    gap: var(--s3) var(--s5);
-  }
-
-  .site-nav ul {
-    gap: 0 18px;
-  }
-
-  .site-nav-caret {
-    display: none;
-  }
-
-  .brand-mark {
-    font-size: 20px;
-    letter-spacing: 0.24em;
-  }
-}
-
-@media (max-width: 640px) {
-  .site-announce {
-    letter-spacing: 0.12em;
-  }
-
-  .site-header-inner {
-    justify-content: space-between;
-    padding-block: 12px;
-  }
-
-  .brand-mark {
-    font-size: 18px;
-    letter-spacing: 0.22em;
-  }
-
-  .brand-sub {
-    font-size: 8px;
-    letter-spacing: 0.38em;
-  }
-
-  .site-utils {
-    order: 2;
-    gap: var(--s3);
-  }
-
-  /* Nav drops to its own scrollable row beneath the wordmark and utilities. */
-  .site-nav {
-    order: 3;
-    flex-basis: 100%;
-    margin-top: var(--s2);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .site-nav ul {
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    gap: 0 20px;
-  }
-
-  .site-nav a {
-    padding-bottom: 10px;
-  }
+.site-header--overlay .site-wordmark {
+  color: var(--bone);
 }
 
 /* --- Footer --------------------------------------------------------------- */
-/* Espresso band. Every colour in here is a dark-ground token: paper for the
-   wordmark and tagline, light brass for links, stone for headings and fine
-   print, and --line-dark for the one hairline. */
 .site-footer {
-  margin-top: var(--s10);
-  background: var(--ink);
-  color: var(--brass-light);
-}
-
-/* A `bleed` page paints its own bands edge to edge and owns its own bottom
-   spacing. Without this the margin above becomes a 6rem paper strip between the
-   page's last band and the footer — and where that last band is itself espresso
-   (the brand page's related reading), a bright seam between two dark bands. */
-.main-bleed + .site-footer {
   margin-top: 0;
+  background: var(--umber);
+  color: var(--shell);
 }
 
-.site-footer .container {
-  padding-block: var(--s9) var(--s6);
-}
-
-.footer-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
-  gap: var(--s8);
-  align-items: start;
-}
-
-.footer-brand .brand-mark {
-  display: block;
-  font-size: 22px;
-  letter-spacing: 0.26em;
-  padding-left: 0.26em;
-  color: var(--paper);
-}
-
-.footer-brand .brand-sub {
-  display: block;
-  margin-top: 5px;
-  font-size: 8px;
-  letter-spacing: 0.44em;
-  padding-left: 0.44em;
-  color: var(--brass);
-}
-
-.footer-line {
-  margin: var(--s5) 0 0;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--d-xs);
-  line-height: 1.4;
-  color: var(--paper);
-  max-width: 22ch;
-}
-
-.footer-place {
-  margin: var(--s3) 0 0;
-  font-size: var(--t-xs);
-  letter-spacing: 0.06em;
-  color: var(--muted);
-}
-
-.footer-groups {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--s6);
-}
-
-.footer-heading {
-  color: var(--muted);
-}
-
-.footer-group ul {
-  margin: var(--s4) 0 0;
-  padding: 0;
-  list-style: none;
+/* The mock's rule is inside the frame (x=72, width=1136), so it is the inner
+   container that carries it, not the band. */
+.site-footer-inner {
   display: flex;
-  flex-direction: column;
-  gap: var(--s3);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s6);
+  padding-block: var(--s7); /* 48px */
+  border-top: 1px solid var(--umber-line);
 }
 
-.footer-group a {
-  font-size: var(--t-sm);
-  color: var(--brass-light);
-  text-decoration: none;
-  transition: color var(--quick);
+.site-footer-brand {
+  display: block;
+  flex-shrink: 0;
+  color: var(--bone);
+  line-height: 0;
 }
 
-.footer-group a:hover {
-  color: var(--paper);
-}
-
-.footer-base {
+.site-footer-nav ul {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s4);
-  margin-top: var(--s8);
-  padding-top: var(--s5);
-  border-top: 1px solid var(--line-dark);
-}
-
-.footer-copy,
-.footer-note {
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--s3) var(--s5);
   margin: 0;
-  font-size: var(--t-xs);
-  color: var(--muted);
-}
-
-.footer-note {
-  font-family: var(--font-display);
-  font-style: italic;
-}
-
-/* --- Footer contact + social + showrooms ---------------------------------- */
-.footer-contact {
-  margin: var(--s4) 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.footer-contact a {
-  font-size: var(--t-sm);
-  color: var(--brass-light);
-  text-decoration: none;
-  transition: color var(--quick);
-}
-
-.footer-contact a:hover {
-  color: var(--paper);
-}
-
-.footer-social {
-  margin: var(--s4) 0 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  gap: var(--s4);
 }
 
-.footer-social a {
-  font-size: var(--t-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
+.site-footer-nav a {
+  font-family: var(--font-ui);
+  font-size: var(--t-xs); /* 12px */
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
   text-decoration: none;
+  white-space: nowrap;
+  color: var(--shell);
   transition: color var(--quick);
 }
 
-.footer-social a:hover {
-  color: var(--brass-light);
+.site-footer-nav a:hover {
+  color: var(--gold);
 }
 
-.footer-showrooms ul {
-  gap: var(--s4);
-}
-
-.footer-showrooms li {
-  font-size: var(--t-xs);
-  line-height: 1.5;
-  color: var(--brass-light);
-}
-
-.footer-showrooms strong {
-  display: block;
-  color: var(--paper);
-  letter-spacing: 0.02em;
-}
-
-/* --- Footer responsive ---------------------------------------------------- */
+/* --- Responsive ----------------------------------------------------------- */
+/* Below the container's own breakpoint the two flex groups meet in the middle
+   of the wordmark, so the row becomes three stacked rows: wordmark, nav,
+   utilities. The wordmark leaves the absolute layer to do it. */
 @media (max-width: 1024px) {
-  .footer-top {
-    grid-template-columns: 1fr;
-    gap: var(--s7);
+  .site-header-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--s4);
+    padding-block: var(--s5) var(--s4);
   }
 
-  .footer-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s6);
+  .site-wordmark {
+    position: static;
+    top: auto;
+    transform: none;
+    order: -1;
+    flex: 0 0 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .site-footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s5);
+    padding-block: var(--s6);
+  }
+
+  .site-footer-nav ul {
+    justify-content: flex-start;
   }
 }
 
 @media (max-width: 640px) {
-  .site-footer {
-    margin-top: var(--s8);
+  /* The nav scrolls rather than wrapping to a second line: four labels wrapped
+     to two rows reads as two navs. */
+  .site-nav {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .footer-groups {
-    gap: var(--s5);
+  .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-utils {
+    gap: var(--s4);
   }
 }

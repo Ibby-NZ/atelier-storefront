@@ -1,112 +1,49 @@
 ---
-// Maison footer (design: MaisonFooter.dc.html): espresso band, paper wordmark
-// stack with the italic tagline and address line, link columns in light brass,
-// and a bottom bar over a hairline-on-dark carrying the copyright and the
-// standing "Indicative" note.
+import Wordmark from './Wordmark.astro'
+import { getCollection } from 'astro:content'
+
+// Site footer, 2026 direction (design: Figma 7307:930, repeated verbatim at the
+// foot of the Brand and Product Page frames).
 //
-// Departs from the mock in one way, deliberately: the mock has three link
-// columns, this has four. Showrooms, phone, email and social are real details
-// from src/lib/site.js and dropping them to match a mock that predates them
-// would lose content, not tidy it.
-import { CONTACT, SHOWROOMS, SOCIAL } from '../lib/site.js'
+// One umber band over a hairline: the wordmark at 175.656px on the left, one
+// row of 12px links on the right. It replaced the Maison footer's four link
+// columns — the showroom addresses, phone, email and social links that lived
+// there are still in src/lib/site.js and still render on /contact, which is
+// where the design puts them.
+//
+// Privacy Policy and Terms & Conditions are the design's last two links and the
+// only two with no route behind them. They render when (and only when) someone
+// adds src/content/pages/privacy.md or terms.md — the page collection already
+// drives /story and /contact the same way. Shipping the links against missing
+// pages would put two 404s in the footer of every page on the site.
+//
+// getCollection, not getEntry: a missing getEntry logs "Entry page → privacy
+// was not found" on every page of every build, and here a miss is the expected
+// state, not a fault.
+const pageIds = new Set((await getCollection('page')).map((entry) => entry.id))
 
-const year = new Date().getFullYear()
-
-const groups = [
-  {
-    heading: 'The Collection',
-    links: [
-      { href: '/products?product_type=fabric', label: 'Fabrics' },
-      { href: '/products?product_type=finished_good', label: 'Finished goods' },
-      { href: '/brands', label: 'The houses' },
-    ],
-  },
-  {
-    heading: 'The Studio',
-    links: [
-      { href: '/resources', label: 'Journal' },
-      { href: '/story', label: 'Story' },
-      { href: '/contact', label: 'Contact' },
-    ],
-  },
-  {
-    heading: 'Trade',
-    links: [
-      { href: '/trade-application', label: 'Apply for trade' },
-      { href: '/login', label: 'Trade login' },
-      { href: '/order-lookup', label: 'Order lookup' },
-      { href: '/account', label: 'My account' },
-    ],
-  },
-]
-
-// The head office address, as one line, matching the design's placement under
-// the tagline.
-const [head] = SHOWROOMS
-const addressLine = `${head.lines.join(', ')} — Aotearoa New Zealand`
+const links = [
+  { href: '/products', label: 'Products' },
+  { href: '/brands', label: 'Brands' },
+  { href: '/story', label: 'Our Story' },
+  { href: '/resources', label: 'Journal' },
+  { href: '/trade-application', label: 'Trade Account' },
+  { href: '/contact', label: 'Contact' },
+  pageIds.has('privacy') ? { href: '/privacy', label: 'Privacy Policy' } : null,
+  pageIds.has('terms') ? { href: '/terms', label: 'Terms & Conditions' } : null,
+].filter(Boolean)
 ---
 
 <footer class="site-footer">
-  <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <span class="brand-mark">ATELIER</span>
-        <span class="brand-sub">TEXTILES</span>
-        <p class="footer-line">Curators of global design excellence.</p>
-        <p class="footer-place">{addressLine}</p>
-        <p class="footer-contact">
-          <a href={`tel:${CONTACT.phoneHref}`}>{CONTACT.phone}</a>
-          <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
-        </p>
-        <ul class="footer-social">
-          {
-            SOCIAL.map((link) => (
-              <li>
-                <a href={link.href} target="_blank" rel="noopener noreferrer">
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
+  <div class="container site-footer-inner">
+    <a class="site-footer-brand" href="/" aria-label="Atelier Textiles — home">
+      <Wordmark width="175.656px" />
+    </a>
 
-      <nav class="footer-groups" aria-label="Footer">
-        {
-          groups.map((group) => (
-            <div class="footer-group">
-              <h2 class="footer-heading">{group.heading}</h2>
-              <ul>
-                {group.links.map((link) => (
-                  <li>
-                    <a href={link.href}>{link.label}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
-        }
-
-        <div class="footer-group footer-showrooms">
-          <h2 class="footer-heading">Showrooms</h2>
-          <ul>
-            {
-              SHOWROOMS.map((s) => (
-                <li>
-                  <strong>{s.city}</strong> {s.lines.join(', ')}
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-      </nav>
-    </div>
-
-    <div class="footer-base">
-      <p class="footer-copy">&copy; {year} Atelier Textiles.</p>
-      <p class="footer-note">
-        All prices indicative and subject to confirmation.
-      </p>
-    </div>
+    <nav class="site-footer-nav" aria-label="Footer">
+      <ul>
+        {links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+      </ul>
+    </nav>
   </div>
 </footer>

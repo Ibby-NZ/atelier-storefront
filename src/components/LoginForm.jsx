@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
 
-// Login island (US-021). Posts { email, password } to POST /auth/login. On
-// success the API sets the session cookie; we redirect home (or to a ?redirect=
-// path when present) and the header re-reads /auth/me to show the account name.
-// A 401 returns { error: 'Invalid email or password.' }, surfaced inline via
-// ApiError.message. Single component (store ESLint has no React plugin).
+// Login island (US-021), 2026 direction (design: Figma "Sign in Page 2",
+// node 9350:361). Posts { email, password } to POST /auth/login. On success the
+// API sets the session cookie; we redirect home (or to a ?redirect= path when
+// present) and the header re-reads /auth/me to show the account icon's
+// signed-in destination. A 401 returns { error: 'Invalid email or password.' },
+// surfaced inline via ApiError.message.
+//
+// The mock labels both fields with placeholders alone. Placeholders are not
+// labels — they vanish the moment someone types — so each field keeps a real
+// <label>, visually hidden. Single component (store ESLint has no React
+// plugin).
 
 function redirectTarget() {
   if (typeof window === 'undefined') return '/'
@@ -44,42 +50,50 @@ export default function LoginForm() {
   }
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit} noValidate>
+    <form className="auth-screen-form" onSubmit={handleSubmit} noValidate>
       {error && (
-        <p className="form-error" role="alert">
+        <p className="auth-screen-error" role="alert">
           {error}
         </p>
       )}
 
-      <label className="field">
-        <span>Email</span>
+      <div className="auth-screen-fields">
+        <label className="sr-only" htmlFor="auth-email">
+          Email
+        </label>
         <input
+          className="auth-screen-input"
+          id="auth-email"
           type="email"
           name="email"
+          placeholder="Email"
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-      </label>
 
-      <label className="field">
-        <span>Password</span>
+        <label className="sr-only" htmlFor="auth-password">
+          Password
+        </label>
         <input
+          className="auth-screen-input"
+          id="auth-password"
           type="password"
           name="password"
+          placeholder="Password"
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-      </label>
+      </div>
 
-      <button className="btn btn-primary" type="submit" disabled={submitting}>
-        {submitting ? 'Logging in…' : 'Log in'}
+      <button className="cta-underline cta-underline-light" type="submit" disabled={submitting}>
+        {submitting ? 'Signing in…' : 'Sign in'}
       </button>
 
-      <p className="auth-alt">
+      <p className="auth-screen-alt">
         New here? <a href="/register">Create an account</a> or{' '}
         <a href="/trade-application">apply for trade</a>.
       </p>

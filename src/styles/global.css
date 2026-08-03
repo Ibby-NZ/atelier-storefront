@@ -6,28 +6,37 @@
  * here in cascade order — later layers may refine earlier ones.
  *
  *   tokens.css      palette, type + spacing scale, reset, base typography, a11y
- *   primitives.css  eyebrows, buttons, pills, tags, forms, cards, states
- *   chrome.css      skip link, editorial TopBar, gallery footer
- *   home.css        homepage bands (its own design direction — see the file)
+ *   primitives.css  Maison figures: eyebrows, buttons, pills, forms, cards
+ *   direction-2026  Figma figures: underlined action, badge, photo band, tiles
+ *   chrome.css      skip link, header, footer
+ *   home.css        homepage geometry
  *   library.css     library page band, refine sidebar, product gallery grid
  *   product.css     product detail: gallery, price block, specs, colourways
  *   commerce.css    cart, checkout, orders, account, auth forms
- *   editorial.css   journal cards, long-form prose, brand pages
+ *   auth.css        sign-in screen (2026 direction)
+ *   editorial.css   journal cards, long-form prose, house pages
  *   houses.css      brands index: focus strip, house directory, sourcing band
  *
- * Design language is the platform handoff (design_handoff_atelier_platform):
- * warm paper ground, 1px greige hairlines instead of heavy cards, claret used
- * sparingly (roughly one element per screen), brass for fine flourishes only,
- * Fraunces for display, Inter for UI, IBM Plex Mono for every figure.
- * Light-only — the handoff defines no dark palette.
+ * TWO DIRECTIONS live here, deliberately. The Maison handoff
+ * (design_handoff_atelier_platform / the Maison redesign) still dresses the
+ * library, the product detail, the journal and commerce: warm paper ground, 1px
+ * greige hairlines, claret used sparingly, Fraunces display. The client's Figma
+ * file dresses the chrome, the home, the house pages and sign-in: cream shell,
+ * umber bands, ochre accent, grotesk display, an underlined text action instead
+ * of a button. `primitives.css` and `direction-2026.css` are the two vocabulary
+ * sheets; do not promote a figure from one into the other, or a page nobody
+ * redesigned changes shape. Light-only — neither handoff defines a dark
+ * palette.
  */
 
 @import "./tokens.css";
 @import "./primitives.css";
+@import "./direction-2026.css";
 @import "./chrome.css";
 @import "./home.css";
 @import "./library.css";
 @import "./product.css";
 @import "./commerce.css";
+@import "./auth.css";
 @import "./editorial.css";
 @import "./houses.css";

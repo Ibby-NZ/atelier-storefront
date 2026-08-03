@@ -1,0 +1,234 @@
+/*
+ * Sign in, 2026 direction (design: Figma "Sign in Page 2", node 9350:361).
+ *
+ * A full-bleed interior photograph under a flat 50% scrim, the header floating
+ * over it, and one 371px column centred in the frame: "Welcome" in grotesk
+ * display, the role note, two outlined inputs and the underlined action.
+ *
+ * Only /login wears this. /register and /trade-application stay on the Maison
+ * `.auth-form` in commerce.css — the Figma draws one auth screen and inventing
+ * the other two in its language would be guessing, not implementing.
+ */
+
+.auth-screen {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 9rem var(--gutter) var(--s9); /* clears the floating header */
+  overflow: hidden;
+  background-color: var(--umber-soft);
+}
+
+.auth-screen:not(.weave) {
+  background-size: cover;
+  background-position: center;
+}
+
+/* Flat rather than a bottom gradient — the copy sits in the middle of the
+   frame, so there is nothing for a gradient to anchor to — and darkest behind
+   the column, where the fields have to hold their own edges.
+   It used to run much deeper (0.45 radial over a 0.55 flat). That was sized for
+   a backdrop the catalogue picked, which could be a dense floral photographed
+   in daylight — on one of those, a light scrim left the input rules and the
+   bone placeholders camouflaged against the pattern rather than merely
+   low-contrast, and the fields read as absent. The backdrop is now one
+   art-directed, already-dark interior (see login.astro), so the deep values
+   only buried it. These keep the form column at ~0.5 and the frame open. */
+.auth-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      60% 55% at 50% 50%,
+      rgba(0, 0, 0, 0.32),
+      rgba(0, 0, 0, 0) 100%
+    ),
+    rgba(0, 0, 0, 0.26);
+}
+
+.auth-screen-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s6); /* 32px */
+  width: 100%;
+  max-width: 23.1875rem; /* the mock's 371px */
+  text-align: center;
+}
+
+.auth-screen-title {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-xl);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--bone);
+}
+
+.auth-screen-note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-base); /* 14px */
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--shell);
+}
+
+/* --- The form ------------------------------------------------------------- */
+.auth-screen-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s6);
+  width: 100%;
+}
+
+.auth-screen-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5); /* 24px */
+  width: 100%;
+}
+
+/* The Figma "Input" (3370:12) reversed: 16px of padding all round, 16px type, a
+   1px white rule.
+   Two departures from the mock, both for the same reason as the scrim above.
+   The rule runs at 70% rather than 50%, and the field carries a translucent
+   dark fill instead of `transparent`: an input has to announce itself as an
+   input, and over patterned cloth a hairline alone does not. The fill is dark
+   enough to seat the rule and the placeholder on ONE ground rather than on
+   whatever the photograph is doing pixel by pixel. */
+.auth-screen-input {
+  width: 100%;
+  padding: var(--s4);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--r-sm);
+  background: rgba(0, 0, 0, 0.35);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--bone);
+  transition: border-color var(--quick), background-color var(--quick);
+}
+
+.auth-screen-input::placeholder {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.auth-screen-input:hover {
+  border-color: #fff;
+}
+
+.auth-screen-input:focus {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.auth-screen-input:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+/* Autofilled credentials, reversed.
+   Left alone, a saved email/password arrives wearing the UA's own ground —
+   near-white with black text — painted from an internal stylesheet the cascade
+   cannot reach with `background-color`. On this screen that is the whole field
+   turning into a white slab over the photograph. `-webkit-text-fill-color`
+   overrides the text (plain `color` does not), and Chrome/Edge reach their
+   ground through a background-color TRANSITION, so a delay longer than any
+   session means it never lands and our translucent fill survives. */
+.auth-screen-input:-webkit-autofill,
+.auth-screen-input:-webkit-autofill:hover,
+.auth-screen-input:-webkit-autofill:focus,
+.auth-screen-input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--bone);
+  caret-color: var(--bone);
+  transition: background-color 0s 600000s, color 0s 600000s;
+}
+
+/* Safari paints that ground outright rather than transitioning to it, so the
+   delay above never catches it; an inset shadow is the one override it honours.
+   Opaque by necessity — it covers the fill instead of tinting it — so it is the
+   umber the fill composites to over the scrim, not the rgba itself.
+   `-webkit-hyphens: none` is a Safari-only feature test: applying the shadow
+   everywhere would cost Chrome the translucency the rule above just saved. */
+@supports (-webkit-hyphens: none) {
+  .auth-screen-input:-webkit-autofill,
+  .auth-screen-input:-webkit-autofill:hover,
+  .auth-screen-input:-webkit-autofill:focus,
+  .auth-screen-input:-webkit-autofill:active {
+    box-shadow: inset 0 0 0 100vmax var(--umber);
+  }
+}
+
+/* Reversed onto the photograph, and centred with the rest of the column — the
+   underlined action is `align-self: flex-start` everywhere else. */
+.auth-screen-form .cta-underline {
+  align-self: center;
+  background: none;
+  border-top: 0;
+  border-inline: 0;
+  padding-inline: 0;
+  cursor: pointer;
+}
+
+/* `.cta-underline`'s own hover is scoped to `a` — this one is a submit
+   button. */
+.auth-screen-form .cta-underline:hover:not(:disabled) {
+  color: #fff;
+}
+
+.auth-screen-form .cta-underline:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.auth-screen-error {
+  margin: 0;
+  width: 100%;
+  padding: var(--s3) var(--s4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--bone);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* The two routes the mock leaves out. They cannot simply go — register and the
+   trade application are reachable from nowhere else on a signed-out site — so
+   they sit under the action as fine print rather than as a third action. */
+.auth-screen-alt {
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--bone-muted);
+}
+
+.auth-screen-alt a {
+  color: var(--shell);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.auth-screen-alt a:hover {
+  color: #fff;
+}
+
+@media (max-width: 1024px) {
+  .auth-screen {
+    min-height: 44rem;
+    padding-top: 11rem; /* the header stacks to three rows below 1024px */
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-screen {
+    padding-bottom: var(--s7);
+  }
+}

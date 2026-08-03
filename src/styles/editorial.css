@@ -385,192 +385,259 @@
   color: var(--accent);
 }
 
-/* --- Brand page (Maison) -------------------------------------------------- */
-/* Design: "Maison Brand" — full-bleed 58vh banner, intro column beside the facts
-   list, 4/5 collection tiles, espresso related-reading band. The banner, the
-   band, the index rows, the scrim tiles and the spec rows are all shared figures
-   from primitives.css; only the geometry below is brand-page-specific. */
+/* --- House page (2026 direction) ------------------------------------------ */
+/* Design: Figma "Brand Page" (9350:479) and "Product Page" (9350:788) — one
+   page with two openings. The banner, the badge, the tile wall and the
+   underlined action are shared figures from direction-2026.css; what is below
+   is only this page's geometry.
+
+   Note the type: the mock sets the house blurb in 24px Inter MEDIUM, not in a
+   serif lede. There is no Fraunces anywhere on these two frames. */
 
 /* The not-found body still needs the block padding a `bleed` page gives up. */
-.brand-missing {
+.house-missing {
   padding-block: var(--s8) var(--s10);
   max-width: 34rem;
 }
 
-.brand-hero {
-  height: 58vh;
-  min-height: 26rem;
+/* --- Opening: banner (Brand Page) ----------------------------------------- */
+/* The mock's 674px banner with the header floating inside it. 78vh holds that
+   proportion with the header included; the 30rem floor clears the header, the
+   badge and the house name stacked on a phone. */
+.house-banner {
+  height: 78vh;
+  min-height: 30rem;
 }
 
-/* The banner scrim is a touch lighter than the home hero's: there is one line of
-   type over it, not four. */
-.brand-hero::after {
+/* Two lighter stops than the home hero's: one badge and one line of type sit
+   over this, not a headline plus a paragraph. */
+.house-banner.photo-band::after {
   background: linear-gradient(
     to top,
-    rgba(33, 28, 23, 0.6),
-    rgba(33, 28, 23, 0.05) 55%
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.08) 55%
   );
+  /* The mock also lays a flat 20% over the whole frame, which is what keeps the
+     header legible against a bright ceiling at the top of the picture. */
+  box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0.2);
 }
 
-.brand-hero .bleed-hero-body .container {
-  padding-bottom: var(--s8);
+.house-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5); /* the mock's 24px between badge and name */
 }
 
-.brand-hero h1 {
-  font-size: var(--d-hero-brand);
+/* --- Opening: band (Product Page) ----------------------------------------- */
+/* Same copy, no photograph: the umber band the mock draws for a house with no
+   banner imagery. Its top padding holds the header, which is NOT floating here
+   — the band is the page ground, so the header sits on it in its paper theme
+   and the band starts below. */
+.house-band {
+  padding-block: var(--s9) var(--s7);
+  background: var(--umber);
 }
 
-.brand-intro {
+.house-band .photo-band-title {
+  color: var(--bone);
+}
+
+/* --- Intro ---------------------------------------------------------------- */
+.house-intro {
+  background: var(--shell);
+}
+
+.house-intro-inner {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  gap: var(--s10);
+  grid-template-columns: minmax(0, 466fr) minmax(0, 371fr); /* the mock's two columns */
+  gap: var(--s9);
   align-items: start;
-  padding-block: 4.5rem;
+  padding-block: 6.375rem; /* the mock's 102px */
 }
 
-.brand-intro-body {
+.house-intro-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6); /* 32px */
   min-width: 0;
 }
 
-/* The house blurb, set as a Fraunces lede rather than body copy. */
-.brand-lede {
+/* The house blurb: 24px Inter medium, umber, tight leading — the mock's own
+   "Text Wrapper" head style, not a serif lede. */
+.house-lede {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.375rem;
-  line-height: 1.5;
-  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--umber);
   text-wrap: pretty;
 }
 
-.brand-copy {
-  margin-top: 1.75rem;
-  font-size: var(--t-prose);
-  line-height: 1.78;
-  color: var(--ink-soft);
+.house-copy {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--umber-soft);
 }
 
-.brand-copy > p {
-  margin: 0 0 1.25rem;
+.house-copy > p {
+  margin: 0 0 1rem;
 }
 
-.brand-intro-body .btn {
-  margin-top: 2.25rem;
+.house-copy > p:last-child {
+  margin-bottom: 0;
 }
 
-/* --- Collections --------------------------------------------------------- */
-.brand-collections {
-  border-top: var(--hair);
+/* Both actions on one line, as the "Product Page" frame draws them. */
+.house-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s5);
 }
 
-.brand-collections > .container {
-  padding-block: 4.5rem var(--s10);
+/* --- Facts ---------------------------------------------------------------- */
+/* Label left, value right, a hairline under every row but the last: the mock's
+   371px "Frame 2". Deliberately NOT `.spec-rows` from primitives.css — that is
+   the Maison figure (mono values, greige rule) and this one is 12px Inter
+   semibold on a black hairline. */
+.house-facts {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
 }
 
-.brand-collections h2 {
-  margin: var(--s3) 0 2.5rem;
-  font-weight: 400;
-  font-size: 2rem;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
+.house-fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
+  padding-block: var(--s5); /* 20px */
+  border-bottom: 1px solid var(--shell-line);
 }
 
-.brand-collection-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.5rem;
+.house-fact:last-child {
+  border-bottom: 0;
 }
 
-.brand-collection {
-  display: block;
-  min-width: 0;
-  color: inherit;
-  text-decoration: none;
+.house-fact dt {
+  color: var(--shell-muted);
 }
 
-/* Taller than the shared 3/4 tile, and framed — these sit on paper, not in a
-   hairline grid wall like the homepage's category tiles. */
-.brand-collection-media {
-  aspect-ratio: 4 / 5;
-  border: var(--hair);
-  transition: border-color var(--slow), box-shadow var(--slow);
+.house-fact dd {
+  margin: 0;
+  text-align: right;
+  color: var(--umber);
 }
 
-.brand-collection:hover .brand-collection-media {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
+/* --- Collections ---------------------------------------------------------- */
+/* `.tile-wall` supplies the grid; the mock runs five rows of two here rather
+   than the home's single row, so there is nothing to add but the section name
+   for the cascade to hang on. */
+.house-collections {
+  border-top: 0;
 }
 
-.brand-collection-media .scrim-tile-label {
-  padding: var(--s5);
-  background: linear-gradient(to top, rgba(33, 28, 23, 0.5), transparent 40%);
+/* --- Related reading ------------------------------------------------------ */
+/* Not in the mock — the Figma's house page ends at the tiles — but the journal
+   ties posts to houses and dropping the link would strip content the CMS
+   publishes. Painted umber so it reads as the footer's opening rather than as a
+   leftover from the Maison direction. */
+.house-reading {
+  background: var(--umber);
+  color: var(--shell);
 }
 
-.brand-collection-note {
-  display: block;
-  margin-top: var(--s4);
-  font-size: var(--t-base);
-  line-height: 1.6;
-  color: var(--ink-soft);
-}
-
-/* --- Related reading ----------------------------------------------------- */
-.brand-reading > .container {
+.house-reading > .container {
   padding-block: var(--s9);
 }
 
-.brand-reading .band-dark-head {
+.house-reading-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s6);
   margin-bottom: var(--s6);
 }
 
-.brand-reading h2 {
+.house-reading-head h2 {
   margin: 0;
-  font-size: var(--d-lg);
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
   line-height: 1.1;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.03em;
+  color: var(--bone);
 }
 
-.brand-reading .index-list a {
+.house-reading-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.house-reading-list a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
   padding-block: 1.25rem;
+  border-top: 1px solid var(--umber-line);
+  text-decoration: none;
+  color: var(--shell);
+  transition: color var(--quick);
 }
 
-.brand-reading-title {
-  font-size: var(--d-sm);
+.house-reading-list a:hover {
+  color: var(--gold);
 }
 
-/* A date, not a country · year label: mono, no tracking. */
-.brand-reading-date {
-  font-family: var(--font-mono);
+.house-reading-list li:last-child a {
+  border-bottom: 1px solid var(--umber-line);
+}
+
+.house-reading-title {
+  font-family: var(--font-ui);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.house-reading-date {
+  flex-shrink: 0;
+  font-family: var(--font-ui);
   font-size: var(--t-xs);
-  letter-spacing: 0;
-  text-transform: none;
+  font-weight: 500;
+  color: var(--bone-muted);
 }
 
 /* The brands index lives in houses.css — it is a page of its own now, not a
    card variant, so `.brand-card` / `.brand-meta` went with the `.card-grid`. */
 
 @media (max-width: 1024px) {
-  .brand-hero {
+  .house-banner {
     height: auto;
-    min-height: 24rem;
+    min-height: 28rem;
+    padding-top: 12rem; /* the header stacks to three rows below 1024px */
   }
 
-  .brand-intro {
+  .house-band {
+    padding-block: var(--s8) var(--s6);
+  }
+
+  .house-intro-inner {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s7);
     padding-block: var(--s8);
   }
-
-  .brand-collection-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 640px) {
-  .brand-collection-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .brand-reading .index-list a {
+  .house-reading-list a {
     flex-direction: column;
     gap: var(--s2);
   }

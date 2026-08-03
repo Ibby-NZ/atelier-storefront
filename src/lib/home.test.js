@@ -5,6 +5,7 @@ import {
   brandDesignCounts,
   collectionBySlug,
   collectionHref,
+  houseLabel,
   pickCollections,
 } from './home.js'
 
@@ -149,4 +150,24 @@ test('bandPhotographs skips missing images and pads to the requested count', () 
     ['c1', null, null]
   )
   assert.deepEqual(bandPhotographs(), [null, null, null, null])
+})
+
+test('houseLabel drops the house when the collection name already starts with it', () => {
+  assert.equal(houseLabel('Larsen 2024', 'Larsen'), null)
+  assert.equal(houseLabel('Manuel Canovas 2024', 'Manuel Canovas'), null)
+  assert.equal(houseLabel('larsen 2024', 'Larsen'), null)
+})
+
+test('houseLabel keeps the house when the name only mentions it later, or not at all', () => {
+  assert.equal(houseLabel("Nature's Opera", 'de Le Cuona'), 'de Le Cuona')
+  assert.equal(
+    houseLabel("India Mahdavi's True Velvet Collection", 'Pierre Frey'),
+    'Pierre Frey'
+  )
+})
+
+test('houseLabel yields null for a missing house rather than an empty line', () => {
+  assert.equal(houseLabel('Larsen 2024', null), null)
+  assert.equal(houseLabel('Larsen 2024', '   '), null)
+  assert.equal(houseLabel(null, 'Larsen'), 'Larsen')
 })

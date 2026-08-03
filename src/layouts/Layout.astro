@@ -14,6 +14,13 @@ const {
   // direction's linen page headers) and place its own containers inside them.
   // Default false — every existing page keeps the centred container.
   bleed = false,
+  // `overlay` floats the header over the page's first band and reverses its
+  // type to bone — the 2026 direction's treatment for a screen that opens on a
+  // full-bleed photograph (the home hero, a house banner, sign-in). It only
+  // makes sense with `bleed`, since a contained page has paper under the
+  // header, and the page is responsible for leaving the band tall enough to
+  // hold the header plus its own copy.
+  overlay = false,
 } = Astro.props
 
 // Staging is noindex by default; baked in at build time for prerendered pages.
@@ -66,7 +73,7 @@ const FONTS =
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Header />
+    <Header overlay={overlay} />
     <main id="main" class={bleed ? 'main-bleed' : undefined}>
       {
         bleed ? (

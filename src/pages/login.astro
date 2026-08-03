@@ -1,22 +1,45 @@
 ---
 export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+import { getImage } from 'astro:assets'
 import Layout from '../layouts/Layout.astro'
 import LoginForm from '../components/LoginForm.jsx'
+import signInArt from '../assets/img/sign-in-bg.jpg'
 
-// Login page (US-021). The form is a client:load island posting to
-// POST /auth/login; on success it redirects home (or ?redirect=) and the header
-// account island re-reads /auth/me.
+// Sign in (US-021), 2026 direction (design: Figma "Sign in Page 2", node
+// 9350:361): a full-bleed interior photograph, the header floating over it, and
+// one centred column — "Welcome", the role note, the two fields, the underlined
+// action. The form itself is a client:load island posting to POST /auth/login;
+// on success it redirects home (or to ?redirect=).
+//
+// The photograph is art-directed and ships with the site (`src/assets/img`),
+// which is also what makes this screen safe: the form sits in the MIDDLE of the
+// frame, so the picture behind it has to be dark and calm or the fields stop
+// reading as fields. This page used to pick a live collection interior by slug,
+// with the catalogue's first usable photograph as the fallback — and that
+// fallback once landed a dense floral upholstery shot the inputs vanished into.
+// A committed image has no fallback to go wrong, and it no longer makes the
+// sign-in page depend on the API being up to look right.
+//
+// getImage() rather than <Image>: the picture is a background (the scrim in
+// auth.css paints over it), so there is no <img> to place.
+const backdrop = await getImage({ src: signInArt, format: 'webp' })
+
+// The role note is the mock's copy, verbatim.
+const NOTE =
+  'Each person signs in as themselves. What you see — pricing, cost, margin and whose sales appear in a report — follows the role attached to your login.'
 ---
 
 <Layout
-  title="Log in — Atelier Textiles"
-  description="Log in to your Atelier Textiles account to view orders and trade pricing."
+  title="Sign in — Atelier Textiles"
+  description="Sign in to your Atelier Textiles account to view orders and trade pricing."
+  bleed
+  overlay
 >
-  <section class="page-intro">
-    <p class="page-eyebrow">Account</p>
-    <h1>Log <em>in</em></h1>
-    <p>Access your orders and, for approved trade accounts, trade pricing.</p>
+  <section class="auth-screen" style={`background-image: url(${backdrop.src})`}>
+    <div class="auth-screen-body">
+      <h1 class="auth-screen-title">Welcome</h1>
+      <p class="auth-screen-note">{NOTE}</p>
+      <LoginForm client:load />
+    </div>
   </section>
-
-  <LoginForm client:load />
 </Layout>

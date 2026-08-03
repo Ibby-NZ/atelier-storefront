@@ -1,0 +1,186 @@
+---
+import { Image } from 'astro:assets'
+
+// The home hero: the featured collections, one photograph each, crossfading.
+//
+// It is a `.photo-band` like the manifesto and design-houses bands, with one
+// difference that shapes everything below — the band holds SEVERAL slides
+// stacked on top of each other, so each slide carries its OWN scrim rather than
+// the band carrying one for all of them (see `.home-hero-slide::after` in
+// home.css). A single band-level scrim would sit above a mid-fade slide,
+// because a slide at fractional opacity becomes a stacking context and takes
+// its copy down with it.
+//
+// The photographs are commissioned banner art shipped in `src/assets/img`, not
+// catalogue rows: the collection's own `image_url` is a room shot cropped for a
+// 4:5 tile and does not hold a full-bleed 88vh frame. Everything else on the
+// slide — house, name, description — is still live API data, so a collection
+// renamed in the CRM renames itself here.
+//
+// Rotation is progressive enhancement. The first slide is marked active in the
+// HTML, so with no JavaScript the hero is exactly the single-photograph band it
+// was before. The rest are `inert` + `aria-hidden` so their "View collection"
+// link is never a tab stop while off-screen.
+
+/**
+ * @typedef {{
+ *   key: string,
+ *   name: string,
+ *   house?: string,
+ *   description?: string|null,
+ *   href: string,
+ *   image: ImageMetadata,
+ * }} HeroSlide
+ */
+
+const { slides = [], rotateMs = 7000, title } = Astro.props
+---
+
+<section
+  class="photo-band home-hero"
+  data-hero
+  data-rotate={String(rotateMs)}
+  aria-roledescription="carousel"
+  aria-label="Featured collections"
+>
+  {/*
+    The page's one <h1>. Each slide's own headline is an <h2>: a rotating <h1>
+    would name whichever collection happened to be showing as the subject of the
+    whole page, and three of them would leave the document with three.
+  */}
+  <h1 class="sr-only">{title}</h1>
+
+  {
+    slides.map((slide, index) => (
+      <article
+        class:list={['home-hero-slide', { 'is-active': index === 0 }]}
+        data-hero-slide
+        role="group"
+        aria-roledescription="slide"
+        aria-label={`${slide.name} — ${index + 1} of ${slides.length}`}
+        aria-hidden={index === 0 ? undefined : 'true'}
+        inert={index === 0 ? undefined : true}
+      >
+        {/* Decorative: the headline beside it already names the collection. */}
+        <Image
+          class="home-hero-photo"
+          src={slide.image}
+          alt=""
+          widths={[960, 1440, 1920, 2560]}
+          sizes="100vw"
+          format="webp"
+          loading={index === 0 ? 'eager' : 'lazy'}
+          fetchpriority={index === 0 ? 'high' : 'auto'}
+        />
+        <div class="photo-band-body">
+          <div class="container photo-band-row">
+            <h2 class="photo-band-title">
+              {slide.house && <span class="photo-band-title-sub">{slide.house}</span>}
+              {slide.name}
+            </h2>
+            <div class="photo-band-aside">
+              {slide.description && <p>{slide.description}</p>}
+              <a class="cta-underline cta-underline-light" href={slide.href}>
+                View collection
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+    ))
+  }
+
+  {
+    slides.length > 1 && (
+      <div class="container home-hero-controls">
+        <div class="home-hero-dots" role="group" aria-label="Choose a featured collection">
+          {slides.map((slide, index) => (
+            <button
+              type="button"
+              class:list={['home-hero-dot', { 'is-active': index === 0 }]}
+              data-hero-dot
+              aria-current={index === 0 ? 'true' : undefined}
+            >
+              <span class="sr-only">{slide.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+</section>
+
+<script>
+  // Crossfade rotator. Deliberately vanilla and self-contained: the hero holds
+  // no state the server needs and nothing else on the page reads it, so hydrating
+  // a React island for it would ship a framework to fade a photograph.
+  const rotators = document.querySelectorAll('[data-hero]')
+
+  rotators.forEach((hero) => {
+    const slides = Array.from(hero.querySelectorAll('[data-hero-slide]'))
+    const dots = Array.from(hero.querySelectorAll('[data-hero-dot]'))
+    if (slides.length < 2) return
+
+    const period = Number(hero.dataset.rotate) || 7000
+    // Auto-advance is motion nobody asked for, so reduced-motion gets a static
+    // hero — the dots still work, which keeps every collection reachable.
+    const stillness = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+    let current = 0
+    let timer = null
+
+    const show = (next) => {
+      if (next === current) return
+      slides.forEach((slide, index) => {
+        const active = index === next
+        slide.classList.toggle('is-active', active)
+        // `inert` keeps the off-screen slide's link out of the tab order; the
+        // aria-hidden pair keeps it out of the accessibility tree.
+        slide.toggleAttribute('inert', !active)
+        if (active) slide.removeAttribute('aria-hidden')
+        else slide.setAttribute('aria-hidden', 'true')
+      })
+      dots.forEach((dot, index) => {
+        const active = index === next
+        dot.classList.toggle('is-active', active)
+        if (active) dot.setAttribute('aria-current', 'true')
+        else dot.removeAttribute('aria-current')
+      })
+      current = next
+    }
+
+    const stop = () => {
+      if (timer === null) return
+      window.clearInterval(timer)
+      timer = null
+    }
+
+    const start = () => {
+      if (timer !== null || stillness.matches || document.hidden) return
+      timer = window.setInterval(() => show((current + 1) % slides.length), period)
+    }
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        // Restart the clock on a manual pick, or the chosen slide can be
+        // replaced a moment later by a timer that was already most of the way
+        // through its period.
+        stop()
+        show(index)
+        start()
+      })
+    })
+
+    // Hold still while someone is reading or tabbing through the copy, and stop
+    // the timer entirely on a hidden tab rather than queueing transitions
+    // nobody is watching.
+    hero.addEventListener('pointerenter', stop)
+    hero.addEventListener('pointerleave', start)
+    hero.addEventListener('focusin', stop)
+    hero.addEventListener('focusout', start)
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()))
+    stillness.addEventListener('change', () => (stillness.matches ? stop() : start()))
+
+    start()
+  })
+</script>

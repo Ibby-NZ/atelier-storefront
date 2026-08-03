@@ -295,75 +295,6 @@
   color: var(--muted);
 }
 
-/* --- Full-bleed image hero ------------------------------------------------ */
-/* The image is a background so the scrim can sit on top without a wrapper; the
-   copy is absolutely positioned so it hugs the bottom-left of the container. */
-.bleed-hero {
-  position: relative;
-  overflow: hidden;
-  background: var(--surface);
-  background-size: cover;
-  background-position: center;
-}
-
-.bleed-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(33, 28, 23, 0.62),
-    rgba(33, 28, 23, 0.06) 55%
-  );
-}
-
-.bleed-hero-body {
-  position: absolute;
-  z-index: 1; /* above ::after, which paints the scrim */
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-.bleed-hero-eyebrow {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  font-weight: 600;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  color: #e0c9a2; /* brass lifted for legibility over a photograph */
-}
-
-.bleed-hero-body h1 {
-  margin: var(--s3) 0 0;
-  font-weight: 400;
-  line-height: 0.96;
-  letter-spacing: -0.02em;
-  color: var(--paper);
-}
-
-.bleed-hero-body h1 em {
-  font-style: italic;
-  font-weight: 300;
-}
-
-.bleed-hero-lede {
-  margin: 1.25rem 0 0;
-  max-width: 36rem;
-  font-size: 1rem;
-  line-height: 1.65;
-  color: rgba(247, 242, 233, 0.85);
-}
-
-.bleed-hero-cta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s6);
-  margin-top: 1.75rem;
-}
-
 /* --- Espresso band ------------------------------------------------------- */
 .band-dark {
   background: var(--ink);
@@ -831,7 +762,16 @@ a.tag:hover {
   font-variant-numeric: tabular-nums;
 }
 
+/* A checkbox / radio row: the control first, then its text. `display` belongs
+   HERE and not only on `.field` — without it the direction, alignment and gap
+   below are inert, the <label> falls back to `display: inline`, and the control
+   and its text render with literally no space between them. It only ever looked
+   right because the one caller that wrote `class="field field-checkbox"` got the
+   flex box from `.field`; every bare caller collapsed silently. Declaring it
+   here is a byte-for-byte no-op for the combined-class callers and a fix for
+   the rest, current and future. */
 .field-checkbox {
+  display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: var(--s3);
@@ -847,6 +787,25 @@ a.tag:hover {
   accent-color: var(--accent);
 }
 
+/* Put the house focus ring back. `.field input:focus` above strips the native
+   outline and replaces it with a claret border plus a 2px `--accent-wash` halo
+   — which reads on a 44px text input and is invisible on a 17px checkbox
+   (`--accent-wash` #f3eadf on `--paper` #f7f2e9 is 1.07:1). Every checkbox and
+   radio in this codebase sits inside a `.field`, so all of them lost their only
+   keyboard affordance; this restores the global `:focus-visible` figure from
+   tokens.css. Same specificity (0,2,1) as the rule it corrects, so it must stay
+   BELOW it in source order — do not move this block above `.field input:focus`.
+   Outline is out-of-flow, so nothing here can shift layout. */
+.field-checkbox input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* SPECIFICITY-CRITICAL. Resets a checkbox row's text back to body copy. Ties
+   the eyebrow rule at the top of this file at (0,1,1) and wins ONLY because it
+   is declared later — reordering this sheet would turn every consent sentence
+   into an uppercase letterspaced eyebrow. */
 .field-checkbox > span {
   font-size: var(--t-sm);
   font-weight: 400;
@@ -856,7 +815,19 @@ a.tag:hover {
   line-height: 1.5;
 }
 
-.field-hint {
+/* Hints and errors are spans inside `.field`, so the eyebrow rule at the top of
+   this file catches them: `.field > span` is (0,1,1) and a bare `.field-hint` /
+   `.field-error` is (0,1,0), so the resets below have never applied. Both have
+   been rendering as 11px UPPERCASE .16em stone eyebrows — a hint looked like a
+   second label, and an error looked exactly like the label above it and was not
+   even clay. Naming the same shape a second time at (0,2,1) is the smallest
+   repair that restores the authors' intent WITHOUT editing the eight-selector
+   eyebrow group (which also styles page eyebrows, product brands, cart lines,
+   detail price labels, footer headings and the library results count). Keep the
+   bare selectors: OrderRequestForm renders a standalone `<p class="field-error">`
+   that sits outside any `.field`. */
+.field-hint,
+.field > span.field-hint {
   display: block;
   margin-top: 2px;
   font-size: var(--t-xs);
@@ -866,9 +837,25 @@ a.tag:hover {
   color: var(--muted);
 }
 
-.field-error {
+/* Deliberately layout-free — no display, no margin, no padding. `.field-error`
+   is worn both by a <span> that is a flex item of `.field` and by a bare <p>
+   that is a direct flex child of `.request-form` (gap var(--s5)); an author
+   margin here would beat the UA `p { margin: 1em 0 }` on cascade origin and
+   double-space that one message while looking correct everywhere else. */
+.field-error,
+.field > span.field-error {
   font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--clay);
+}
+
+/* Line-height only where the eyebrow's tight 1.3 would otherwise apply. The
+   standalone <p> keeps its inherited body line-height untouched. */
+.field > span.field-hint,
+.field > span.field-error {
+  line-height: 1.45;
 }
 
 /* --- Quantity stepper -----------------------------------------------------

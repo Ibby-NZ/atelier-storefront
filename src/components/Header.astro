@@ -1,147 +1,79 @@
 ---
 import CartIndicator from './CartIndicator.jsx'
 import AccountNav from './AccountNav.jsx'
+import Wordmark from './Wordmark.astro'
 
-// Maison header (design: MaisonHeader.dc.html).
+// Site header, 2026 direction (design: Figma Header 3376:24 / 3376:4, drawn on
+// every one of the four frames — home 7307:617, Brand 9350:479, Product Page
+// 9350:788, Sign in 9350:361).
 //
-// Espresso announcement bar, then a paper header row: inline ATELIER TEXTILES
-// wordmark left, uppercase nav centre, utilities right. "Products" opens a
-// full-width mega-menu on hover or focus (src/lib/mega-menu.js).
+// One row: nav left, the wordmark absolutely centred, Contact + three 24px
+// icons right. No announcement bar and no mega-menu — the design has neither,
+// and the mega-menu's job (by type / by application / the houses) is the
+// library's own facet sidebar.
 //
-// The wordmark is the only route home — the design drops the Home nav item —
-// and the nav labels are the design's own ("The Houses" for /brands, "The
-// Maison" for /story). Cart and account stay React islands because they carry
-// live state; everything else is static markup so the mega-menu's links are in
-// the served HTML.
+// Two themes, one markup. `overlay` floats the header over the first band of a
+// bleed page and reverses the type to bone (the home hero, a house banner,
+// sign-in); without it the header sits on the page ground in umber over a
+// hairline. `Layout.astro` passes it through from the page.
+//
+// The nav labels are the design's own: Story for /story, Journal for
+// /resources. There is no Home item — the wordmark is the way home.
+const { overlay = false } = Astro.props
+
 const links = [
-  { href: '/brands', label: 'The Houses' },
+  { href: '/products', label: 'Products' },
+  { href: '/brands', label: 'Brands' },
+  { href: '/story', label: 'Story' },
   { href: '/resources', label: 'Journal' },
-  { href: '/story', label: 'The Maison' },
-  { href: '/contact', label: 'Contact' },
 ]
-
-// Mega-menu columns. Every destination is a real route with a real filter key
-// that ProductLibrary reads from the URL — no invented facets, so none of these
-// can land on an empty grid.
-const byType = [
-  { href: '/products?product_type=fabric', label: 'Fabrics' },
-  { href: '/products?product_type=finished_good', label: 'Finished goods' },
-]
-
-const byApplication = [
-  { href: '/products?application=Upholstery', label: 'Upholstery' },
-  { href: '/products?application=Drapery', label: 'Drapery' },
-  { href: '/products?application=Wallcovering', label: 'Wallcovering' },
-  { href: '/products?application=Outdoor', label: 'Outdoor' },
-]
-
-// The four houses named in the design. Slugs match the seeded catalogue.
-const houses = [
-  { href: '/brands/pierre-frey', label: 'Pierre Frey' },
-  { href: '/brands/casamance', label: 'Casamance' },
-  { href: '/brands/dedar', label: 'Dedar' },
-  { href: '/brands/rubelli', label: 'Rubelli' },
-]
-
-// Seasonal merchandising, hardcoded exactly as the design specifies. Both this
-// and the announcement bar copy are the two places in the chrome that need a
-// hand edit each season — there is no CMS field behind them yet.
-const FEATURE = {
-  eyebrow: 'New this season',
-  title: 'Carrousel — Pierre Frey',
-  href: '/brands/pierre-frey',
-}
 
 const current = Astro.url.pathname
-const isActive = (href) => current.startsWith(href.split('?')[0])
-const productsActive = current.startsWith('/products')
+const isActive = (href) => current === href || current.startsWith(`${href}/`)
 ---
 
-<div class="site-header-shell">
-  <p class="site-announce">
-    New season — Carrousel by Pierre Frey has arrived ·
-    <a href="/products">Request a cutting</a>
-  </p>
+<header class:list={['site-header', { 'site-header--overlay': overlay }]}>
+  <div class="container site-header-inner">
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
 
-  <header class="site-header" data-mega-root>
-    <div class="container site-header-inner">
-      <a class="brand" href="/" aria-label="Atelier Textiles — home">
-        <span class="brand-mark">ATELIER</span>
-        <span class="brand-sub">TEXTILES</span>
+    <a class="site-wordmark" href="/" aria-label="Atelier Textiles — home">
+      <Wordmark width="150px" />
+    </a>
+
+    <div class="site-utils">
+      <a class="site-util-link" href="/contact" aria-current={isActive('/contact') ? 'page' : undefined}>
+        Contact
       </a>
-
-      <nav class="site-nav" aria-label="Primary">
-        <ul>
-          <li>
-            <a
-              class="site-nav-mega"
-              href="/products"
-              data-mega-trigger
-              aria-haspopup="true"
-              aria-expanded="false"
-              aria-current={productsActive ? 'page' : undefined}
-            >
-              Products<span class="site-nav-caret" aria-hidden="true">▾</span>
-            </a>
-          </li>
-          {
-            links.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  data-mega-dismiss
-                  aria-current={isActive(link.href) ? 'page' : undefined}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </nav>
-
-      <div class="site-utils">
-        <a class="site-util" href="/products" data-mega-dismiss>Search</a>
-        <AccountNav client:load />
-        <CartIndicator client:load />
-      </div>
+      {/* Search is the library itself: it opens with the search field the
+          shopper is reaching for, and there is no separate search route to
+          send them to. */}
+      <a class="site-icon" href="/products" aria-label="Search the collection">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M13.7069 15.0002L19.0001 20.2929" stroke-linecap="round"></path>
+          <circle cx="9.5" cy="9.5" r="6.5"></circle>
+        </svg>
+      </a>
+      <AccountNav client:load />
+      <CartIndicator client:load />
     </div>
-
-    <div class="site-mega" data-mega-panel>
-      <div class="container site-mega-inner">
-        <div class="site-mega-col">
-          <p class="site-mega-heading">By type</p>
-          <ul>
-            {byType.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
-          </ul>
-        </div>
-
-        <div class="site-mega-col">
-          <p class="site-mega-heading">By application</p>
-          <ul>
-            {byApplication.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
-          </ul>
-        </div>
-
-        <div class="site-mega-col">
-          <p class="site-mega-heading">The houses</p>
-          <ul>
-            {houses.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
-            <li><a class="site-mega-all" href="/brands">All houses →</a></li>
-          </ul>
-        </div>
-
-        <a class="site-mega-feature" href={FEATURE.href}>
-          <span class="site-mega-feature-media weave" aria-hidden="true"></span>
-          <span class="site-mega-feature-eyebrow">{FEATURE.eyebrow}</span>
-          <span class="site-mega-feature-title">{FEATURE.title}</span>
-        </a>
-      </div>
-    </div>
-  </header>
-</div>
-
-<script>
-  import { initMegaMenu } from '../lib/mega-menu.js'
-  initMegaMenu()
-</script>
+  </div>
+</header>

@@ -1,14 +1,33 @@
 ---
 export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+import { Image, getImage } from 'astro:assets'
 import Layout from '../layouts/Layout.astro'
+import CollectionHero from '../components/CollectionHero.astro'
 import { safeFetch } from '../lib/api.js'
 import {
   bandPhotographs,
   brandDesignCounts,
   collectionBySlug,
   collectionHref,
+  houseLabel,
   pickCollections,
 } from '../lib/home.js'
+
+// Commissioned banner art, shipped with the site rather than fetched.
+//
+// Everything else on this page still takes its photograph from the catalogue,
+// and that is still the right default — a collection tile should show the
+// collection. These six do not: they are the bands the client art-directed, and
+// a band the catalogue fills at random cannot be art-directed at all. They live
+// in `src/assets` (not `public/`) so the build emits sized webp derivatives
+// instead of serving a 2560px JPEG to a phone.
+import natureOperaBanner from '../assets/img/natures-opera-hero-banner.jpg'
+import larsenBanner from '../assets/img/larsen-hero-banner.jpg'
+import manuelCanovasBanner from '../assets/img/manuel-canovas-hero-banner.jpg'
+import exploreTypeArt from '../assets/img/explore-type-bg.jpg'
+import exploreApplicationArt from '../assets/img/explore-application-bg.jpg'
+import featuredCollectionArt from '../assets/img/featured-collection-image.jpg'
+import designHousesArt from '../assets/img/design-brands-banner-bg.jpg'
 
 // Home, 2026 direction (design: Figma "Atelier Home page", node 7307:617).
 // Section order is the mock's, verbatim: full-bleed collection hero, the two
@@ -29,6 +48,9 @@ import {
 //
 // The page is `bleed`: every band paints edge to edge and carries its own
 // `.container`, which keeps its copy aligned with the site header and footer.
+// It is also `overlay` — the mock floats the header over the hero photograph
+// rather than stacking it above, so the hero owns the top of the viewport and
+// `.home-hero` is sized to hold the header inside it.
 
 const { data: catalogue } = await safeFetch('/catalogue/products?limit=100')
 const products = catalogue?.products ?? []
@@ -36,13 +58,38 @@ const products = catalogue?.products ?? []
 const { data: collectionList } = await safeFetch('/catalogue/collections')
 const collections = collectionList?.collections ?? []
 
+// Houses, for the featured collection's fact list — the collections endpoint
+// carries the house's slug and name but not where it works from.
+const { data: brandList } = await safeFetch('/catalogue/brands')
+const brands = brandList?.brands ?? []
+
 // --- Seasonal merchandising ------------------------------------------------
-// Three slugs and four blocks of copy, hand-edited each season. Same
-// convention (and same reason) as Header.astro's FEATURE and announcement bar:
-// there is no CMS field behind a season yet, and these are the whole list.
-// A slug that has been retired in the CRM resolves to null and its section is
-// simply omitted rather than rendering an empty frame.
-const HERO_SLUG = 'nature-s-opera'
+// The featured collections and four blocks of copy, hand-edited each season.
+// Same convention (and same reason) as Header.astro's FEATURE and announcement
+// bar: there is no CMS field behind a season yet, and these are the whole list.
+//
+// Each featured collection carries its banner art and the labels to fall back
+// on. Everything the hero shows normally is live API data; the `name`/`house`
+// here only surface when the API is down or the slug has been retired, so the
+// page opens on a photograph and a title rather than on nothing. (The bands
+// further down still drop out in that case — they have no art of their own.)
+const FEATURED_COLLECTIONS = [
+  {
+    slug: 'nature-s-opera',
+    name: "Nature's Opera",
+    house: 'de Le Cuona',
+    image: natureOperaBanner,
+  },
+  { slug: 'larsen-2024', name: 'Larsen 2024', house: 'Larsen', image: larsenBanner },
+  {
+    slug: 'manuel-canovas-2024',
+    name: 'Manuel Canovas 2024',
+    house: 'Manuel Canovas',
+    image: manuelCanovasBanner,
+  },
+]
+
+// The one that also gets the full band lower down, with its own portrait art.
 const FEATURED_SLUG = 'larsen-2024'
 const LATEST_SLUGS = [
   'manuel-canovas-giverny',
@@ -77,38 +124,83 @@ const HOUSES = {
 }
 
 // --- Collections -----------------------------------------------------------
-const hero = collectionBySlug(collections, HERO_SLUG)
-const featured = collectionBySlug(collections, FEATURED_SLUG)
-const latest = pickCollections(collections, {
-  slugs: LATEST_SLUGS,
-  count: 4,
-  exclude: [hero?.slug, featured?.slug].filter(Boolean),
-})
-
 // Designs held per house — the third rung of collectionHref()'s ladder, so a
 // tile for a house we hold nothing from goes to the house page rather than to
 // an empty grid. de Le Cuona and No.9 Thompson are both in that position on the
 // seeded catalogue, and both are named by the design.
 const designsPerHouse = brandDesignCounts(products)
-const hrefFor = (collection) =>
-  collectionHref(collection, designsPerHouse[collection?.brand?.slug] ?? 0)
+const houseDesigns = (collection) => designsPerHouse[collection?.brand?.slug] ?? 0
+const hrefFor = (collection) => collectionHref(collection, houseDesigns(collection))
 
-// --- Photography -----------------------------------------------------------
-// The hero, the row and the featured band carry their own collection's
-// photograph. The two banners and the two dark bands have no collection behind
-// them, so bandPhotographs() hands them four different pictures the page is not
-// already showing — collection interiors first, product shots only to top up
-// (see lib/home.js for why that order matters under a scrim).
-const [typeImage, applicationImage, manifestoImage, housesImage] = bandPhotographs({
-  collections,
-  products,
-  claimed: [hero?.image_url, featured?.image_url, ...latest.map((entry) => entry.image_url)],
-  count: 4,
+const heroSlides = FEATURED_COLLECTIONS.map((entry) => {
+  const collection = collectionBySlug(collections, entry.slug)
+  const name = collection?.name ?? entry.name
+  return {
+    key: entry.slug,
+    name,
+    // Two of the three are "<house> <year>", so the house line is dropped
+    // rather than stuttering it above the title — see houseLabel().
+    house: houseLabel(name, collection?.brand?.name ?? entry.house),
+    description: collection?.description ?? null,
+    href: collection ? hrefFor(collection) : '/products',
+    image: entry.image,
+  }
 })
 
+const featuredEntry =
+  FEATURED_COLLECTIONS.find((entry) => entry.slug === FEATURED_SLUG) ?? null
+const featuredLive = collectionBySlug(collections, FEATURED_SLUG)
+const featured = {
+  name: featuredLive?.name ?? featuredEntry?.name ?? '',
+  description: featuredLive?.description ?? null,
+  href: featuredLive ? hrefFor(featuredLive) : '/products',
+}
+
+// The fact list beside the featured collection. Every row is live data, and a
+// row with nothing behind it is dropped rather than shown empty — so the band
+// still reads as finished when the API is down. `product_count` is deliberately
+// NOT one of them: collection membership is staff-assigned in the CRM and the
+// seed assigns none, so it is 0 for every collection and would read as "nothing
+// in it". Designs held from the HOUSE is the honest figure, and it is also
+// where the "Explore collection" link lands (collectionHref's second rung).
+const featuredHouse = brands.find((brand) => brand.slug === featuredLive?.brand?.slug) ?? null
+const featuredDesigns = houseDesigns(featuredLive)
+const featuredFacts = [
+  { label: 'House', value: featuredLive?.brand?.name ?? null },
+  { label: 'Origin', value: featuredHouse?.country ?? null },
+  { label: 'Designs held', value: featuredDesigns > 0 ? String(featuredDesigns) : null },
+].filter((fact) => fact.value)
+
+const latest = pickCollections(collections, {
+  slugs: LATEST_SLUGS,
+  count: 4,
+  exclude: FEATURED_COLLECTIONS.map((entry) => entry.slug),
+})
+
+// --- Photography -----------------------------------------------------------
+// The hero, the two banners, the featured band and the design-houses band are
+// art-directed (the imports at the top). The manifesto band is the one left
+// with no picture of its own, so bandPhotographs() hands it one the page is not
+// already showing — collection interiors first, product shots only to top up
+// (see lib/home.js for why that order matters under a scrim).
+const [manifestoImage] = bandPhotographs({
+  collections,
+  products,
+  claimed: latest.map((entry) => entry.image_url),
+  count: 1,
+})
+
+// Art-directed bands paint their photograph as a background, so they go through
+// getImage() rather than <Image>: same webp derivative, no <img> to place.
+const [typeArt, applicationArt, housesArt] = await Promise.all(
+  [exploreTypeArt, exploreApplicationArt, designHousesArt].map((src) =>
+    getImage({ src, format: 'webp' })
+  )
+)
+
 const banners = [
-  { ...BANNERS[0], image: typeImage },
-  { ...BANNERS[1], image: applicationImage },
+  { ...BANNERS[0], image: typeArt.src },
+  { ...BANNERS[1], image: applicationArt.src },
 ]
 
 const bandStyle = (image) => (image ? `background-image: url(${image})` : undefined)
@@ -117,43 +209,21 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
 <Layout
   title="Atelier Textiles — Curators of global design excellence"
   description="Fine fabrics and finished goods for makers and trade, sourced from houses across Aotearoa and beyond."
-  image={hero?.image_url}
+  image={heroSlides[0]?.image?.src}
   bleed
+  overlay
 >
-  {
-    hero && (
-      <section
-        class:list={['home-band', 'home-hero', { weave: !hero.image_url }]}
-        style={bandStyle(hero.image_url)}
-      >
-        <div class="home-band-body">
-          <div class="container home-band-row">
-            <h1 class="home-band-title">
-              <span class="home-band-title-sub">{hero.brand?.name}</span>
-              {hero.name}
-            </h1>
-            <div class="home-band-aside">
-              <p>{hero.description}</p>
-              <a class="cta-underline cta-underline-light" href={hrefFor(hero)}>
-                View collection
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  <CollectionHero
+    slides={heroSlides}
+    title="Atelier Textiles — curators of global design excellence"
+  />
 
-  <section class="home-banners">
+  <section class="tile-wall">
     {
       banners.map((banner) => (
-        <a
-          class:list={['home-banner', { weave: !banner.image }]}
-          style={bandStyle(banner.image)}
-          href={banner.href}
-        >
-          <span class="home-banner-body">
-            <span class="home-banner-title">{banner.title}</span>
+        <a class="tile" style={bandStyle(banner.image)} href={banner.href}>
+          <span class="tile-body">
+            <span class="tile-title">{banner.title}</span>
             <span class="cta-underline cta-underline-light cta-underline-lg">
               {banner.cta}
             </span>
@@ -186,7 +256,7 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
                 <span class="home-collection-meta">
                   <span class="home-collection-name">{collection.name}</span>
                   {collection.brand?.name && (
-                    <span class="home-badge">{collection.brand.name}</span>
+                    <span class="badge-ochre">{collection.brand.name}</span>
                   )}
                 </span>
               </a>
@@ -198,13 +268,13 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
   }
 
   <section
-    class:list={['home-band', 'home-manifesto', { weave: !manifestoImage }]}
+    class:list={['photo-band', 'home-manifesto', { weave: !manifestoImage }]}
     style={bandStyle(manifestoImage)}
   >
     <div class="container">
       <div class="home-manifesto-body">
-        <h2 class="home-band-title">
-          {MANIFESTO.title} <span class="home-band-title-sub">{MANIFESTO.pronunciation}</span>
+        <h2 class="photo-band-title">
+          {MANIFESTO.title} <span class="photo-band-title-sub">{MANIFESTO.pronunciation}</span>
         </h2>
         <p>{MANIFESTO.body}</p>
         <a class="cta-underline cta-underline-light" href={MANIFESTO.href}>{MANIFESTO.cta}</a>
@@ -212,38 +282,46 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     </div>
   </section>
 
-  {
-    featured && (
-      <section class="home-featured">
-        <div class="container home-featured-inner">
-          <div class="home-featured-media">
-            {featured.image_url ? (
-              <img src={featured.image_url} alt={featured.name} loading="lazy" />
-            ) : (
-              <span class="weave" aria-hidden="true" />
-            )}
-          </div>
-          <div class="home-featured-body">
-            <p class="home-badge">Featured collection</p>
-            <h2>{featured.name}</h2>
-            <p class="home-featured-copy">{featured.description}</p>
-            <a class="cta-underline" href={hrefFor(featured)}>
-              Explore collection
-            </a>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  <section class="home-featured">
+    <div class="container home-featured-inner">
+      <div class="home-featured-media">
+        <Image
+          src={featuredCollectionArt}
+          alt={featured.name}
+          widths={[622, 933, 1244]}
+          sizes="(max-width: 1024px) 100vw, 40vw"
+          format="webp"
+          loading="lazy"
+        />
+      </div>
+      <div class="home-featured-body">
+        <p class="badge-ochre">Featured collection</p>
+        <h2>{featured.name}</h2>
+        {featured.description && <p class="home-featured-copy">{featured.description}</p>}
+        {
+          featuredFacts.length > 0 && (
+            /* The house page's own fact list (editorial.css `.house-facts`),
+               reused verbatim — same figure, same rows, nothing new to style. */
+            <dl class="house-facts home-featured-facts">
+              {featuredFacts.map((fact) => (
+                <div class="house-fact">
+                  <dt>{fact.label}</dt>
+                  <dd>{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )
+        }
+        <a class="cta-underline" href={featured.href}>Explore collection</a>
+      </div>
+    </div>
+  </section>
 
-  <section
-    class:list={['home-band', 'home-houses', { weave: !housesImage }]}
-    style={bandStyle(housesImage)}
-  >
-    <div class="home-band-body">
-      <div class="container home-band-row">
-        <h2 class="home-band-title">{HOUSES.title}</h2>
-        <div class="home-band-aside">
+  <section class="photo-band home-houses" style={bandStyle(housesArt.src)}>
+    <div class="photo-band-body">
+      <div class="container photo-band-row">
+        <h2 class="photo-band-title">{HOUSES.title}</h2>
+        <div class="photo-band-aside">
           <p>{HOUSES.body}</p>
           <a class="cta-underline cta-underline-light" href={HOUSES.href}>{HOUSES.cta}</a>
         </div>

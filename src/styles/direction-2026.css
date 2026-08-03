@@ -1,0 +1,269 @@
+/*
+ * Atelier Textiles — 2026 direction, shared figures.
+ *
+ * Design: the client's Figma file "Atelier" (6iMAmsNk2HkmhfuqAimM5P), frames
+ * "Atelier Home page" (7307:617), "Brand Page" (9350:479), "Product Page"
+ * (9350:788 — a house page with a band instead of a banner) and "Sign in
+ * Page 2" (9350:361). All four share one header, one footer and the same four
+ * figures below; they exist here rather than in home.css because the home is no
+ * longer the only screen in the direction.
+ *
+ * This is NOT primitives.css. primitives.css carries the Maison direction (the
+ * library, the product detail, the journal, commerce) — Fraunces display,
+ * paper ground, claret accent, uppercase eyebrows. The two directions share the
+ * shell and nothing else, so promoting a figure from one into the other would
+ * restyle pages that were never redesigned. Keep them apart.
+ *
+ * Everything here is token-driven; there is no hex in this file.
+ */
+
+/* --- Underlined text action ----------------------------------------------
+   The Figma "Button / Ghost" (3446:2956): Inter medium over a 1.5px rule, no
+   box, no uppercase. It is the direction's ONLY action — there is no filled or
+   outlined button anywhere in the four frames. Used both as an <a> on its own
+   and as a <span> inside a tile link, where the whole photograph is the
+   anchor. */
+.cta-underline {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--umber);
+  padding-bottom: var(--s2);
+  border-bottom: 1.5px solid currentcolor;
+  transition: color var(--quick);
+}
+
+.cta-underline-lg {
+  font-size: 1.125rem;
+}
+
+a.cta-underline:hover {
+  color: var(--ochre);
+}
+
+/* On a photograph or an umber band. Bone rather than pure white, matching the
+   Figma text token; the rule inherits it through `currentcolor`. */
+.cta-underline-light {
+  color: var(--bone);
+}
+
+a.cta-underline-light:hover,
+.tile:hover .cta-underline-light {
+  color: #fff;
+}
+
+/* --- Badge ---------------------------------------------------------------
+   The Figma "Badge" (3369:16) with no fill: a 12px semibold label. Ochre where
+   it sits on the cream ground (the house beside a collection, the "Featured
+   collection" eyebrow); muted bone where it sits on a photograph or an umber
+   band (the country above a house name). Sentence case, not the Maison
+   uppercase eyebrow. */
+.badge-ochre,
+.badge-light {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.badge-ochre {
+  color: var(--ochre);
+}
+
+.badge-light {
+  color: var(--bone-muted);
+}
+
+/* --- Full-bleed photograph band -------------------------------------------
+   The home's hero, manifesto and design-houses bands, and the house banner. The
+   image is a background so the scrim can sit on top without a wrapper element;
+   `.weave` (primitives.css) stands in when there is no photograph. */
+.photo-band {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--shell);
+}
+
+/* Scoped off `.weave` so the woven stand-in keeps its own tile size. */
+.photo-band:not(.weave) {
+  background-size: cover;
+  background-position: center;
+}
+
+/* The scrim runs deeper than the mock's. The mock is drawn over commissioned
+   interiors that are already dark at the bottom of the frame; the live bands
+   take whatever the catalogue holds, and half of it is a pale product shot on
+   white linen. These values keep 16px bone copy at ~5:1 against the worst case
+   in the seeded catalogue rather than only against the mock's own photography. */
+.photo-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.62),
+    rgba(0, 0, 0, 0.12) 58%
+  );
+}
+
+/* Copy hugs the bottom of the band, so the photograph stays the composition. */
+.photo-band-body {
+  position: absolute;
+  z-index: 1; /* above ::after, which paints the scrim */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-bottom: var(--s6);
+}
+
+.photo-band-title {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-xl);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+/* The house above the collection ("de Le Cuona" / "Nature's Opera") and the
+   pronunciation beside "Atelier" are the same figure: the same size, dropped to
+   60% so the line that matters reads first. */
+.photo-band-title-sub {
+  color: var(--bone-muted);
+}
+
+/* Headline left, description + action right — the row the home hero and the
+   design-houses band both use. */
+.photo-band-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s8);
+}
+
+/* 24rem is the mock's 371px title box. It is a basis rather than a width so the
+   title still wraps on its own terms — what matters is that "The World's Finest
+   Design Houses" breaks into the design's three lines instead of running the
+   width of the band. */
+.photo-band-row .photo-band-title {
+  flex: 0 1 24rem;
+}
+
+.photo-band-aside {
+  display: flex;
+  flex: 0 1 24rem;
+  flex-direction: column;
+  gap: var(--s5);
+}
+
+.photo-band-aside p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--bone-soft);
+}
+
+/* --- Tile wall ------------------------------------------------------------
+   Two photographs per row, 8px off the page edge with a 12px gutter — the
+   mock's own 626×700 banners at x=8 and x=646. It is the home's two shop
+   banners and the house page's collection grid, the same figure at the same
+   size in both frames. */
+.tile-wall {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s3);
+  padding: var(--s2);
+  background: var(--shell);
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 313 / 350; /* the mock's 626 × 700 */
+  min-height: 24rem;
+  padding: var(--s7);
+  overflow: hidden;
+  text-decoration: none;
+  background-color: var(--surface);
+}
+
+.tile:not(.weave) {
+  background-size: cover;
+  background-position: center;
+}
+
+.tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0) 52%);
+}
+
+.tile-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s6);
+}
+
+.tile-title {
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+/* --- Responsive ----------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .photo-band-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s5);
+  }
+
+  .photo-band-row .photo-band-title,
+  .photo-band-aside {
+    flex: 0 1 auto;
+  }
+
+  .tile-wall {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tile {
+    aspect-ratio: 4 / 3;
+    min-height: 20rem;
+    padding: var(--s6);
+  }
+}
+
+@media (max-width: 640px) {
+  .photo-band-body {
+    padding-bottom: var(--s5);
+  }
+
+  .tile {
+    aspect-ratio: 3 / 4;
+    padding: var(--s5);
+  }
+
+  .tile-body {
+    gap: var(--s5);
+  }
+}

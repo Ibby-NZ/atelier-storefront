@@ -30,18 +30,36 @@
   --scrim: rgba(33, 28, 23, 0.5);
   --line-dark: rgba(216, 205, 184, 0.22); /* hairline on an espresso band */
 
-  /* --- 2026 home direction (Figma "Atelier Home page", node 7307:617) -------
+  /* --- 2026 direction (Figma "Atelier", file 6iMAmsNk2HkmhfuqAimM5P) --------
      The client's Figma design system runs a second, cooler palette beside the
      Maison one: a warm-cream page ground, an umber dark band, and ochre as the
-     single accent in place of claret. It is currently the HOME PAGE ONLY —
-     named here rather than hardcoded in home.css so the sheet stays hex-free
-     and so the next screen redesigned to this direction reuses the same five
-     values instead of eyeballing them again. */
-  --shell: #e5e1d4; /* color/bg/surface — ground of the home's paper bands */
-  --umber: #33312b; /* color/bg/canvas — dark bands AND primary text on shell */
-  --umber-soft: #605d4f; /* color/text/secondary — body copy on shell */
-  --bone: #f2f0e9; /* color/text/primary, reversed onto umber or a photograph */
-  --ochre: #937942; /* color/brand/primary — badges and small labels */
+     single accent in place of claret. It now carries the SITE CHROME, the home,
+     the house pages and sign-in — so these are no longer home-only values.
+     Named here rather than hardcoded per sheet so nothing eyeballs them twice.
+
+     Figma variable → token, verbatim:
+       color/bg/surface   #e5e1d4  --shell
+       color/bg/canvas    #33312b  --umber
+       color/text/secondary (light) #605d4f  --umber-soft
+       color/text/primary  #f2f0e9  --bone
+       color/brand/primary #937942  --ochre                              */
+  --shell: #e5e1d4; /* ground of the direction's paper bands */
+  --umber: #33312b; /* dark bands AND primary text on shell */
+  --umber-soft: #605d4f; /* body copy and nav labels on shell */
+  --bone: #f2f0e9; /* reversed onto umber or a photograph */
+  --ochre: #937942; /* badges and small labels */
+  --gold: #b5985b; /* the ATELIER wordmark's own gold (Wordmark.astro) */
+
+  /* Rules and muted text, both grounds. The Figma binds these as
+     color/border/{subtle,default,strong} and color/text/muted, and resolves
+     each against whichever ground it sits on — hence two families. */
+  --shell-line-soft: rgba(0, 0, 0, 0.1);
+  --shell-line: rgba(0, 0, 0, 0.35);
+  --shell-line-strong: rgba(0, 0, 0, 0.5);
+  --shell-muted: rgba(0, 0, 0, 0.35);
+  --umber-line: rgba(242, 240, 233, 0.2); /* hairline on an umber band */
+  --bone-soft: rgba(255, 255, 255, 0.8);
+  --bone-muted: rgba(255, 255, 255, 0.6);
 
   /* --- Type families (system fallbacks keep the site legible if Google
          Fonts is blocked — staging sits behind Cloudflare + Basic Auth). --- */
@@ -81,6 +99,13 @@
   --d-hero: clamp(3rem, 2rem + 5vw, 5.5rem);
   --d-hero-brand: clamp(3rem, 2rem + 4.5vw, 5rem);
 
+  /* --- Display scale, 2026 direction (grotesk) ---
+     The Figma's display/xl (50px) and display/lg (40px), each given a floor so
+     they still read on a phone. Every headline in the direction is one of the
+     two — there is no third size in the mocks. */
+  --g-xl: clamp(2.25rem, 1.5rem + 2.6vw, 3.125rem); /* 36 → 50px */
+  --g-lg: clamp(1.875rem, 1.3rem + 2vw, 2.5rem); /* 30 → 40px */
+
   /* --- Spacing scale --- */
   --s1: 0.25rem;
   --s2: 0.5rem;
@@ -110,6 +135,9 @@
   --r-sm: 0;
   --r-md: 0;
   --r-chip: 0;
+  /* The one exception, and it is the Figma's own `radius/pill`: the cart count
+     in the header is a disc, not a square. */
+  --r-pill: 9999px;
   --hair: 1px solid var(--line);
   --shadow-lift: 0 16px 36px rgba(33, 28, 23, 0.13);
   --shadow-panel: 0 24px 60px rgba(33, 28, 23, 0.3);

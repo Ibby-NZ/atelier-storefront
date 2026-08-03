@@ -359,16 +359,32 @@
 /* The trade application carries the full paper-form field set, so unlike the
    other auth forms it runs the full width of the page container, with each
    fieldset laying its fields out on a two-column grid. `.field-span` marks the
-   long fields (addresses, directors, consent) that take the whole row. */
+   long fields (addresses, directors, consent) that take the whole row.
+
+   Eight fieldsets on one page (the login pair plus the seven application parts)
+   only read as eight SECTIONS if the spacing runs one way: 44px between
+   sections > 32px of section padding > 24px between fields > 8px inside a
+   field > 4px question-to-first-option. Nothing below invents a gap outside
+   that ladder.
+
+   Everything here is scoped to `.trade-form` on purpose. `.field`,
+   `.field-group`, `.field-checkbox`, `.field-hint` and `.field-error` are
+   shared with the contact, order-request, login, register and lookup forms;
+   only the two genuine primitive defects — the missing `display: flex` and the
+   eyebrow swallowing hints and errors — are fixed unscoped, in primitives.css. */
 .trade-form {
   max-width: none;
-  gap: var(--s6);
+  gap: var(--s7);
+  counter-reset: trade-section;
 }
 
 .trade-form .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s4) var(--s5);
+  /* Row gap opens 16px -> 24px so a label, its control and its message read as
+     one object rather than as a block of text; the 24px column gap is what was
+     already there. */
+  gap: var(--s5);
   align-items: start;
 }
 
@@ -376,9 +392,150 @@
   grid-column: 1 / -1;
 }
 
+/* One rule carries the whole section treatment, so all eight fieldsets are
+   identical and a ninth added later inherits it with no code change. */
+.trade-form .field-group {
+  counter-increment: trade-section;
+  padding: var(--s6);
+}
+
+/* The one place this form leaves the shared eyebrow. A section title and a
+   field caption were the SAME 11px stone eyebrow, which is exactly why nothing
+   stood out — the legend read as just another label. Fraunces at `--d-sm` in
+   ink is this site's own h4 (tokens.css), so the step up introduces no new
+   language; it only puts the title a rank above the captions beneath it. The
+   legend keeps its native rendered-legend role and the notch geometry from
+   primitives.css (`padding: 0 var(--s2)` plus the matching negative inline
+   margin) — that figure already ships and is proven on /order-request, so there
+   is nothing here to gamble on. (0,2,1) beats `.field-group legend` (0,1,1)
+   outright; this does not depend on the @import order in global.css. */
+.trade-form .field-group legend {
+  font-family: var(--font-display);
+  font-size: var(--d-sm);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* 01 ... 08 from a CSS counter: a long paper form keeps its running order on
+   screen, and no markup carries a number that could drift when a section is
+   added, removed or reordered. Mono because every figure on this site is mono,
+   brass because this is a fine stroke and never a fill. */
+.trade-form .field-group legend::before {
+  content: counter(trade-section, decimal-leading-zero);
+  margin-inline-end: var(--s3);
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+}
+
+/* Field captions darken from stone to bark. `--muted` on `--paper` is 3.49:1,
+   below AA for normal text, and this form asks for roughly thirty-five of them
+   at 11px underneath a title that is now much louder. `:first-child` is
+   load-bearing twice: it selects the caption only, leaving the hint and error
+   spans on their own colours, and it cannot reach a checkbox row's text (there
+   the <input> is the first child), so `.field-checkbox > span` stays in charge
+   of option copy. Do NOT simplify this to `.trade-form .field > span`. */
+.trade-form .field > span:first-child {
+  color: var(--ink-soft);
+}
+
+/* The "optional" marker. Two of ~35 fields are optional, so the minority is
+   what gets marked and the convention is stated once in the intro rather than
+   starring the other thirty-three. It is rendered from the same `optional` flag
+   that drives `required={!optional}`, so it cannot drift from the validator,
+   and it sits inside the <label> so it joins the input's accessible name. It
+   sheds the caption's uppercase, tracking and weight but keeps bark: a muted
+   italic aside at 12px would be the least legible text on the page. */
+.trade-form .field-optional {
+  margin-inline-start: var(--s2);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+/* A choice is an answer, and it should be as easy to hit as the 44px input in
+   the cell beside it — a stack of 17px inline labels never shared a top edge
+   with one. No frame, no fill, no shadow: the house separates with hairlines
+   and this row already sits inside one, so the height and the padding are the
+   whole figure. 12px of block padding around a 21px line lands the row at ~45px,
+   which makes `min-height` a floor rather than a stretcher, and keeps the
+   primitive's `align-items: flex-start` correct when the text wraps to two
+   lines. `align-self: start` shrink-wraps the label so the pointer area matches
+   what is visible instead of running the full width of a 700px grid cell. */
+.trade-form .field-checkbox {
+  align-self: start;
+  max-width: 100%;
+  min-height: 44px;
+  padding-block: var(--s3);
+  cursor: pointer;
+}
+
+/* 14px sentence case reads as a statement you are agreeing to rather than as a
+   second caption, and matches the type size inside the inputs — what you type
+   and what you choose are the same size. The primitive's 2px top nudge on the
+   control is already the right optical centring for a 21px line, so it stays. */
+.trade-form .field-checkbox > span {
+  font-size: var(--t-base);
+}
+
+/* A group question and its first option are one thought; a hair more air than
+   the 8px `.field` gap keeps the options reading as answers to it. Only fires
+   where a caption actually precedes a row. */
+.trade-form .field > span + .field-checkbox {
+  margin-top: var(--s1);
+}
+
+/* A failed field is marked on the control as well as under it, so a "Required."
+   thirty rows up the page is findable without hunting. `:not(:focus)` is
+   mandatory: without it this (0,4,1) rule out-specifies `.field input:focus`
+   (0,2,1) and a keyboard user tabbing back would lose the claret focus border
+   on exactly the fields validation sent them to. `--clay` rather than
+   `--clay-line`, which is 1.42:1 on paper and would not be seen at all. */
+.trade-form .field input[aria-invalid="true"]:not(:focus),
+.trade-form .field textarea[aria-invalid="true"]:not(:focus) {
+  border-color: var(--clay);
+}
+
+/* Emphasis takes ink the way `.prose strong` does in editorial.css — the copy
+   around it is `--muted` / `--ink-soft`, so weight alone would not read.
+   Rationed to two places in the whole form: the operative word of the intro and
+   the operative phrase of the consent line. `.auth-success` is used by this
+   component and nothing else (grepped), so the confirmation matches and the
+   page says the same thing the same way before and after submit. */
+.trade-form strong,
+.auth-success strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* The intro now carries the required/optional convention, so it has to be
+   readable: `.auth-intro` is `--muted` at 13px, which is 3.49:1. Scoped, so the
+   login and register intros are untouched. */
+.trade-form .auth-intro {
+  color: var(--ink-soft);
+}
+
 @media (max-width: 720px) {
   .trade-form .field-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* The wide section padding is a desktop luxury; on a phone the page gutter is
+     already doing that job. The legend keeps `--d-sm` — the longest title with
+     its numeral, "05 Trading account details", still sets on one line inside a
+     335px box, and a wrapped legend would tear a two-line hole in the
+     fieldset's top hairline. The 44px choice rows do not shrink: that is the
+     touch target. */
+  .trade-form .field-group {
+    padding: var(--s5);
   }
 }
 
@@ -442,15 +599,48 @@
   max-width: 58rem;
 }
 
-.account-greeting {
-  margin: 0 0 var(--s6);
+/* The greeting and Log out share the rule that used to sit under the greeting
+   alone. Log out moved here from the header when the 2026 chrome replaced the
+   named account link with a 24px icon (see Account.jsx). */
+.account-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
+  margin-bottom: var(--s6);
   padding-bottom: var(--s4);
   border-bottom: var(--hair);
+}
+
+.account-greeting {
+  margin: 0;
   font-size: var(--t-eyebrow);
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.account-logout {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--quick);
+}
+
+.account-logout:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.account-logout:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 /* Trade-account state. Left-rule panel rather than a coloured fill: the palette
