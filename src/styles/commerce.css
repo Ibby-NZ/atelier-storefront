@@ -356,6 +356,13 @@
   max-width: 36rem;
 }
 
+/* The trade application carries the full paper-form field set, so it gets the
+   wider request-form measure and roomier gaps between its fieldsets. */
+.trade-form {
+  max-width: 36rem;
+  gap: var(--s6);
+}
+
 .order-lookup {
   max-width: none;
 }
