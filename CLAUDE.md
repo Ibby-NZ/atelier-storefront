@@ -11,6 +11,11 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   build-time `safeFetch` call executes; the API being down must NOT fail the
   build (see fetch helper below).
 - `npm run lint` — ESLint over `.js/.jsx/.mjs` only.
+- `npm test` — `node --test "src/**/*.test.js"`. Node's built-in runner, **no
+  test dependency**: the store ships no test framework and adding one for a
+  handful of pure helpers is not worth the install. Only the pure modules under
+  `src/lib/` are covered (no DOM, no fetch, no React) — anything needing a
+  browser belongs in an end-to-end run against a live API, not here.
 
 ## Conventions
 
@@ -134,16 +139,38 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
 - **`src/lib/catalogue.js`** is the single place the catalogue display rules
   live, so the library grid, the product detail island and the homepage cannot
   drift apart. Pure functions, no fetching, no DOM.
-  - `priceInfo(product)` → `{ label, text, muted, indicative, retail }`. FR-3
-    precedence: `trade_price_cents` (only ever sent to an approved trade user, so
-    if it arrived, show it, with the visible retail struck through beside it) →
-    `price_hidden` or no retail price → "Sign in for trade pricing" → retail.
+  - `priceInfo(product, viewer)` → `{ label, text, muted, indicative, retail }`.
+    FR-3 precedence: `trade_price_cents` (only ever sent to an approved trade
+    user, so if it arrived, show it, with the visible retail struck through
+    beside it) → `price_hidden` or no retail price → a `NO_PRICE_COPY` line
+    **chosen by the viewer** → retail.
     **`trade_price_cents` is NZD cents**, while `products.currency` is the
     supplier's currency and belongs to `retail_price_cents` — formatting the
     trade figure with the product currency rendered NZ money as "US$187.76".
     `TRADE_CURRENCY` is the constant; do not pass `product.currency` there.
     `indicative: true` drives the small muted "Indicative" annotation the design
     system puts beside every monetary figure.
+  - **`viewer` is the `/auth/me` user (or null) and only ever picks COPY** — it
+    never derives a figure the API response did not carry, so it cannot leak a
+    price. It exists because most of the catalogue has no visible price (every
+    international house hides retail, and only fabrics carry a trade figure), so
+    the no-price line is what most cards actually show: "Sign in for trade
+    pricing" is right for a guest and wrong for everyone else. On the seeded
+    catalogue an **approved** trade account was being told to sign in on 32 of
+    48 products. Lines: guest → sign in; `role='trade'` not yet approved →
+    "Trade pricing once approved"; anyone else signed in (customer, staff, or an
+    approved trade user looking at a product with no trade figure) → "Price on
+    request". Guarded by `src/lib/catalogue.test.js`.
+  - **`src/lib/account.js`** (pure, no fetching — `src/lib/auth.js` owns the
+    request) turns that user into `tradeStatus(user)` → `none|pending|approved`,
+    `isApprovedTrade(user)` and `tradeStatusNote(user)`. Approval is manual and
+    the API sends no notification, so the account page renders the note: without
+    it a pending trade account is indistinguishable from an approved one, since
+    both simply see no trade prices.
+  - **Both product islands resolve the viewer in the same `Promise.all` as the
+    product fetch**, not in a second effect — a later `setViewer` would repaint
+    the price block after first paint. `ProductDetail` starts `viewer` at null
+    because the server render has no cookie, so anything else fails hydration.
   - `weaveBackground(hexTones)` builds the duotone weave placeholder from a
     colourway's tones (texture layer first — it is semi-transparent and sits on
     top). Returns `undefined` when there are no tones, so the caller falls back
@@ -377,7 +404,11 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   (`Account.jsx`, `client:load`) resolves auth at runtime: `fetchCurrentUser()`;
   no user → `window.location.href = '/login?redirect=/account'` (satisfies the
   "unauthenticated → login" criterion), else `GET /orders/mine` → `{ orders }`
-  listed newest-first. `/order-lookup` (`OrderLookupForm.jsx`) is PUBLIC — order
+  listed newest-first. It also renders `tradeStatusNote(user)` (see
+  `src/lib/account.js`) under the greeting — **this is the only place a trade
+  applicant learns anything**: approval is a manual flag flip in the CRM with no
+  email, and until this existed a pending account and an approved one looked
+  identical from the storefront. `/order-lookup` (`OrderLookupForm.jsx`) is PUBLIC — order
   number + email → `GET /orders/lookup?order_number=&email=`; a 404 (either key
   wrong) shows a friendly "no order matches" message, never an enumeration
   signal. Order rendering (status pill, line table, totals, invoice reference)

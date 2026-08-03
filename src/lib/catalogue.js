@@ -5,6 +5,7 @@
 // rather than being copied into each. Pure functions only — no fetching, no DOM.
 
 import { formatMoney } from './money.js'
+import { tradeStatus, TRADE_STATUS } from './account.js'
 
 export const PRODUCT_TYPE_LABELS = Object.freeze({
   fabric: 'Fabric',
@@ -20,6 +21,25 @@ export const productTypeLabel = (type) => PRODUCT_TYPE_LABELS[type] || type || '
 // "US$187.76". Trade money is always NZD.
 export const TRADE_CURRENCY = 'NZD'
 
+// What to say where a product has no price this viewer may see. Which line
+// applies depends on WHO is looking, which is why priceInfo takes a viewer:
+// "Sign in for trade pricing" is an invitation to a guest and an insult to
+// someone already signed in — and most of the catalogue lands here, because
+// every international house hides retail and only fabrics carry a trade figure.
+export const NO_PRICE_COPY = Object.freeze({
+  guest: 'Sign in for trade pricing',
+  pending: 'Trade pricing once approved',
+  signedIn: 'Price on request',
+})
+
+const noPriceCopyFor = (viewer) => {
+  if (!viewer) return NO_PRICE_COPY.guest
+  if (tradeStatus(viewer) === TRADE_STATUS.PENDING) return NO_PRICE_COPY.pending
+  // Approved trade with no trade figure (every finished good), a customer, or
+  // staff: they are signed in, so the only honest line is "ask us".
+  return NO_PRICE_COPY.signedIn
+}
+
 /**
  * What to show where a price goes.
  *
@@ -27,13 +47,16 @@ export const TRADE_CURRENCY = 'NZD'
  *   1. `trade_price_cents` — only ever present for an approved trade user, so
  *      if the API sent it, show it.
  *   2. `price_hidden` (international house) or no retail price — the shopper is
- *      not allowed to see a figure; prompt them to sign in for trade pricing.
+ *      not allowed to see a figure; the prompt depends on the viewer.
  *   3. otherwise the retail price.
  *
  * @param {object} product
+ * @param {object|null} [viewer] — the /auth/me user, or null when logged out.
+ *   Only ever selects COPY: the API decides what pricing data exists, and this
+ *   never derives a figure the response did not carry.
  * @returns {{ label: string, text: string, muted: boolean, indicative: boolean, retail: string|null }}
  */
-export function priceInfo(product) {
+export function priceInfo(product, viewer = null) {
   if (!product) {
     return { label: '', text: '', muted: true, indicative: false, retail: null }
   }
@@ -55,7 +78,7 @@ export function priceInfo(product) {
   if (!hasRetail) {
     return {
       label: '',
-      text: 'Sign in for trade pricing',
+      text: noPriceCopyFor(viewer),
       muted: true,
       indicative: false,
       retail: null,

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { fetchCurrentUser } from '../lib/auth.js'
 import { addToCart } from '../lib/cart.js'
 import { priceInfo, productTypeLabel, weaveBackground, isFabric } from '../lib/catalogue.js'
 import { countWord } from '../lib/houses.js'
@@ -74,6 +75,10 @@ export default function ProductDetail({ slug, initialProduct = null }) {
   )
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(0) // how many were just added, 0 = nothing
+  // Starts null so the client's first render matches the server's (which has no
+  // cookie and therefore no viewer) — anything else fails hydration. Resolved
+  // alongside the product below, and only ever selects price copy.
+  const [viewer, setViewer] = useState(null)
 
   const seeded = Boolean(initialProduct)
 
@@ -85,12 +90,19 @@ export default function ProductDetail({ slug, initialProduct = null }) {
 
   useEffect(() => {
     let active = true
-    apiFetch(`/catalogue/products/${encodeURIComponent(slug)}`)
-      .then((body) => {
+    Promise.all([
+      apiFetch(`/catalogue/products/${encodeURIComponent(slug)}`),
+      // Resolved in the same round trip as the product so the price block never
+      // flips copy after paint. Guarded because losing the viewer must not fail
+      // the product fetch — it only costs a line of copy.
+      fetchCurrentUser().catch(() => null),
+    ])
+      .then(([body, user]) => {
         if (!active) return
         // Detail endpoint wraps the product in an envelope: { product: {...} }.
         const loaded = body?.product ?? null
         setProduct(loaded)
+        setViewer(user)
         // Keep the shopper's chosen colourway across the refresh; only fall
         // back to the default when that SKU is no longer listed.
         setSelectedSku((current) =>
@@ -161,7 +173,7 @@ export default function ProductDetail({ slug, initialProduct = null }) {
     return <p className="products-empty">This product is not available.</p>
   }
 
-  const price = priceInfo(product)
+  const price = priceInfo(product, viewer)
   const fabric = isFabric(product)
   const displayName = splitDisplayName(product.name)
   const specs = SPEC_FIELDS.filter(

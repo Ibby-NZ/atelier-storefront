@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { fetchCurrentUser } from '../lib/auth.js'
 import {
   priceInfo,
   productTypeLabel,
@@ -15,7 +16,11 @@ import {
 //
 // The request is credentialed (see lib/api.js), so an approved trade user's
 // cards carry trade_price_cents — the API is the gate, this island only renders
-// whatever price it was given.
+// whatever price it was given. It ALSO resolves the viewer (GET /auth/me) in the
+// same round trip, because the copy shown where there is no visible price
+// depends on who is asking (priceInfo's second argument); the two are fetched
+// together so the grid never paints "Sign in for trade pricing" at someone who
+// already is.
 //
 // Layout: a sticky refine sidebar (search, House / Type facet lists, the
 // remaining filters as underline selects) beside the results column. Sidebar
@@ -199,6 +204,9 @@ function compareProducts(a, b, sort) {
 
 export default function ProductLibrary() {
   const [products, setProducts] = useState([])
+  // The signed-in user, or null. Only ever selects price COPY — the API decides
+  // which prices this shopper is allowed to receive.
+  const [viewer, setViewer] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [error, setError] = useState('')
   // Lazy initialiser so the URL is parsed once, on the client, at mount.
@@ -216,10 +224,17 @@ export default function ProductLibrary() {
 
   useEffect(() => {
     let active = true
-    apiFetch(`/catalogue/products?limit=${PAGE_LIMIT}`)
-      .then((body) => {
+    Promise.all([
+      apiFetch(`/catalogue/products?limit=${PAGE_LIMIT}`),
+      // Never rejects (fetchCurrentUser swallows ApiError); the extra guard is
+      // for genuinely unexpected failures, which must not take the grid down —
+      // not knowing the viewer only costs a line of copy.
+      fetchCurrentUser().catch(() => null),
+    ])
+      .then(([body, user]) => {
         if (!active) return
         setProducts(Array.isArray(body?.products) ? body.products : [])
+        setViewer(user)
         setStatus('ready')
       })
       .catch((err) => {
@@ -404,7 +419,7 @@ export default function ProductLibrary() {
         ) : (
           <ul className="product-grid">
             {visible.map((product) => {
-              const price = priceInfo(product)
+              const price = priceInfo(product, viewer)
               const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
               const shown = product.colourways || []
               const extra = (product.colourway_count || 0) - shown.length

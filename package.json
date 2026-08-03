@@ -12,6 +12,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint .",
+    "test": "node --test \"src/**/*.test.js\"",
     "seed:cms": "emdash seed --database ./data/emdash.db --uploads-dir ./data/uploads"
   },
   "dependencies": {
