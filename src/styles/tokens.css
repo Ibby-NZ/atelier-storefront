@@ -30,6 +30,19 @@
   --scrim: rgba(33, 28, 23, 0.5);
   --line-dark: rgba(216, 205, 184, 0.22); /* hairline on an espresso band */
 
+  /* --- 2026 home direction (Figma "Atelier Home page", node 7307:617) -------
+     The client's Figma design system runs a second, cooler palette beside the
+     Maison one: a warm-cream page ground, an umber dark band, and ochre as the
+     single accent in place of claret. It is currently the HOME PAGE ONLY —
+     named here rather than hardcoded in home.css so the sheet stays hex-free
+     and so the next screen redesigned to this direction reuses the same five
+     values instead of eyeballing them again. */
+  --shell: #e5e1d4; /* color/bg/surface — ground of the home's paper bands */
+  --umber: #33312b; /* color/bg/canvas — dark bands AND primary text on shell */
+  --umber-soft: #605d4f; /* color/text/secondary — body copy on shell */
+  --bone: #f2f0e9; /* color/text/primary, reversed onto umber or a photograph */
+  --ochre: #937942; /* color/brand/primary — badges and small labels */
+
   /* --- Type families (system fallbacks keep the site legible if Google
          Fonts is blocked — staging sits behind Cloudflare + Basic Auth). --- */
   --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino,
@@ -38,6 +51,13 @@
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
     Consolas, "Liberation Mono", monospace;
+  /* Display face of the 2026 home. The Figma sets it in Helvena, a licensed
+     grotesque this repo does not ship and cannot fetch from Google Fonts; Inter
+     — already loaded for UI — is the nearest available face and is what the
+     mock's letterforms read as anyway. Named first in the stack so dropping the
+     licensed file into the font pipeline is the only change needed to switch. */
+  --font-grotesk: "Helvena", "Inter", -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, sans-serif;
 
   /* --- Type scale (UI, Inter/mono) --- */
   --t-micro: 0.625rem; /* 10px — sku captions under swatches */

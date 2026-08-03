@@ -47,8 +47,8 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     block padding (`.main-bleed` in tokens.css), handing the page the full width
     of `<main>` so it can paint edge-to-edge bands. A bleed page must supply its
     own `.container` inside each band — that is what keeps its content column
-    aligned with the header wordmark and the footer. Users: `/` (hero, tile wall,
-    espresso maisons band), `/products` (linen page-header band) and
+    aligned with the header wordmark and the footer. Users: `/` (every band —
+    the whole home is bands), `/products` (linen page-header band) and
     `/brands/[slug]` (banner + espresso related reading). Every other page keeps
     the centred container.
     - `.main-bleed + .site-footer` zeroes the footer's `margin-top`. That 6rem
@@ -84,6 +84,21 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   the earlier platform handoff (`design_handoff_atelier_platform/`), which is
   still the reference for anything the Maison set does not cover (cart, checkout,
   auth, journal, contact). Plain CSS, no framework, no build step beyond Astro.
+  - **The homepage runs the client's OTHER direction** (Figma, node 7307:617)
+    and is currently the only screen that does. It shares the shell — the same
+    `.container`, the same Header and Footer — and nothing else: grotesk display
+    type instead of Fraunces, `--shell` cream instead of `--paper`, `--umber`
+    instead of espresso, `--ochre` instead of claret, and an underlined text
+    action instead of `.btn`. Those five colours plus `--font-grotesk` are named
+    in `tokens.css`; the figures that use them live in `home.css` alone, NOT in
+    `primitives.css`, because the two directions have no figure in common and
+    promoting one would restyle every other page. `--font-grotesk` leads with
+    Helvena, the licensed face the Figma sets, and falls back to Inter — which
+    is what the mock's letterforms read as and is already loaded, so no new font
+    is fetched. Dropping the licensed file into the stack is the only change
+    needed to switch. **The Figma's Header and Footer have NOT been adopted**
+    (they are site chrome, shared with every other page); the home renders under
+    the Maison chrome.
   - **Maison globals, adopted in `tokens.css`/`primitives.css`** — these are the
     reason the whole site reads as one design rather than four redesigned pages:
     `--container: 96rem` + `--gutter: 3rem` (the mocks' `max-width:96rem;
@@ -184,7 +199,12 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   contradict the client's own copy); `houseMeta(brand)` builds
   `"France · est. 1935"`, degrading to the country alone; `countWord(n)` spells
   counts to twelve for the redesign's headings ("Six *colourways*", "Three
-  *collections*") and falls back to digits past that.
+  *collections*") and falls back to digits past that. `houseMeta` is now
+  `/brands`'s alone — the homepage's maisons band went with the redesign.
+- **`src/lib/home.js`** — the homepage's own rules (`collectionHref`,
+  `pickCollections`, `bandPhotographs`, `brandDesignCounts`), guarded by
+  `src/lib/home.test.js`. See the `/` section under Pages for what each one is
+  protecting.
 
 ## Pages
 
@@ -326,32 +346,49 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   successful build, which is the rule for every storefront page). The build-time
   fetch is anonymous, so **no trade pricing is ever baked into the homepage** —
   trade figures only appear on the live islands.
-  - **Maison section order** (design: "Redesign A Maison"), `<Layout bleed>`:
-    full-bleed 74vh collection hero → four-tile category wall → collection story
-    (two columns) → espresso maisons index → journal. The old product grids
-    ("Ready to ship", "The cloth") are gone: the Maison home is editorial, and
-    the library is where designs are browsed.
-  - **Three seasonal constants are hand-edited, by design**: `HERO`, `STORY` and
-    `CATEGORIES` in the frontmatter, alongside `Header.astro`'s `FEATURE` and
-    announcement copy. There is no CMS field behind a season yet, and those five
-    places are the whole list. Every `href` is a real route with a real filter key
-    (`/products?product_type=fabric`, `?application=Wallcovering`,
-    `?brand=atelier-textiles-nz`) that `ProductLibrary` reads from the URL, so no
-    tile can land on an empty grid.
-  - **Photography is claimed, not just picked.** `claimImage(predicate)` tracks
-    which `image_url`s are already spoken for, so the hero, the story and the four
-    tiles get six *different* photographs; without it a 48-row catalogue lands the
-    same image in every block, which looks like the design from a distance and
-    nothing like it up close. Hero and story claim first (the design names them).
-  - The maisons band lists the twelve international houses we hold the **most
-    designs** from, counted off the already-fetched catalogue (48 rows against a
-    100 limit, so the counts are exact) — alphabetical order buried Pierre Frey
-    and Rubelli below houses with one design each.
-  - `est. YYYY` beside a house comes from `foundedYear()` in `src/lib/houses.js`,
-    which reads the year out of the house's **own story text** ("Founded 1935…").
-    Only 3 of 27 stories state one; the rest show their country alone, which is
-    what the design degrades to. A hardcoded date table was rejected: it would
-    drift from, and could contradict, the client's own copy.
+  - **Section order** (design: Figma "Atelier Home page", node 7307:617),
+    `<Layout bleed>`: full-bleed 74vh collection hero → two shop banners →
+    latest-collections scroller → espresso "Atelier" manifesto → featured
+    collection → design-houses band. This REPLACED the earlier Maison home
+    (tile wall / collection story / maisons index / journal), so the maisons
+    band and the journal grid are gone from this page; `/brands` is the houses
+    index and `/resources` the journal.
+  - **The home is merchandised out of `GET /catalogue/collections`, not out of
+    the product grid.** Every collection the mock names — Nature's Opera,
+    Giverny, Mazan, Cappuccino, Feuillage, Larsen 2024 — is a real row of that
+    endpoint carrying its own name, description, photograph and house, so the
+    hero, the row and the featured band are one collection each and the copy is
+    the client's, not invented. Only the CHOICE is seasonal: `HERO_SLUG`,
+    `FEATURED_SLUG` and `LATEST_SLUGS` in the frontmatter, alongside the four
+    blocks of static copy (`BANNERS`, `MANIFESTO`, `HOUSES`) and
+    `Header.astro`'s `FEATURE` + announcement copy. There is no CMS field behind
+    a season yet and those are the whole hand-edit list. A slug retired in the
+    CRM resolves to null and its section is omitted rather than rendering an
+    empty frame.
+  - **Rules live in `src/lib/home.js`** (pure + tested, mirrors
+    `lib/catalogue.js`): `collectionHref()` — the three-rung ladder a tile
+    follows so it never lands on an empty grid (collection filter → the house's
+    grid → the house's page; de Le Cuona and No.9 Thompson are both on the third
+    rung on the seeded catalogue and are both named by the design);
+    `pickCollections()` — the seasonal slug list, topped up from the rest of the
+    catalogue so the row still shows four tiles when a slug is retired, never
+    repeating one the hero or featured band already holds; `bandPhotographs()`;
+    `brandDesignCounts()`.
+  - **Photography for the four bands with no collection of their own** (the two
+    banners, the manifesto, the design houses) comes from `bandPhotographs()`,
+    which prefers COLLECTION images over product images. The collection rows are
+    commissioned interiors; most product photography in the catalogue is a
+    finished good on white linen, which disappears under a scrim and takes the
+    copy with it (only 6 of 42 imaged products even carry an `application`).
+    It is deterministic — catalogue order, no sampling — because this page is
+    prerendered, and it hands out four *different* pictures, since a 24-row
+    catalogue otherwise lands the same photograph in every band.
+  - The scrims run deeper than the mock's (`.home-band::after` 0.62,
+    `.home-manifesto::after` 0.58 flat). The mock is drawn over its own chosen
+    photography; the live bands take whatever the catalogue holds.
+  - **Both shop banners link to `/products`**, not to a pre-filtered grid: "by
+    type" and "by application" name the library's own two facet dimensions, and
+    picking a value would promise one thing and show another.
 
 - **`/404`** — `src/pages/404.astro`, static, routes back to the library, contact
   and order lookup.

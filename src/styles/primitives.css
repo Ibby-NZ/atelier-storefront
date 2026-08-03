@@ -459,6 +459,22 @@
   color: #e0c9a2;
 }
 
+/* A name and its meta will not sit on one line on a phone. This lived in
+   home.css, unscoped, while the Maison homepage's maisons band was a caller;
+   it belongs beside the primitive, which the brands index and the brand page's
+   related reading still use. */
+@media (max-width: 640px) {
+  .index-list a {
+    flex-direction: column;
+    gap: var(--s2);
+    padding-block: var(--s4);
+  }
+
+  .index-name {
+    font-size: var(--d-md);
+  }
+}
+
 /* --- Image tile with a scrim label --------------------------------------- */
 /* A photograph carrying its own Fraunces label bottom-left: the home category
    wall and the brand page's collection tiles. */
@@ -477,6 +493,13 @@
   object-fit: cover;
 }
 
+/* The weave stand-in has no intrinsic size, so it has to fill the tile. */
+.scrim-tile-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .scrim-tile-label {
   position: absolute;
   inset: 0;
@@ -490,6 +513,48 @@
   line-height: 1.15;
   letter-spacing: 0.01em;
   color: var(--paper);
+}
+
+/* --- Section head (headline + link over a hairline) ----------------------- */
+/* Used by the journal index, the brands index and the brand page's related
+   reading. It lived in home.css while the Maison homepage's journal band was
+   its first caller; the 2026 home has no such band, and a figure three other
+   screens share belongs in primitives rather than as one page's export. */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s6);
+  padding-bottom: var(--s4);
+  margin-bottom: var(--s7);
+  border-bottom: var(--hair);
+}
+
+.section-head h2 {
+  margin: 0;
+  font-weight: 500;
+  font-size: var(--d-lg);
+  line-height: 1.12;
+}
+
+.section-head h2 em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.section-head > a {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: var(--hair);
+  padding-bottom: 2px;
+  white-space: nowrap;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.section-head > a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 /* --- Spec rows (label left, mono value right) ---------------------------- */

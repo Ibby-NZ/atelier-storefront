@@ -1,282 +1,504 @@
 /*
- * Homepage, Maison direction (design: "Redesign A Maison").
+ * Homepage, 2026 direction (design: Figma "Atelier Home page", node 7307:617).
  *
- * Five bands in a fixed order: a full-bleed 74vh collection hero, the four-tile
- * category wall separated by hairline gaps, the two-column collection story, the
- * espresso maisons index, and the journal.
+ * Six bands in a fixed order: a full-bleed collection hero, the two shop
+ * banners, the latest-collections scroller, the espresso "Atelier" manifesto,
+ * the featured collection, and the design-houses band.
  *
- * The shared figures — the bleed hero, the espresso band, the index list, the
- * scrim tile, the brass rule — live in primitives.css because the brand page
- * uses them too. What is here is only the homepage's own geometry.
+ * This screen runs the client's OTHER design system — the Figma one: grotesk
+ * display type instead of Fraunces, warm cream (`--shell`) instead of paper,
+ * umber instead of espresso, ochre instead of claret, and an underlined text
+ * action instead of the Maison `.btn`. That is why almost nothing here is
+ * shared with primitives.css: the two directions do not have a figure in
+ * common, and forcing one would have restyled every other page. The five
+ * colours and the grotesk stack are named in tokens.css so this sheet stays
+ * hex-free and the next screen redesigned to the direction can reuse them.
+ *
+ * Deviations from the mock, deliberate:
+ *  - The mock's 1280px frame with 72px padding becomes the site's own
+ *    `.container` (96rem / 3rem), so the home lines up with the header wordmark
+ *    and the footer the way every other page does.
+ *  - The mock starts the collections row hard against the left edge, out of
+ *    line with its own heading. Here it starts at the container gutter and
+ *    still bleeds off the right, which is the part that reads as a gallery.
  */
 
-/* --- Hero ----------------------------------------------------------------- */
-/* The design's own 74vh / 34rem floor holds at every width: the copy is
-   absolutely positioned, and 34rem is taller than the headline, lede and both
-   CTAs even stacked on a phone — so the photograph stays part of the
-   composition and there is no breakpoint override to keep in sync. */
-.home-hero {
-  height: 74vh;
-  min-height: 34rem;
+/* --- Underlined text action ----------------------------------------------
+   The Figma "Button / Ghost": Inter medium over a 1.5px rule, no box, no
+   uppercase. Used six times on this page — as an <a> on its own, and as a
+   <span> inside the banner links, where the whole photograph is the anchor. */
+.cta-underline {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--umber);
+  padding-bottom: var(--s2);
+  border-bottom: 1.5px solid currentcolor;
+  transition: color var(--quick);
 }
 
-.home-hero .bleed-hero-body .container {
-  padding-bottom: var(--s9);
+.cta-underline-lg {
+  font-size: 1.125rem;
 }
 
-.home-hero h1 {
-  font-size: var(--d-hero);
-  max-width: 18ch;
+a.cta-underline:hover {
+  color: var(--ochre);
+}
+
+/* On a photograph. Bone rather than pure white, matching the Figma text token,
+   and the rule inherits it through `currentcolor`. */
+.cta-underline-light {
+  color: var(--bone);
+}
+
+a.cta-underline-light:hover,
+.home-banner:hover .cta-underline-light {
+  color: #fff;
+}
+
+/* --- Ochre label ---------------------------------------------------------
+   The Figma "Badge": the house name beside a collection, and the "Featured
+   collection" eyebrow. Sentence case, not the Maison uppercase eyebrow. */
+.home-badge {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--ochre);
+}
+
+/* --- Full-bleed photograph band -------------------------------------------
+   Shared by the hero, the manifesto and the design-houses band. The image is a
+   background so the scrim can sit on top without a wrapper element. */
+.home-band {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--shell);
+}
+
+/* Scoped off `.weave` so the woven stand-in keeps its own tile size when a
+   band has no photograph to show. */
+.home-band:not(.weave) {
+  background-size: cover;
+  background-position: center;
+}
+
+/* The scrim runs deeper than the mock's. The mock is drawn over commissioned
+   interiors that are already dark at the bottom of the frame; the live bands
+   take whatever the catalogue holds, and half of it is a pale product shot on
+   white linen. These values keep 16px bone copy at ~5:1 against the worst case
+   in the seeded catalogue rather than only against the mock's own photography. */
+.home-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.62),
+    rgba(0, 0, 0, 0.12) 58%
+  );
+}
+
+.home-band-title {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: clamp(2.25rem, 1.5rem + 2.6vw, 3.125rem); /* 36 → 50px */
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
   text-wrap: balance;
 }
 
-/* --- Category tile wall --------------------------------------------------- */
-.home-categories {
-  border-bottom: var(--hair);
+/* The house above the collection ("de Le Cuona" / "Nature's Opera") and the
+   pronunciation beside "Atelier" are the same figure: the same size, dropped to
+   60% so the line that matters reads first. */
+.home-band-title-sub {
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.home-categories-eyebrow {
-  padding-block: var(--s9) var(--s5);
-  text-align: center;
-}
-
-/* The 1px grid gap over a greige background IS the hairline between tiles —
-   cheaper and more even than four borders that would double up. */
-.home-tile-wall {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
-  margin-top: var(--s6);
-  background: var(--line);
-  border-top: var(--hair);
-}
-
-/* The weave stand-in has no intrinsic size, so it has to fill the tile. */
-.scrim-tile-media {
+.home-hero .home-band-title-sub {
   display: block;
-  width: 100%;
-  height: 100%;
 }
 
-/* --- Collection story ---------------------------------------------------- */
-.home-story {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: var(--s10);
-  align-items: center;
-  padding-block: var(--s10);
+/* Copy hugs the bottom of the band, so the photograph stays the composition. */
+.home-band-body {
+  position: absolute;
+  z-index: 1; /* above ::after, which paints the scrim */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-bottom: var(--s6);
 }
 
-.home-story-media {
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-  border: var(--hair);
-  background: var(--surface);
-}
-
-.home-story-media img,
-.home-story-media > span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.home-story-body h2 {
-  margin: var(--s4) 0 0;
-  font-weight: 400;
-  font-size: clamp(2rem, 1.5rem + 2.2vw, 3rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-}
-
-.home-story-copy {
-  margin: var(--s5) 0 0;
-  font-size: var(--t-prose);
-  line-height: 1.78;
-  color: var(--ink-soft);
-}
-
-/* Fraunces italic aside — the "available by the metre" line. */
-.home-story-note {
-  margin: var(--s5) 0 0;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--t-body);
-  color: var(--muted);
-}
-
-.home-story-body .btn {
-  margin-top: var(--s6);
-}
-
-/* --- Maisons band -------------------------------------------------------- */
-.home-maisons > .container {
-  padding-block: 5.5rem;
-}
-
-.home-maisons .band-dark-head {
-  margin-bottom: var(--s7);
-}
-
-.home-maisons h2 {
-  margin: var(--s3) 0 0;
-  font-size: 2.25rem;
-  line-height: 1.08;
-  letter-spacing: -0.015em;
-}
-
-/* --- Journal ------------------------------------------------------------- */
-.home-journal {
-  padding-block: 5.5rem var(--s10);
-}
-
-/* Headline + "read the journal" link over a hairline. Shared by any band that
-   needs the same header (see .home-journal, brand collections). */
-.section-head {
+.home-band-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s8);
+}
+
+/* 24rem is the mock's 371px title box for both bands that use this row. It is a
+   basis rather than a width so the title still wraps on its own terms — what
+   matters is that "The World's Finest Design Houses" breaks into the design's
+   three lines instead of running the width of the band. */
+.home-band-row .home-band-title {
+  flex: 0 1 24rem;
+}
+
+.home-band-aside {
+  display: flex;
+  flex: 0 1 24rem;
+  flex-direction: column;
+  gap: var(--s5);
+}
+
+.home-band-aside p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* --- Hero ----------------------------------------------------------------- */
+/* The mock's hero is 584px of photograph under the header. 74vh holds that
+   proportion on a laptop, and the 30rem floor is taller than the headline, the
+   description and the action stacked on a phone — so there is no breakpoint
+   override to keep in sync. */
+.home-hero {
+  height: 74vh;
+  min-height: 30rem;
+}
+
+/* --- Shop banners --------------------------------------------------------- */
+.home-banners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s3);
+  padding: var(--s2);
+  background: var(--shell);
+}
+
+.home-banner {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 8 / 9;
+  min-height: 24rem;
+  padding: var(--s7);
+  overflow: hidden;
+  text-decoration: none;
+  background-color: var(--surface);
+}
+
+.home-banner:not(.weave) {
+  background-size: cover;
+  background-position: center;
+}
+
+.home-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.62),
+    rgba(0, 0, 0, 0) 52%
+  );
+}
+
+.home-banner-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s6);
+}
+
+.home-banner-title {
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: clamp(1.875rem, 1.3rem + 2vw, 2.5rem); /* 30 → 40px */
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+/* --- Latest collections --------------------------------------------------- */
+.home-collections {
+  padding-block: var(--s10);
+  background: var(--shell);
+}
+
+.home-collections-head {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: var(--s6);
-  padding-bottom: var(--s4);
   margin-bottom: var(--s7);
-  border-bottom: var(--hair);
 }
 
-.section-head h2 {
+.home-collections-head h2 {
   margin: 0;
-  font-weight: 500;
-  font-size: var(--d-lg);
-  line-height: 1.12;
-}
-
-.section-head h2 em {
-  font-style: italic;
+  font-family: var(--font-grotesk);
   font-weight: 400;
+  font-size: clamp(1.875rem, 1.3rem + 2vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
 }
 
-.section-head > a {
-  font-size: var(--t-sm);
-  color: var(--ink-soft);
-  text-decoration: none;
-  border-bottom: var(--hair);
-  padding-bottom: 2px;
-  white-space: nowrap;
-  transition: color var(--quick), border-color var(--quick);
-}
-
-.section-head > a:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.journal-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.75rem var(--s6);
+/* The row bleeds off the right edge rather than wrapping: four tiles are a
+   composition in the mock, and a 2×2 grid is a different picture. Scroll
+   padding keeps the first tile on the container gutter after a snap. */
+.home-collection-row {
+  display: flex;
+  gap: var(--s3);
   margin: 0;
-  padding: 0;
+  padding: 0 var(--gutter);
   list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline-start: var(--gutter);
+  scrollbar-width: none;
 }
 
-.journal-card {
-  min-width: 0;
+.home-collection-row::-webkit-scrollbar {
+  display: none;
 }
 
-.journal-card > a {
+.home-collection-row > li {
+  flex: 0 0 clamp(15rem, 24vw, 23.1875rem); /* → 371px, the mock's tile */
+  scroll-snap-align: start;
+}
+
+.home-collection-row a {
   display: block;
-  color: inherit;
   text-decoration: none;
+  color: inherit;
 }
 
-.journal-card img,
-.journal-card-media {
+.home-collection-row img,
+.home-collection-media {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 5;
   object-fit: cover;
-  margin-bottom: var(--s4);
-  border: var(--hair);
   background: var(--surface);
-  transition: border-color var(--slow), box-shadow var(--slow);
+  transition: opacity var(--slow);
 }
 
-/* Maison hover: the frame moves, the type does not — border to brass plus a
-   soft shadow, no lift and no zoom. */
-.journal-card > a:hover img,
-.journal-card > a:hover .journal-card-media {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
+.home-collection-row a:hover img,
+.home-collection-row a:hover .home-collection-media {
+  opacity: 0.88;
 }
 
-.journal-card h3 {
-  margin: 0 0 var(--s3);
-  font-family: var(--font-display);
+.home-collection-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-top: 20px;
+}
+
+.home-collection-name {
+  font-family: var(--font-ui);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--umber);
+  transition: color var(--quick);
+}
+
+.home-collection-row a:hover .home-collection-name {
+  color: var(--ochre);
+}
+
+/* --- Manifesto band ------------------------------------------------------- */
+.home-manifesto {
+  display: flex;
+  align-items: center;
+  min-height: 44rem;
+  padding-block: var(--s9);
+}
+
+/* A flat wash rather than the bottom gradient the other two bands use: the copy
+   sits mid-band here, so there is nothing for a gradient to anchor to. */
+.home-manifesto::after {
+  background: rgba(0, 0, 0, 0.58);
+}
+
+/* The `.container` is the flex item, so it keeps its own full width and gutter
+   and the copy column is constrained INSIDE it. Capping the container itself
+   would centre a 34rem block in the band instead of setting it on the gutter. */
+.home-manifesto > .container {
+  position: relative;
+  z-index: 1;
+}
+
+.home-manifesto-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+  max-width: 34rem;
+}
+
+.home-manifesto-body p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--bone);
+}
+
+/* --- Featured collection -------------------------------------------------- */
+.home-featured {
+  padding-block: var(--s4);
+  background: var(--shell);
+}
+
+.home-featured-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--s10);
+  align-items: center;
+}
+
+.home-featured-media {
+  aspect-ratio: 9 / 10;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.home-featured-media img,
+.home-featured-media > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-featured-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+.home-featured-body h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
   font-weight: 400;
-  font-size: var(--d-md);
-  line-height: 1.14;
-  color: var(--ink);
+  font-size: clamp(2.25rem, 1.5rem + 2.6vw, 3.125rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
+}
+
+.home-featured-copy {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--umber-soft);
+}
+
+/* --- Design houses band --------------------------------------------------- */
+.home-houses {
+  min-height: 44rem;
 }
 
 .home-outage {
   padding-block: var(--s8);
+  background: var(--shell);
 }
 
-/* --- Responsive ---------------------------------------------------------- */
+/* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .home-tile-wall {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .home-band-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s5);
   }
 
-  .home-story {
+  .home-band-row .home-band-title,
+  .home-band-aside {
+    flex: 0 1 auto;
+  }
+
+  .home-banners {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-banner {
+    aspect-ratio: 4 / 3;
+    min-height: 20rem;
+    padding: var(--s6);
+  }
+
+  .home-collections {
+    padding-block: var(--s9);
+  }
+
+  .home-manifesto,
+  .home-houses {
+    min-height: 34rem;
+  }
+
+  .home-featured {
+    padding-block: var(--s7);
+  }
+
+  .home-featured-inner {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s7);
-    padding-block: var(--s9);
-  }
-
-  .home-maisons > .container {
-    padding-block: var(--s9);
-  }
-
-  .home-journal {
-    padding-block: var(--s9) var(--s8);
-  }
-
-  .journal-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .home-hero .bleed-hero-body .container {
-    padding-bottom: var(--s7);
+  .home-hero {
+    height: auto;
+    min-height: 28rem;
   }
 
-  .home-categories-eyebrow {
-    padding-block: var(--s7) var(--s4);
+  .home-band-body {
+    padding-bottom: var(--s5);
   }
 
-  .home-tile-wall {
-    grid-template-columns: 1fr;
+  .home-banner {
+    aspect-ratio: 3 / 4;
+    padding: var(--s5);
   }
 
-  .home-maisons .band-dark-head {
+  .home-banner-body {
+    gap: var(--s5);
+  }
+
+  .home-collections {
+    padding-block: var(--s8);
+  }
+
+  .home-collections-head {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--s3);
   }
 
-  .index-name {
-    font-size: var(--d-md);
+  .home-collection-row > li {
+    flex-basis: 78vw;
   }
 
-  .index-list a {
-    flex-direction: column;
-    gap: var(--s2);
-    padding-block: var(--s4);
-  }
-
-  .journal-grid {
-    grid-template-columns: 1fr;
+  .home-manifesto,
+  .home-houses {
+    min-height: 28rem;
   }
 }

@@ -8,11 +8,8 @@
  */
 
 /* --- Post meta ------------------------------------------------------------ */
-/* Shared by the journal index, the homepage's journal band and the story
-   header. The old `.post-card` block that used to sit here went with the
-   generic `.card-grid` index it styled — the journal gallery is now the
-   homepage's `.journal-grid` / `.journal-card` (home.css), so there is one
-   card figure instead of two that drifted apart. */
+/* Shared by the journal index and the story header. The old `.post-card` block
+   that used to sit here went with the generic `.card-grid` index it styled. */
 .post-date {
   display: block;
   font-family: var(--font-mono);
@@ -135,6 +132,57 @@
   margin-bottom: var(--s6);
 }
 
+/* The journal gallery. It lived in home.css while the Maison homepage carried a
+   journal band; the 2026 home does not, so it moved to the sheet that owns the
+   journal rather than staying behind as the homepage's only export. */
+.journal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.75rem var(--s6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journal-card {
+  min-width: 0;
+}
+
+.journal-card > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.journal-card img,
+.journal-card-media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  margin-bottom: var(--s4);
+  border: var(--hair);
+  background: var(--surface);
+  transition: border-color var(--slow), box-shadow var(--slow);
+}
+
+/* Maison hover: the frame moves, the type does not — border to brass plus a
+   soft shadow, no lift and no zoom. */
+.journal-card > a:hover img,
+.journal-card > a:hover .journal-card-media {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-lift);
+}
+
+.journal-card h3 {
+  margin: 0 0 var(--s3);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--d-md);
+  line-height: 1.14;
+  color: var(--ink);
+}
+
 @media (max-width: 1024px) {
   .journal-head {
     padding-block: var(--s7) var(--s6);
@@ -151,6 +199,16 @@
 
   .journal-more {
     padding-block: var(--s6) var(--s9);
+  }
+
+  .journal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .journal-grid {
+    grid-template-columns: 1fr;
   }
 }
 

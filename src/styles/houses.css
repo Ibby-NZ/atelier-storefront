@@ -6,8 +6,8 @@
  * house 800-line ceiling.
  *
  * Everything structural is borrowed: `.brass-rule` / `.eyebrow-*` / `.scrim-tile`
- * / `.index-list` / `.band-dark` from primitives.css and `.section-head` from
- * home.css. What is below is only this page's geometry — the page is `bleed`, so
+ * / `.index-list` / `.band-dark` / `.section-head` from primitives.css.
+ * What is below is only this page's geometry — the page is `bleed`, so
  * each section owns its own block padding.
  */
 

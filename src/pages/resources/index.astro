@@ -7,9 +7,11 @@ import { excerptFromBody } from '../../lib/journal.js'
 
 // Resources / journal index, Maison direction. Newsletters become posts (meeting
 // decision). Like the brands index, this page was left on the old generic
-// `.card-grid` when the redesign landed; it is rebuilt here from the same shared
-// figures — brass rule, `.section-head`, `.journal-grid` — that the homepage's
-// journal band already uses, so the two stay in step.
+// `.card-grid` when the redesign landed; it is rebuilt here from the shared
+// Maison figures — brass rule and `.section-head` from primitives.css, plus
+// `.journal-grid` / `.journal-card` in editorial.css. Those two started life in
+// home.css beside the Maison homepage's journal band; the 2026 home dropped the
+// band, so this page is now their only caller and they moved with it.
 //
 // The newest post leads as a two-column feature; the rest fall into the
 // three-across gallery. With a single post the gallery simply does not render,
