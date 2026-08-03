@@ -356,11 +356,30 @@
   max-width: 36rem;
 }
 
-/* The trade application carries the full paper-form field set, so it gets the
-   wider request-form measure and roomier gaps between its fieldsets. */
+/* The trade application carries the full paper-form field set, so unlike the
+   other auth forms it runs the full width of the page container, with each
+   fieldset laying its fields out on a two-column grid. `.field-span` marks the
+   long fields (addresses, directors, consent) that take the whole row. */
 .trade-form {
-  max-width: 36rem;
+  max-width: none;
   gap: var(--s6);
+}
+
+.trade-form .field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4) var(--s5);
+  align-items: start;
+}
+
+.trade-form .field-span {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .trade-form .field-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .order-lookup {

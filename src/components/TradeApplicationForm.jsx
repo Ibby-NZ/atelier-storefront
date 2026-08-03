@@ -8,8 +8,10 @@ import { apiFetch, ApiError } from '../lib/api.js'
 // credentials. Posts { name?, email, password, application } to
 // POST /auth/trade-application, which creates the role=trade account
 // (trade_approved=false — approval is MANUAL, the back office reviews the form
-// in the CRM's Applicants tab) and stores the form. On success we do NOT
-// redirect; the confirmation explains the manual approval. Field errors follow
+// in the CRM's Applicants tab) and stores the form. The applicant is NOT
+// logged in and CANNOT sign in until approved (the API sets no session cookie
+// and login answers 403 while pending); the confirmation explains this.
+// Field errors follow
 // the ContactForm pattern: client-side validation plus the API's 422
 // { errors: [{ field, message }] } mapped inline (the server prefixes form
 // fields with `application.`). Single component (store ESLint has no React
@@ -30,7 +32,8 @@ const YES_NO = [
 ]
 
 // Text inputs by section; `optional` fields skip the required check, `email`
-// ones get format-checked, `textarea` renders multi-line.
+// ones get format-checked, `textarea` renders multi-line, `span` takes the
+// full row of the two-column field grid.
 const TEXT_SECTIONS = [
   {
     legend: 'Customer details',
@@ -48,7 +51,7 @@ const TEXT_SECTIONS = [
     fields: [
       { key: 'accounts_contact_name', label: 'Accounts contact name' },
       { key: 'accounts_contact_person', label: 'Accounts contact person' },
-      { key: 'accounts_email', label: 'Accounts email address', type: 'email', email: true },
+      { key: 'accounts_email', label: 'Accounts email address', type: 'email', email: true, span: true },
     ],
   },
   {
@@ -211,8 +214,8 @@ export default function TradeApplicationForm() {
   }
 
   // Plain render helpers (not components — see the ESLint note above).
-  const textField = ({ key, label, type = 'text', autoComplete, optional, textarea, hint }) => (
-    <label className="field" key={key}>
+  const textField = ({ key, label, type = 'text', autoComplete, optional, textarea, hint, span }) => (
+    <label className={span ? 'field field-span' : 'field'} key={key}>
       <span>{label}</span>
       {textarea ? (
         <textarea
@@ -268,10 +271,9 @@ export default function TradeApplicationForm() {
       <div className="auth-success">
         <h2>Application received</h2>
         <p>
-          Your trade account has been created and you are now logged in. Trade
-          pricing is approved <strong>manually</strong> — our team will review
-          your application and be in touch. Until it is approved your account
-          works as a standard customer account.
+          Thank you — your application is with our team. Every trade account is
+          reviewed <strong>manually</strong>, and we will be in touch. You will
+          be able to sign in once your application has been approved.
         </p>
         <a className="btn btn-primary" href="/products">
           Browse the catalogue
@@ -295,92 +297,108 @@ export default function TradeApplicationForm() {
 
       <fieldset className="field-group">
         <legend>Your login</legend>
-        {textField({ key: 'name', label: 'Your name', autoComplete: 'name', optional: true })}
-        {textField({ key: 'email', label: 'Email', type: 'email', autoComplete: 'email' })}
-        {textField({
-          key: 'password',
-          label: 'Password',
-          type: 'password',
-          autoComplete: 'new-password',
-          hint: `At least ${MIN_PASSWORD_LENGTH} characters.`,
-        })}
+        <div className="field-grid">
+          {textField({ key: 'name', label: 'Your name', autoComplete: 'name', optional: true })}
+          {textField({ key: 'email', label: 'Email', type: 'email', autoComplete: 'email' })}
+          {textField({
+            key: 'password',
+            label: 'Password',
+            type: 'password',
+            autoComplete: 'new-password',
+            hint: `At least ${MIN_PASSWORD_LENGTH} characters.`,
+            span: true,
+          })}
+        </div>
       </fieldset>
 
       {TEXT_SECTIONS.map((section) => (
         <fieldset className="field-group" key={section.legend}>
           <legend>{section.legend}</legend>
-          {section.fields.map((field) => textField(field))}
+          <div className="field-grid">{section.fields.map((field) => textField(field))}</div>
         </fieldset>
       ))}
 
       <fieldset className="field-group">
         <legend>Communication preferences</legend>
-        {radioGroup(
-          'mailchimp_opt_in',
-          'Are you happy to receive notifications from Mailchimp?',
-          YES_NO
-        )}
-        {textField({
-          key: 'primary_contact_email',
-          label: 'Primary contact email',
-          type: 'email',
-        })}
-        <div className="field">
-          <span>Would you like to:</span>
-          {checkbox('wants_showroom_visit', 'Visit the showrooms')}
-          {checkbox('wants_account_manager', 'Be contacted by an account manager')}
+        <div className="field-grid">
+          {radioGroup(
+            'mailchimp_opt_in',
+            'Are you happy to receive notifications from Mailchimp?',
+            YES_NO
+          )}
+          {textField({
+            key: 'primary_contact_email',
+            label: 'Primary contact email',
+            type: 'email',
+          })}
+          <div className="field field-span">
+            <span>Would you like to:</span>
+            {checkbox('wants_showroom_visit', 'Visit the showrooms')}
+            {checkbox('wants_account_manager', 'Be contacted by an account manager')}
+          </div>
         </div>
       </fieldset>
 
       <fieldset className="field-group">
         <legend>Trading account details</legend>
-        {textField({ key: 'nzbn', label: 'NZBN' })}
-        {radioGroup('business_type', 'Type of business', BUSINESS_TYPES)}
-        {textField({
-          key: 'registered_office_address',
-          label: 'Address of registered office',
-          textarea: true,
-        })}
-        {textField({
-          key: 'directors_names_addresses',
-          label: 'Directors/proprietors — full names & residential addresses',
-          textarea: true,
-        })}
-        {textField({
-          key: 'directors_dates_of_birth',
-          label: 'Directors/proprietors — dates of birth',
-        })}
-        {radioGroup('cash_account_acceptable', 'Cash account acceptable?', YES_NO)}
+        <div className="field-grid">
+          {textField({ key: 'nzbn', label: 'NZBN' })}
+          {radioGroup('business_type', 'Type of business', BUSINESS_TYPES)}
+          {textField({
+            key: 'registered_office_address',
+            label: 'Address of registered office',
+            textarea: true,
+            span: true,
+          })}
+          {textField({
+            key: 'directors_names_addresses',
+            label: 'Directors/proprietors — full names & residential addresses',
+            textarea: true,
+            span: true,
+          })}
+          {textField({
+            key: 'directors_dates_of_birth',
+            label: 'Directors/proprietors — dates of birth',
+          })}
+          {radioGroup('cash_account_acceptable', 'Cash account acceptable?', YES_NO)}
+        </div>
       </fieldset>
 
       <fieldset className="field-group">
         <legend>Trade references</legend>
-        {textField({
-          key: 'trade_reference',
-          label: 'Name / contact person / phone',
-          textarea: true,
-        })}
+        <div className="field-grid">
+          {textField({
+            key: 'trade_reference',
+            label: 'Name / contact person / phone',
+            textarea: true,
+            span: true,
+          })}
+        </div>
       </fieldset>
 
       <fieldset className="field-group">
         <legend>Consent</legend>
-        <div className="field">
-          {checkbox('terms_accepted', 'I agree to the Terms of Trade.')}
-          {fieldErrors.terms_accepted && (
-            <span className="field-error">{fieldErrors.terms_accepted}</span>
-          )}
+        <div className="field-grid">
+          <div className="field field-span">
+            {checkbox('terms_accepted', 'I agree to the Terms of Trade.')}
+            {fieldErrors.terms_accepted && (
+              <span className="field-error">{fieldErrors.terms_accepted}</span>
+            )}
+          </div>
+          {textField({
+            key: 'customer_full_name',
+            label: 'The customer (full business & contact name)',
+            span: true,
+          })}
+          {textField({ key: 'signatory_name', label: 'Name of signatory' })}
+          {textField({ key: 'signatory_position', label: 'Position/title' })}
+          {textField({
+            key: 'signature',
+            label: 'Signature',
+            hint: 'Type your full name as your signature.',
+            span: true,
+          })}
         </div>
-        {textField({
-          key: 'customer_full_name',
-          label: 'The customer (full business & contact name)',
-        })}
-        {textField({ key: 'signatory_name', label: 'Name of signatory' })}
-        {textField({ key: 'signatory_position', label: 'Position/title' })}
-        {textField({
-          key: 'signature',
-          label: 'Signature',
-          hint: 'Type your full name as your signature.',
-        })}
       </fieldset>
 
       <button className="btn btn-primary" type="submit" disabled={submitting}>

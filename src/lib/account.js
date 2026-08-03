@@ -38,7 +38,10 @@ const TRADE_STATUS_NOTES = Object.freeze({
   [TRADE_STATUS.PENDING]: Object.freeze({
     tone: 'pending',
     label: 'Trade application under review',
-    text: 'Your trade account is being reviewed by our team. Until it is approved this account works as a standard customer account and trade pricing stays hidden.',
+    // Effectively unreachable now — a pending trade account cannot sign in at
+    // all (the API refuses login until approval) — but kept truthful in case a
+    // session ever survives into this state.
+    text: 'Your trade application is being reviewed by our team. You will be able to sign in and see trade pricing once it has been approved.',
   }),
   [TRADE_STATUS.APPROVED]: Object.freeze({
     tone: 'approved',
