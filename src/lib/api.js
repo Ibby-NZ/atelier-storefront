@@ -76,6 +76,49 @@ export async function apiFetch(path, options = {}) {
   return body
 }
 
+// A file download from an authenticated endpoint, as a Blob plus the filename
+// the server asked for.
+//
+// It goes through fetch rather than a plain <a href> ON PURPOSE. The session
+// cookie is SameSite=Lax, which means a top-level GET navigation DOES carry it —
+// so a bare link would work, and so would one on somebody else's page,
+// triggering a credentialed download of a client's price list under their
+// session. Fetching keeps the request script-initiated and therefore
+// CORS-checked against the API's closed origin allowlist.
+//
+// Throws ApiError exactly as apiFetch does, so a 401/403/404 renders as a
+// message rather than saving an error page to the client's Downloads folder.
+export async function apiDownload(path, fallbackFilename = 'download') {
+  const url = `${API_BASE_URL}${path}`
+
+  let response
+  try {
+    response = await fetch(url, { credentials: 'include' })
+  } catch (cause) {
+    throw new ApiError(NETWORK_MESSAGE, 0, cause)
+  }
+
+  if (!response.ok) {
+    const body = await parseBody(response)
+    const error = new ApiError(messageFromBody(body, response.status), response.status)
+    error.body = body
+    throw error
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: filenameFrom(response.headers.get('content-disposition'), fallbackFilename),
+  }
+}
+
+// `attachment; filename="atelier-trade-prices-pierre-frey.csv"`. Anything that
+// does not match falls back — the header is server-set, but a caller should
+// never end up saving a file named from a parse accident.
+function filenameFrom(header, fallback) {
+  const match = /filename="([^"]+)"/.exec(header || '')
+  return match ? match[1] : fallback
+}
+
 // Never throws — returns { data, error }. Use in page frontmatter/islands so the
 // template can render an error state instead of crashing the whole page.
 export async function safeFetch(path, options = {}) {

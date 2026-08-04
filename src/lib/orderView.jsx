@@ -11,6 +11,7 @@
 // calling them directly (not rendering as elements) is safe.
 
 import { formatMoney } from './money.js'
+import { hasQuotedTotal } from './reorder.js'
 
 // Human labels + a CSS modifier class per order status.
 const STATUS_META = {
@@ -53,6 +54,7 @@ export function orderCard(order) {
   const currency = 'NZD'
   const lines = order.lines ?? []
   const created = formatDate(order.created_at)
+  const priced = hasQuotedTotal(order)
 
   return (
     <article className="order-card" key={order.order_number}>
@@ -94,20 +96,27 @@ export function orderCard(order) {
         <p className="order-empty-lines">No line items on this order.</p>
       )}
 
-      <dl className="order-totals">
-        {order.subtotal_cents != null ? (
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{formatMoney(order.subtotal_cents, currency)}</dd>
-          </div>
-        ) : null}
-        {order.shipping_cents != null && Number(order.shipping_cents) > 0 ? (
-          <div>
-            <dt>Shipping{order.shipping_zone ? ` (${order.shipping_zone})` : ''}</dt>
-            <dd>{formatMoney(order.shipping_cents, currency)}</dd>
-          </div>
-        ) : null}
-        {order.total_cents != null ? (
+      {/* A cut-to-order request is created with every money column at ZERO and
+          nothing ever fills them in — the amount is set by hand in Xero when the
+          back office confirms it. Printing those verbatim puts "$0.00" on every
+          fabric order a designer ever placed, which reads as a bug rather than
+          as "not priced yet". So an unpriced order says so in words, and the
+          test is the TOTAL, not the status: the zeros survive confirmation,
+          payment and shipping, which are exactly the orders a client opens. */}
+      {priced ? (
+        <dl className="order-totals">
+          {order.subtotal_cents != null ? (
+            <div>
+              <dt>Subtotal</dt>
+              <dd>{formatMoney(order.subtotal_cents, currency)}</dd>
+            </div>
+          ) : null}
+          {order.shipping_cents != null && Number(order.shipping_cents) > 0 ? (
+            <div>
+              <dt>Shipping{order.shipping_zone ? ` (${order.shipping_zone})` : ''}</dt>
+              <dd>{formatMoney(order.shipping_cents, currency)}</dd>
+            </div>
+          ) : null}
           <div className="order-total-row">
             <dt>Total</dt>
             <dd>
@@ -115,14 +124,29 @@ export function orderCard(order) {
               <span className="indicative-note">Indicative</span>
             </dd>
           </div>
-        ) : null}
-        {order.xero_invoice_ref ? (
-          <div>
-            <dt>Invoice reference</dt>
-            <dd>{order.xero_invoice_ref}</dd>
+          {order.xero_invoice_ref ? (
+            <div>
+              <dt>Invoice reference</dt>
+              <dd>{order.xero_invoice_ref}</dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : (
+        <dl className="order-totals">
+          <div className="order-total-row">
+            <dt>Total</dt>
+            <dd className="order-total-pending">
+              {order.xero_invoice_ref ? 'See invoice' : 'Priced on confirmation'}
+            </dd>
           </div>
-        ) : null}
-      </dl>
+          {order.xero_invoice_ref ? (
+            <div>
+              <dt>Invoice reference</dt>
+              <dd>{order.xero_invoice_ref}</dd>
+            </div>
+          ) : null}
+        </dl>
+      )}
     </article>
   )
 }

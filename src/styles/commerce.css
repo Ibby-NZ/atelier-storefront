@@ -194,6 +194,155 @@
   padding: 0;
 }
 
+/* --- Request list (cut-to-order fabric) ------------------------------------
+   The cart's sibling, and deliberately built from the cart's own parts: the
+   same `.cart-lines` / `.cart-line-*` line and the same `.cart-summary` shell.
+   Two things differ, and only those are written here — the line carries a
+   metres field and a cut-requirements note where the cart carries a price, and
+   the summary carries the contact details and the submit where the cart carries
+   a subtotal and a checkout link. */
+.request-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24rem;
+  gap: var(--s8);
+  align-items: start;
+}
+
+.request-list-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s5);
+  min-width: 0;
+}
+
+.request-list .cart-lines {
+  width: 100%;
+}
+
+/* A full-width note cannot live in the cart line's centred flex row, so the
+   request line is a grid: cloth and metres on the first row, the cut
+   requirements (and any error) underneath, indented past the thumbnail.
+   `.cart-line.request-line` rather than `.request-line` on purpose — it must
+   beat `.cart-line`'s `display: flex` on specificity, not on source order. */
+.cart-line.request-line {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto auto;
+  grid-template-areas: "media main metres remove";
+  align-items: start;
+  column-gap: var(--s4);
+  row-gap: var(--s4);
+}
+
+.request-line .cart-line-media {
+  grid-area: media;
+}
+
+.request-line .cart-line-main {
+  grid-area: main;
+}
+
+.request-line .request-metres {
+  grid-area: metres;
+}
+
+.request-line .cart-remove {
+  grid-area: remove;
+  align-self: center;
+}
+
+/* No row is named for these: auto-placement gives them an implicit row only
+   when they exist, so an absent error costs no empty track and no row gap. */
+.request-line .request-line-note,
+.request-line .request-line-error {
+  grid-column: 2 / -1;
+}
+
+.request-metres {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.request-metres-label {
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.request-metres input {
+  width: 5.5rem;
+}
+
+/* Stock is the one fact on this line that changes what the shopper has to
+   agree to (the lead-time acceptance), so it is stated on the line rather than
+   left to the summary. */
+.request-stock {
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.request-stock.in {
+  color: var(--sage);
+}
+
+.request-stock.out {
+  color: var(--ochre);
+}
+
+.request-line-lead {
+  margin: var(--s1) 0 0;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+/* Two rows of notes, not the 7.5rem the standalone form textarea takes — a
+   line's note is an aside to the line, and at full height four cloths would
+   push the summary off the screen. */
+.request-line-note textarea {
+  min-height: 4.5rem;
+}
+
+.request-line-error {
+  margin: 0;
+}
+
+/* Dimmed rather than hidden: the shopper chose it, and it has to stay
+   recognisable enough to be the thing they remove. */
+.request-line.is-unavailable .cart-line-media,
+.request-line.is-unavailable .cart-line-main {
+  opacity: 0.55;
+}
+
+.request-summary .cart-subtotal strong {
+  font-family: var(--font-mono);
+  font-size: var(--d-sm);
+}
+
+.request-metres-unit {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.request-summary .field-group {
+  gap: var(--s4);
+}
+
+/* `.request-note` is shared with the product page's purchase ROW, where
+   `flex-basis: 100%` means "take the whole row". In this column-direction flex
+   summary that same declaration means "take the whole HEIGHT", so it has to be
+   reset here rather than inherited. */
+.request-summary .request-note {
+  flex-basis: auto;
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
 /* --- Checkout ------------------------------------------------------------- */
 .checkout {
   max-width: var(--container-narrow);
@@ -680,6 +829,350 @@
   color: var(--ink-soft);
 }
 
+/* --- Account portal: section nav ------------------------------------------
+   A row of underlined text actions, not tabs with a filled ground: the earlier
+   platform handoff (which still owns this screen) has no chip or pill anywhere,
+   and the current section is marked by the brass rule the rest of the site uses
+   for "you are here". Scrolls horizontally rather than wrapping on a phone —
+   six wrapped labels read as a paragraph. */
+.account-nav {
+  display: flex;
+  gap: var(--s5);
+  margin-bottom: var(--s6);
+  padding-bottom: var(--s3);
+  border-bottom: var(--hair);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.account-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.account-nav-item {
+  flex: none;
+  padding: 0 0 var(--s3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.account-nav-item:hover {
+  color: var(--ink);
+}
+
+.account-nav-item.is-current {
+  border-bottom-color: var(--brass);
+  color: var(--ink);
+}
+
+.account-panel {
+  min-height: 12rem;
+}
+
+/* --- Account portal: overview --------------------------------------------- */
+.account-identity {
+  margin-bottom: var(--s6);
+}
+
+.account-identity-label {
+  margin: 0 0 var(--s2);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-identity-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.account-identity-sub {
+  margin: var(--s2) 0 0;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.account-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--s5);
+  margin-bottom: var(--s6);
+}
+
+.account-stat {
+  padding: var(--s5);
+  border: var(--hair);
+  background: var(--surface);
+}
+
+.account-stat-value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.account-stat-label {
+  margin: var(--s3) 0 0;
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-stat-hint {
+  margin: var(--s2) 0 0;
+  font-size: var(--t-xs);
+  color: var(--muted-soft);
+}
+
+.account-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  margin-top: var(--s6);
+}
+
+/* --- Account portal: account manager --------------------------------------
+   Same left-rule panel as the trade-status note, in brass: it is a contact
+   card, not a status, and brass is the site's "fine detail" stroke. */
+.account-manager {
+  margin: 0 0 var(--s6);
+  padding: var(--s4) var(--s5);
+  border: var(--hair);
+  border-left: 2px solid var(--brass);
+  background: var(--surface);
+}
+
+.account-manager-label {
+  margin: 0 0 var(--s2);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-manager-name {
+  margin: 0;
+  font-size: var(--t-body);
+  color: var(--ink);
+}
+
+.account-manager-lines {
+  margin: var(--s2) 0 0;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+/* An account still waiting on the back office to match it to its Dynamics
+   record. Clay left rule (the site's warning tone) because something is
+   outstanding — but it is our task, not the client's, so the copy says so. */
+.account-notice {
+  padding: var(--s5);
+  border: var(--hair);
+  border-left: 2px solid var(--clay);
+  background: var(--surface);
+}
+
+.account-notice-label {
+  margin: 0 0 var(--s2);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.account-notice-text {
+  margin: 0;
+  max-width: 44rem;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* --- Account portal: record tables (samples, invoices) --------------------- */
+.account-panel-note {
+  margin: 0 0 var(--s5);
+  max-width: 44rem;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* The tables carry more columns than a phone has room for, so the table scrolls
+   inside its own wrapper rather than pushing the page sideways. */
+.account-table-wrap {
+  overflow-x: auto;
+}
+
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+
+.account-table th {
+  padding: var(--s3) var(--s4);
+  border-bottom: var(--hair);
+  background: var(--surface-deep);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.account-table td {
+  padding: var(--s4);
+  border-bottom: var(--hair);
+  color: var(--ink-soft);
+  vertical-align: top;
+}
+
+.account-cell-strong {
+  display: block;
+  color: var(--ink);
+}
+
+.account-cell-sub {
+  display: block;
+  margin-top: var(--s1);
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+.account-table-action {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.account-table-meta {
+  margin: var(--s4) 0 0;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+/* "Showing 20 of 681" + Show more. Centred under the list so it reads as the
+   end of the record rather than as another row. */
+.account-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+  margin-top: var(--s6);
+  padding-top: var(--s5);
+  border-top: var(--hair);
+}
+
+.account-more .account-table-meta {
+  margin: 0;
+}
+
+.account-requested {
+  font-size: var(--t-xs);
+  color: var(--sage);
+}
+
+/* Text action inside a table row — the site has no small button. */
+.account-link-button {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  font-size: var(--t-xs);
+  color: var(--ink);
+  cursor: pointer;
+  transition: color var(--quick), border-color var(--quick);
+}
+
+.account-link-button:hover:not(:disabled) {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.account-link-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* --- Account portal: price lists ------------------------------------------ */
+.account-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-list-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
+  padding: var(--s4) 0;
+  border-bottom: var(--hair);
+}
+
+/* --- Account portal: details ---------------------------------------------- */
+.account-detail-list {
+  margin: 0 0 var(--s6);
+  display: grid;
+  gap: var(--s4);
+}
+
+.account-detail-list dt {
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-detail-list dd {
+  margin: var(--s2) 0 0;
+  color: var(--ink);
+}
+
+.account-detail-note {
+  margin: 0 0 var(--s5);
+  max-width: 44rem;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* A repeat order sits under its own card rather than in the card header: the
+   card is shared with the guest order-lookup page, which has no basket. */
+.account-order-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--s3);
+}
+
+/* Fabric requests carry no price until the back office confirms them. */
+.order-total-pending {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
 .account-empty {
   display: flex;
   flex-direction: column;
@@ -839,7 +1332,8 @@
 }
 
 @media (max-width: 1024px) {
-  .cart {
+  .cart,
+  .request-list {
     grid-template-columns: 1fr;
     gap: var(--s6);
   }
@@ -847,6 +1341,10 @@
   .cart-summary {
     position: static;
     max-width: 26rem;
+  }
+
+  .request-summary {
+    max-width: 32rem;
   }
 }
 
@@ -867,6 +1365,25 @@
   .cart-summary {
     max-width: none;
     padding: var(--s5);
+  }
+
+  /* The metres field and Remove drop under the cloth rather than squeezing a
+     four-column row into a phone. */
+  .cart-line.request-line {
+    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-areas:
+      "media  main"
+      "metres remove";
+  }
+
+  .request-line .request-line-note,
+  .request-line .request-line-error {
+    grid-column: 1 / -1;
+  }
+
+  .request-line .cart-remove {
+    align-self: end;
+    justify-self: end;
   }
 
   .checkout .cart-continue {

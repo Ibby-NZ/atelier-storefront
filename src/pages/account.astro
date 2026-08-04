@@ -3,19 +3,26 @@ export const prerender = true // storefront pages stay static; EmDash routes ren
 import Layout from '../layouts/Layout.astro'
 import Account from '../components/Account.jsx'
 
-// My Account page (US-022). The order history is a client:load island: auth
-// state and orders are per-request (session cookie), so nothing is prerendered.
-// An unauthenticated visitor is redirected to /login?redirect=/account.
+// My Account (US-022). Everything inside is a client:load island: auth state,
+// orders, samples, invoices and price lists are all per-session (cookie), so
+// none of it can be prerendered. An unauthenticated visitor is redirected to
+// /login?redirect=/account.
+//
+// The sections live in the URL hash rather than as separate routes — see
+// Account.jsx. That keeps this one prerendered shell for every panel.
 ---
 
 <Layout
   title="My Account — Atelier Textiles"
-  description="View your Atelier Textiles order history and status."
+  description="Your Atelier Textiles orders, samples, invoices and trade price lists."
 >
   <section class="page-intro">
-    <p class="page-eyebrow">Trade &amp; retail</p>
+    <p class="page-eyebrow">Trade account</p>
     <h1>My <em>account</em></h1>
-    <p>Your orders and their current status. Need help? <a href="/order-lookup">Look up a guest order</a>.</p>
+    <p>
+      Your orders, samples, invoices and price lists in one place. Placed an order as a guest?
+      <a href="/order-lookup">Look it up here</a>.
+    </p>
   </section>
 
   <Account client:load />
