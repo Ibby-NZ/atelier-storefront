@@ -7,6 +7,12 @@ import {
   weaveBackground,
   PRODUCT_TYPE_LABELS,
 } from '../lib/catalogue.js'
+import {
+  isTradeGatedList,
+  signInHref,
+  TRADE_APPLICATION_PATH,
+  TRADE_GATE_COPY,
+} from '../lib/tradeGate.js'
 
 // Product library island (US-017), Maison direction (design: "Maison Library").
 // Fetches the website-visible catalogue once from GET /catalogue/products, then
@@ -21,6 +27,14 @@ import {
 // depends on who is asking (priceInfo's second argument); the two are fetched
 // together so the grid never paints "Sign in for trade pricing" at someone who
 // already is.
+//
+// The credentials now decide WHICH DESIGNS come back as well as which prices.
+// A viewer who is not approved trade or staff is served the house's own workroom
+// alone, and `meta.trade_gated` is how the API says so. Without the banner below
+// that is completely silent: the grid just looks small, its facet counts agree
+// with themselves, and a shopper has no way to learn that the maisons Atelier
+// represents are the part they cannot see. The banner is the invitation, and it
+// is never shown to an entitled viewer — meta.trade_gated is false for them.
 //
 // Layout: a sticky refine sidebar (search, House / Type facet lists, the
 // remaining filters as underline selects) beside the results column. Sidebar
@@ -217,6 +231,10 @@ export default function ProductLibrary() {
   // The signed-in user, or null. Only ever selects price COPY — the API decides
   // which prices this shopper is allowed to receive.
   const [viewer, setViewer] = useState(null)
+  // True when the API served the public subset rather than the whole library.
+  // Read from meta.trade_gated, never inferred from the viewer: entitlement is
+  // the API's decision and a second opinion here could contradict the rows.
+  const [tradeGated, setTradeGated] = useState(false)
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [error, setError] = useState('')
   // Lazy initialiser so the URL is parsed once, on the client, at mount.
@@ -245,6 +263,7 @@ export default function ProductLibrary() {
         if (!active) return
         setProducts(Array.isArray(body?.products) ? body.products : [])
         setViewer(user)
+        setTradeGated(isTradeGatedList(body))
         setStatus('ready')
       })
       .catch((err) => {
@@ -403,6 +422,24 @@ export default function ProductLibrary() {
       </aside>
 
       <div className="library-main">
+        {/* Above the grid, not beside the facets: it explains the RESULTS, and
+            a shopper who has scrolled the sidebar away must still meet it. */}
+        {tradeGated && (
+          <aside className="library-gate">
+            <p className="eyebrow-brass">Trade library</p>
+            <p className="library-gate-head">{TRADE_GATE_COPY.library.heading}</p>
+            <p className="library-gate-body">{TRADE_GATE_COPY.library.body}</p>
+            <p className="library-gate-actions">
+              <a className="btn" href={TRADE_APPLICATION_PATH}>
+                {TRADE_GATE_COPY.library.apply}
+              </a>
+              <a className="link-cta" href={signInHref('/products')}>
+                {TRADE_GATE_COPY.library.signIn}
+              </a>
+            </p>
+          </aside>
+        )}
+
         <div className="library-main-head">
           <p className="library-count" aria-live="polite">
             {visible.length} {visible.length === 1 ? 'design' : 'designs'}

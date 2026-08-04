@@ -4,6 +4,7 @@ import { getCollection, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
 import Layout from '../../layouts/Layout.astro'
 import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
+import HouseTradeAccess from '../../components/HouseTradeAccess.jsx'
 import { collectionTiles } from '../../lib/collections.js'
 import { getEmdashBrandPage } from '../../lib/emdash.js'
 import { foundedYear } from '../../lib/houses.js'
@@ -83,6 +84,25 @@ const { data: held } = await safeFetch(
 )
 const designCount = held?.meta?.total ?? null
 const founded = foundedYear(brand ?? { story: blurb })
+
+// The house directory stays PUBLIC — it is marketing, and the API still lists
+// every house to everyone. What is gated is what Atelier HOLDS: for a house with
+// `trade_only` the anonymous product count above comes back 0, so the "Designs
+// held" fact drops out, "View all products" disappears and the collection tiles
+// below never render. Left at that, the page silently reads as though Atelier
+// held nothing from the maison — which is the opposite of the truth and is the
+// worst possible page for the client's own roster. `tradeNote` is the sentence
+// that replaces the silence.
+//
+// The condition is the flag ALONE, with no viewer test, because this page has no
+// viewer to test: Astro's server fetch carries no browser cookie, so an approved
+// trade shopper is served exactly what a guest is — including `designCount` 0.
+// Left there, the note invited a signed-in, already-approved customer to apply
+// for the account they hold, and the page gave them no route into the designs
+// at all. So WHETHER the note appears is decided here (it is a property of the
+// house), and WHAT it says is decided in the browser by the HouseTradeAccess
+// island, which is the only place the cookie exists.
+const tradeNote = Boolean(brand?.trade_only)
 
 // The collections grid is driven by the live catalogue and only decorated by
 // the editorial cards above. The gate is BRAND-level — the section shows when
@@ -205,6 +225,18 @@ if (notFound) {
                   )
                 }
               </div>
+
+              {
+                // An ISLAND, not markup: it is the one part of this page whose
+                // copy depends on who is reading, and the frontmatter above
+                // cannot know (see the comment on `tradeNote`). It renders the
+                // guest note on the server — the correct default — and swaps to
+                // "your account is approved, here is the grid" in the browser,
+                // where the session cookie exists. Styling is the page's own
+                // vocabulary: a hairline over a label, the blurb's body size,
+                // and the same `.cta-underline` actions the block above uses.
+                tradeNote && <HouseTradeAccess client:load brandSlug={slug} />
+              }
             </div>
 
             <dl class="house-facts">

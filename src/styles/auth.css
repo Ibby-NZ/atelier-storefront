@@ -5,9 +5,10 @@
  * over it, and one 371px column centred in the frame: "Welcome" in grotesk
  * display, the role note, two outlined inputs and the underlined action.
  *
- * Only /login wears this. /register and /trade-application stay on the Maison
- * `.auth-form` in commerce.css — the Figma draws one auth screen and inventing
- * the other two in its language would be guessing, not implementing.
+ * Only /login wears this. /trade-application — now the site's only other auth
+ * screen, customer registration having been removed — stays on the Maison
+ * `.auth-form` in commerce.css: the Figma draws one auth screen and inventing
+ * the other in its language would be guessing, not implementing.
  */
 
 .auth-screen {
@@ -200,9 +201,10 @@
   background: rgba(0, 0, 0, 0.35);
 }
 
-/* The two routes the mock leaves out. They cannot simply go — register and the
-   trade application are reachable from nowhere else on a signed-out site — so
-   they sit under the action as fine print rather than as a third action. */
+/* The route the mock leaves out. It cannot simply go — the trade application is
+   reachable from nowhere else on a signed-out site — so it sits under the action
+   as fine print rather than as a second action. (It was two routes; the register
+   page is gone.) */
 .auth-screen-alt {
   margin: 0;
   font-size: var(--t-sm);

@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro'
 import ProductDetail from '../../components/ProductDetail.jsx'
 import { apiFetch, ApiError } from '../../lib/api.js'
 import { productSummary, isFabric } from '../../lib/catalogue.js'
+import { isTradeGateError, TRADE_GATE_PAGE } from '../../lib/tradeGate.js'
 
 // Product detail page (US-018) — the single template EVERY product renders
 // through. There is one route (`/products/[slug]`) and one component, so a
@@ -24,35 +25,56 @@ import { productSummary, isFabric } from '../../lib/catalogue.js'
 // gives the island its data on the first paint instead of after a round trip.
 const { slug } = Astro.params
 
-// apiFetch, not safeFetch: the two failure modes need different handling. A 404
-// means "no such product" and must answer 404. Anything else means the API is
-// unreachable from the server, which must NOT 404 a product that really exists —
-// the island retries from the browser, which may well reach it.
+// apiFetch, not safeFetch: the failure modes need different handling, and there
+// are now THREE of them.
+//   404 — no such product. Answer 404.
+//   403 + trade_only — a real design from a house we hold for the trade (see
+//     lib/tradeGate.js). Answer 403 and invite, never 404: the URL is genuine
+//     and shareable, so pretending it is not would hand a dead page to someone
+//     who was sent the link by our own back office.
+//   anything else — the API is unreachable FROM THE SERVER, which must NOT 404
+//     a product that really exists; the island retries from the browser, which
+//     may well reach it.
+// This request carries no session cookie either way, so a signed-in trade
+// shopper's own product is gated here even though they are entitled to it —
+// which is exactly why the gate still mounts the island (see below).
 let product = null
 let apiDown = false
+let tradeGated = false
 try {
   const body = await apiFetch(`/catalogue/products/${encodeURIComponent(slug)}`)
   product = body?.product ?? null
 } catch (err) {
-  if (!(err instanceof ApiError) || err.status !== 404) apiDown = true
+  if (isTradeGateError(err)) tradeGated = true
+  else if (!(err instanceof ApiError) || err.status !== 404) apiDown = true
 }
 
-const notFound = !product && !apiDown
+const notFound = !product && !apiDown && !tradeGated
 if (notFound) {
   Astro.response.status = 404
+} else if (tradeGated) {
+  Astro.response.status = 403
 }
 
 // This request carries no auth cookie, so `product` never holds trade pricing —
 // the island refetches from the browser, where the cookie exists, and that is
 // what reveals a trade figure. Nothing trade-only is baked into this HTML.
+// A gated response carries NOTHING about the product — not the name, not the
+// house — so its head tags are the generic pair from lib/tradeGate.js. That is
+// the API's decision, not an omission here: a title is public, and "Atlas —
+// Pierre Frey" would publish the very fact the gate exists to withhold.
 const houseName = product?.brand?.name ?? null
 const title = product
   ? [product.name, houseName, 'Atelier Textiles'].filter(Boolean).join(' — ')
-  : 'Product not found — Atelier Textiles'
+  : tradeGated
+    ? TRADE_GATE_PAGE.title
+    : 'Product not found — Atelier Textiles'
 
 const description = product
   ? productSummary(product)
-  : 'This product could not be found.'
+  : tradeGated
+    ? TRADE_GATE_PAGE.description
+    : 'This product could not be found.'
 
 // Share image: the first colourway with a photograph, else the hi-res asset.
 const socialImage =
@@ -125,7 +147,30 @@ const productLdJson = productLd
         </div>
       </div>
     ) : (
-      <ProductDetail client:load slug={slug} initialProduct={product} />
+      /*
+       * The gate is rendered BY THE ISLAND, not by this template, and the island
+       * is mounted on the gated page on purpose.
+       *
+       * This page's fetch is anonymous — Astro's server fetch carries no browser
+       * cookie — so "gated" here means "gated for a signed-out visitor", which
+       * is not the same question as "gated for the person reading it". The
+       * island refetches from the browser WITH the session cookie; for an
+       * approved trade account or staff that request succeeds, and they must end
+       * up looking at the design rather than at an invitation to apply for the
+       * account they already hold. Only the island can make that swap, so only
+       * the island can own the panel: a copy of the gate in this template would
+       * still be sitting above the product after the island resolved.
+       *
+       * The panel is still in the server HTML (Astro server-renders client:load
+       * islands), so a visitor with no JavaScript sees it, and the response is
+       * still 403.
+       */
+      <ProductDetail
+        client:load
+        slug={slug}
+        initialProduct={product}
+        tradeGated={tradeGated}
+      />
     )
   }
 

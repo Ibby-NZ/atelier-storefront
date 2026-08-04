@@ -439,13 +439,13 @@ export default function TradeApplicationForm() {
         </div>
       </fieldset>
 
+      {/* This used to close with "Not trade? Create a standard account." The
+          storefront no longer has one — the client has no standard-customer
+          account product — so the sentence had nowhere to point and the whole
+          paragraph went with it. A trade account is the only account. */}
       <button className="btn btn-primary" type="submit" disabled={submitting}>
         {submitting ? 'Submitting…' : 'Apply for trade account'}
       </button>
-
-      <p className="auth-alt">
-        Not trade? <a href="/register">Create a standard account</a>.
-      </p>
     </form>
   )
 }

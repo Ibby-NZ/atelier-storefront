@@ -26,9 +26,18 @@ const { data, error } = await safeFetch('/catalogue/brands')
 const brands = data?.brands ?? []
 
 // The catalogue is fetched for two reasons, neither of which is a product list:
-// it supplies the design counts that decide which houses lead the page, and it
-// supplies fallback photography for a house with no editorial page yet. Same
-// 100 limit as the homepage, which covers the whole website-visible catalogue.
+// it supplies the design counts, and it supplies fallback photography for a
+// house with no editorial page yet. Same 100 limit as the homepage.
+//
+// **This request is anonymous, so it is now the PUBLIC SUBSET** — the trade gate
+// (brands.trade_only; see lib/tradeGate.js) keeps every represented house's
+// designs out of it, leaving only Atelier's own workroom. Two consequences run
+// through the rest of this file, and both are handled by omission rather than by
+// printing a nought: every represented house counts 0 designs (so no count is
+// rendered for it), and none of them can contribute product photography any
+// more (so the "in focus" strip is fed by editorial imagery alone). The house
+// list itself is untouched — /catalogue/brands still returns every house to
+// everyone, because the directory is marketing.
 const { data: catalogue } = await safeFetch('/catalogue/products?limit=100')
 const products = catalogue?.products ?? []
 
@@ -46,7 +55,10 @@ const editorialImages = {
 }
 
 // First photographed design per house — the stand-in when a house has no
-// editorial page. Keep-first, so the house's own leading design wins.
+// editorial page. Keep-first, so the house's own leading design wins. Since the
+// gate, this can only ever hold the workroom: a represented house's products are
+// not in an anonymous list at all, so editorial imagery is the only picture such
+// a house can have here, and `editorialImages` already wins over this map.
 const productImages = products.reduce((images, product) => {
   const slug = product.brand?.slug
   if (!slug || !product.image_url || images[slug]) return images
@@ -67,10 +79,16 @@ const houses = brands
   }))
   .sort((a, b) => a.name.localeCompare(b.name))
 
-// The strip leads with the international houses we hold the most designs from
-// AND can show a photograph of. Alphabetical order would lead with whoever sorts
-// first rather than with anything a shopper can browse, and an unphotographed
-// house would be a grey rectangle beside two photographs.
+// The strip is the international houses we can show a photograph of, which since
+// the trade gate means the ones with an editorial page — the count tie-break
+// below is now inert (every represented house reads 0 designs to an anonymous
+// visitor) and the order falls through to alphabetical. It is kept because it
+// comes straight back the day a house is opened to the public in the CRM.
+//
+// It therefore thins out: fewer than three photographed houses is now the normal
+// state, not an edge case, which is why the heading counts what is actually in
+// the strip rather than assuming FEATURE_COUNT. An unphotographed house is still
+// excluded — it would be a grey rectangle beside a photograph.
 const FEATURE_COUNT = 3
 const featured = houses
   .filter((house) => house.is_international && house.image)
@@ -126,7 +144,8 @@ const houseCount = houses.length
       <section class="container house-focus">
         <p class="eyebrow-brass">In focus</p>
         <h2>
-          {countWord(featured.length)} <em>maisons</em>
+          {countWord(featured.length)}{' '}
+          <em>{featured.length === 1 ? 'maison' : 'maisons'}</em>
         </h2>
         <div class="house-focus-grid">
           {featured.map((house) => (
@@ -137,11 +156,18 @@ const houseCount = houses.length
               </span>
               <span class="house-focus-note">
                 {house.meta && <span class="house-focus-meta">{house.meta}</span>}
-                {house.held > 0 && (
-                  <span class="house-focus-held">
-                    {house.held} {house.held === 1 ? 'design' : 'designs'} held
-                  </span>
-                )}
+                {
+                  // Omitted rather than rendered as "0 designs held", which is
+                  // what the anonymous count now says for every represented
+                  // house — and would read as "we hold nothing from them"
+                  // instead of "these are held for the trade". The house page
+                  // itself carries that sentence (see brands/[slug].astro).
+                  house.held > 0 && (
+                    <span class="house-focus-held">
+                      {house.held} {house.held === 1 ? 'design' : 'designs'} held
+                    </span>
+                  )
+                }
               </span>
             </a>
           ))}

@@ -337,6 +337,44 @@
   color: var(--paper);
 }
 
+/* --- Trade gate notice ---------------------------------------------------- */
+/* Shown above the grid when the API served the public subset (meta.trade_gated;
+   see lib/tradeGate.js). It sits on `--surface` inside a hairline rather than in
+   the `.error-state` claret frame: nothing has gone wrong, and the claret would
+   read as a failed load. One claret element per screen is the direction's rule
+   and the outlined `.btn` already carries the emphasis. */
+.library-gate {
+  padding: var(--s6);
+  margin-bottom: var(--s7);
+  border: var(--hair);
+  background: var(--surface);
+}
+
+.library-gate-head {
+  margin: var(--s3) 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--d-md);
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.library-gate-body {
+  margin: var(--s3) 0 0;
+  max-width: 48rem;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.library-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s5);
+  margin: var(--s5) 0 0;
+}
+
 /* --- Results header ------------------------------------------------------- */
 .library-main-head {
   display: flex;

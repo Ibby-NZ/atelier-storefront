@@ -337,6 +337,16 @@ button.swatch {
   text-transform: uppercase;
 }
 
+/* --- Trade gate ----------------------------------------------------------- */
+/* The 403 state: a design from a house we hold for the trade (lib/tradeGate.js).
+   It rides on `.not-found`'s geometry — same route-resolved-to-not-a-product
+   shape, same breadcrumb / headline / action row — and adds only the space the
+   brass eyebrow needs above the headline. Deliberately NOT `.error-state`: this
+   is an invitation, and the claret error frame would read as a broken page. */
+.trade-gate .eyebrow-brass {
+  margin-bottom: var(--s3);
+}
+
 .swatch-out {
   opacity: 0.72;
 }

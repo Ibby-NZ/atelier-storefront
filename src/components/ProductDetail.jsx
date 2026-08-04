@@ -2,8 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
 import { fetchCurrentUser } from '../lib/auth.js'
 import { addToCart } from '../lib/cart.js'
+import {
+  addToRequestList,
+  normaliseMetres,
+  METRES_STEP,
+  MAX_METRES,
+} from '../lib/requestList.js'
 import { priceInfo, productTypeLabel, weaveBackground, isFabric } from '../lib/catalogue.js'
 import { countWord } from '../lib/houses.js'
+import {
+  isTradeGateError,
+  signInHref,
+  TRADE_APPLICATION_PATH,
+  TRADE_GATE_COPY,
+} from '../lib/tradeGate.js'
 
 // Product detail island (US-018), Maison direction (design: "Maison Product").
 // Fetches GET /catalogue/products/:slug for live availability and (for approved
@@ -29,9 +41,28 @@ import { countWord } from '../lib/houses.js'
 // the primary action is live on arrival.
 //
 // Purchase action by type:
-//   finished good    -> Add to cart (quantity stepper)
-//   fabric, in stock -> Request order (cut to order, priced by the back office)
-//   fabric, no stock -> Request backorder, with the lead-time note
+//   finished good -> Add to cart (quantity stepper)
+//   fabric        -> Add to request list (metres field), cut to order and priced
+//                    by the back office; an out-of-stock colourway is added the
+//                    same way and carries its lead-time note through to the
+//                    request page, where the whole list is sent as ONE request.
+//
+// Fabric used to link straight out to a one-product form, so a shopper wanting
+// three cloths filed three separate requests. It now adds to
+// src/lib/requestList.js exactly as a finished good adds to the cart.
+//
+// THE TRADE GATE (lib/tradeGate.js) is why this island now has a fourth status.
+// Designs from the maisons Atelier represents are served only to approved trade
+// and staff; everyone else gets 403 with `trade_only: true`. The page's server
+// render is anonymous, so `tradeGated` means "gated for a signed-out visitor" —
+// and this fetch, which does carry the cookie, is the one that can disagree.
+// Both directions matter and both are handled here:
+//   gated server-side, this fetch succeeds -> the shopper is entitled after all,
+//     and the panel is replaced by the product (the reason the .astro mounts the
+//     island on the gate page at all).
+//   this fetch 403s -> the panel, not the generic error state. A 403 is an
+//     answer, not a failure, and "We could not load this right now" would send a
+//     shopper to refresh forever.
 //
 // Everything renders inside one component: the store's ESLint has no React
 // plugin, so a JSX-only reference to a sub-component would trip no-unused-vars
@@ -47,6 +78,9 @@ const SPEC_FIELDS = [
 ]
 
 const MAX_QTY = 99
+
+// Where the request list is reviewed and sent.
+const REQUEST_PATH = '/order-request'
 
 // The colourway a shopper should land on: the first one in stock, else the
 // first one at all. Returns null for a product with no colourways.
@@ -64,17 +98,26 @@ function splitDisplayName(name) {
   return { head: words.slice(0, -1).join(' '), tail: words[words.length - 1] }
 }
 
-export default function ProductDetail({ slug, initialProduct = null }) {
+export default function ProductDetail({ slug, initialProduct = null, tradeGated = false }) {
   const [product, setProduct] = useState(initialProduct)
   // Seeded pages start ready, so there is no loading flash and the server's
   // markup matches the client's first render (a mismatch would fail hydration).
-  const [status, setStatus] = useState(initialProduct ? 'ready' : 'loading')
+  // A gated page starts on the panel for the same reason: server and client both
+  // begin from the prop, and only the credentialed fetch may move it.
+  const [status, setStatus] = useState(
+    tradeGated ? 'gated' : initialProduct ? 'ready' : 'loading'
+  )
   const [error, setError] = useState('')
   const [selectedSku, setSelectedSku] = useState(
     () => defaultColourway(initialProduct?.colourways)?.sku ?? null
   )
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(0) // how many were just added, 0 = nothing
+  // Fabric is bought by the metre, decimal — a stepper is the wrong control, so
+  // this is a typed field held as text until it is added.
+  const [metres, setMetres] = useState('1')
+  const [metresError, setMetresError] = useState('')
+  const [requested, setRequested] = useState(0) // metres just added, 0 = nothing
   // Starts null so the client's first render matches the server's (which has no
   // cookie and therefore no viewer) — anything else fails hydration. Resolved
   // alongside the product below, and only ever selects price copy.
@@ -114,10 +157,17 @@ export default function ProductDetail({ slug, initialProduct = null }) {
       })
       .catch((err) => {
         if (!active) return
-        // A seeded page is already showing the real product. A failed refresh
-        // means stock and trade pricing may be stale — it does not mean the
-        // product is gone, so it must not replace a working page with an error.
-        if (seeded) return
+        // A 403 carrying trade_only is the API's ANSWER, not a failure: this
+        // shopper may not see this design. Show the invitation.
+        if (isTradeGateError(err)) {
+          setStatus('gated')
+          return
+        }
+        // A seeded page is already showing the real product, and a gated page is
+        // already showing the accurate reason it is not. A failed refresh means
+        // stock and trade pricing may be stale — it does not mean the product is
+        // gone, so it must not replace either with an error.
+        if (seeded || tradeGated) return
         setError(err instanceof ApiError ? err.message : 'Unable to load this product.')
         setStatus('error')
       })
@@ -126,7 +176,7 @@ export default function ProductDetail({ slug, initialProduct = null }) {
     }
     // `seeded`, not `initialProduct` itself: a boolean is a stable dependency,
     // where an object prop would re-run this effect on any identity change.
-  }, [slug, seeded])
+  }, [slug, seeded, tradeGated])
 
   const colourways = useMemo(() => product?.colourways ?? [], [product])
 
@@ -156,11 +206,39 @@ export default function ProductDetail({ slug, initialProduct = null }) {
     previousHero.current = heroImage
   }, [heroImage])
 
-  // Changing colourway invalidates the "added to cart" confirmation — it refers
-  // to a specific SKU.
+  // Changing colourway invalidates the "added" confirmation — it refers to a
+  // specific SKU.
   const chooseColourway = (sku) => {
     setSelectedSku(sku)
     setAdded(0)
+    setRequested(0)
+    setMetresError('')
+  }
+
+  // The gate. It borrows `.not-found`'s geometry and the same breadcrumb / h1 /
+  // copy / action-row shape, because it is the same kind of page — a route that
+  // resolved to something other than a product — and it must not read as an
+  // error. Nothing here names the house or the design: the API sends neither,
+  // deliberately.
+  if (status === 'gated') {
+    return (
+      <div className="not-found trade-gate">
+        <p className="breadcrumb">
+          <a href="/products">← The Library</a>
+        </p>
+        <p className="eyebrow-brass">Trade library</p>
+        <h1>{TRADE_GATE_COPY.design.heading}</h1>
+        <p>{TRADE_GATE_COPY.design.body}</p>
+        <div className="cta-row">
+          <a className="btn" href={TRADE_APPLICATION_PATH}>
+            {TRADE_GATE_COPY.design.apply}
+          </a>
+          <a className="link-cta" href={signInHref(`/products/${encodeURIComponent(slug)}`)}>
+            {TRADE_GATE_COPY.design.signIn}
+          </a>
+        </div>
+      </div>
+    )
   }
 
   if (status === 'loading') {
@@ -185,11 +263,6 @@ export default function ProductDetail({ slug, initialProduct = null }) {
   // previous commit showed — the one to hold under the incoming image.
   const outgoingHero = previousHero.current
 
-  // Fabrics are requested per colourway, so carry the selection to the form.
-  const requestHref = `/order-request?product=${encodeURIComponent(product.slug)}${
-    selected ? `&sku=${encodeURIComponent(selected.sku)}` : ''
-  }`
-
   const canAddToCart = !fabric && Boolean(selected?.in_stock)
 
   const onAddToCart = () => {
@@ -208,6 +281,32 @@ export default function ProductDetail({ slug, initialProduct = null }) {
       qty
     )
     setAdded(qty)
+  }
+
+  // Fabric is added per colourway, with its stock state, so the request page can
+  // decide whether the lead-time acceptance is required without re-deriving it.
+  const onAddToRequest = () => {
+    if (!selected) return
+    const wanted = normaliseMetres(metres)
+    if (wanted === 0) {
+      setMetresError('Enter the metres wanted (greater than 0).')
+      return
+    }
+    setMetresError('')
+    addToRequestList(
+      {
+        sku: selected.sku,
+        slug: product.slug,
+        name: product.name,
+        brand: product.brand?.name ?? null,
+        colourway: selected.name,
+        image_url: selected.image_url ?? product.hi_res_asset_url ?? null,
+        in_stock: selected.in_stock === true,
+        lead_time: product.lead_time ?? null,
+      },
+      wanted
+    )
+    setRequested(wanted)
   }
 
   return (
@@ -365,33 +464,67 @@ export default function ProductDetail({ slug, initialProduct = null }) {
                   </p>
                 )}
               </>
-            ) : anyInStock ? (
-              <>
-                <a className="btn btn-primary btn-lg" href={requestHref}>
-                  Request order
-                </a>
-                <a className="link-cta" href="/contact">
-                  Request a cutting
-                </a>
-                <p className="purchase-note">
-                  Cut to order by the metre. We confirm stock and batch shading before
-                  invoicing.
-                </p>
-              </>
             ) : (
               <>
-                <a className="btn btn-primary btn-lg" href={`${requestHref}&backorder=1`}>
-                  Request backorder
-                </a>
+                <label className="metres-field">
+                  <span className="sr-only">Metres wanted</span>
+                  <input
+                    type="number"
+                    min={METRES_STEP}
+                    max={MAX_METRES}
+                    step={METRES_STEP}
+                    inputMode="decimal"
+                    value={metres}
+                    aria-invalid={metresError ? 'true' : undefined}
+                    onChange={(event) => {
+                      setMetres(event.target.value)
+                      setMetresError('')
+                      setRequested(0)
+                    }}
+                  />
+                  <span className="metres-unit" aria-hidden="true">
+                    m
+                  </span>
+                </label>
+
+                <button
+                  type="button"
+                  className="btn btn-primary btn-lg"
+                  onClick={onAddToRequest}
+                  disabled={!selected}
+                >
+                  {selected && !selected.in_stock ? 'Add to backorder request' : 'Add to request'}
+                </button>
+
                 <a className="link-cta" href="/contact">
                   Request a cutting
                 </a>
-                <p className="purchase-note">
-                  Currently out of stock.{' '}
-                  {product.lead_time
-                    ? `Estimated lead time: ${product.lead_time}.`
-                    : 'Lead time confirmed on request.'}
-                </p>
+
+                {metresError && <p className="field-error">{metresError}</p>}
+
+                {!selected ? (
+                  <p className="purchase-note">No colourway is listed to request.</p>
+                ) : selected.in_stock ? (
+                  <p className="purchase-note">
+                    Cut to order by the metre. We confirm stock and batch shading before
+                    invoicing. Add as many cloths as you like and send them as one request.
+                  </p>
+                ) : (
+                  <p className="purchase-note">
+                    {selected.name} is out of stock and will be backordered.{' '}
+                    {product.lead_time
+                      ? `Estimated lead time: ${product.lead_time}.`
+                      : 'Lead time confirmed on request.'}
+                    {anyInStock ? ' Another colourway above is in stock.' : ''}
+                  </p>
+                )}
+
+                {requested > 0 && (
+                  <p className="purchase-added">
+                    {requested} m × {selected?.name} added to your request list.{' '}
+                    <a href={REQUEST_PATH}>Review request</a>
+                  </p>
+                )}
               </>
             )}
           </div>
