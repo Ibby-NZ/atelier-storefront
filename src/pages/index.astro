@@ -5,7 +5,6 @@ import Layout from '../layouts/Layout.astro'
 import CollectionHero from '../components/CollectionHero.astro'
 import { safeFetch } from '../lib/api.js'
 import {
-  bandPhotographs,
   brandDesignCounts,
   collectionBySlug,
   collectionHref,
@@ -17,8 +16,8 @@ import {
 //
 // Everything else on this page still takes its photograph from the catalogue,
 // and that is still the right default — a collection tile should show the
-// collection. These six do not: they are the bands the client art-directed, and
-// a band the catalogue fills at random cannot be art-directed at all. They live
+// collection. These do not: they are the bands the client art-directed, and a
+// band the catalogue fills at random cannot be art-directed at all. They live
 // in `src/assets` (not `public/`) so the build emits sized webp derivatives
 // instead of serving a 2560px JPEG to a phone.
 import natureOperaBanner from '../assets/img/natures-opera-hero-banner.jpg'
@@ -28,6 +27,7 @@ import exploreTypeArt from '../assets/img/explore-type-bg.jpg'
 import exploreApplicationArt from '../assets/img/explore-application-bg.jpg'
 import featuredCollectionArt from '../assets/img/featured-collection-image.jpg'
 import designHousesArt from '../assets/img/design-brands-banner-bg.jpg'
+import manifestoArt from '../assets/img/aterlier-about-bg.jpg'
 
 // Home, 2026 direction (design: Figma "Atelier Home page", node 7307:617).
 // Section order is the mock's, verbatim: full-bleed collection hero, the two
@@ -178,22 +178,16 @@ const latest = pickCollections(collections, {
 })
 
 // --- Photography -----------------------------------------------------------
-// The hero, the two banners, the featured band and the design-houses band are
-// art-directed (the imports at the top). The manifesto band is the one left
-// with no picture of its own, so bandPhotographs() hands it one the page is not
-// already showing — collection interiors first, product shots only to top up
-// (see lib/home.js for why that order matters under a scrim).
-const [manifestoImage] = bandPhotographs({
-  collections,
-  products,
-  claimed: latest.map((entry) => entry.image_url),
-  count: 1,
-})
-
+// Every band on this page is art-directed now (the imports at the top). The
+// manifesto band was the last one still drawing a picture from the catalogue
+// via bandPhotographs(); it takes committed art like the rest, so the band no
+// longer changes with the catalogue and cannot land on a product shot that
+// disappears under its scrim.
+//
 // Art-directed bands paint their photograph as a background, so they go through
 // getImage() rather than <Image>: same webp derivative, no <img> to place.
-const [typeArt, applicationArt, housesArt] = await Promise.all(
-  [exploreTypeArt, exploreApplicationArt, designHousesArt].map((src) =>
+const [typeArt, applicationArt, housesArt, manifestoImage] = await Promise.all(
+  [exploreTypeArt, exploreApplicationArt, designHousesArt, manifestoArt].map((src) =>
     getImage({ src, format: 'webp' })
   )
 )
@@ -267,10 +261,7 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     )
   }
 
-  <section
-    class:list={['photo-band', 'home-manifesto', { weave: !manifestoImage }]}
-    style={bandStyle(manifestoImage)}
-  >
+  <section class="photo-band home-manifesto" style={bandStyle(manifestoImage.src)}>
     <div class="container">
       <div class="home-manifesto-body">
         <h2 class="photo-band-title">
@@ -328,15 +319,4 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
       </div>
     </div>
   </section>
-
-  {
-    products.length === 0 && collections.length === 0 && (
-      <div class="container home-outage">
-        <p class="error-state">
-          The catalogue is unavailable right now. Please try again shortly, or
-          <a href="/contact"> get in touch</a>.
-        </p>
-      </div>
-    )
-  }
 </Layout>

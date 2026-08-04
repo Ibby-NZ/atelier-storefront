@@ -416,11 +416,13 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   - **Art-directed photography ships in `src/assets/img`** (imported, hashed and
     resized by `astro:assets` — NOT `public/`, which this repo does not have).
     The hero's three banners, both shop banners, the featured collection's
-    portrait and the design-houses band are the client's commissioned art, and a
-    band the catalogue fills at random cannot be art-directed. `<Image>` where
+    portrait, the manifesto band and the design-houses band are the client's
+    commissioned art, and a band the catalogue fills at random cannot be
+    art-directed. **Every band on this page is art-directed now** — nothing here
+    still draws a photograph from the catalogue. `<Image>` where
     there is an `<img>` to place (hero slides, featured portrait — these get a
     srcset), `getImage({ format: 'webp' })` where the picture is a CSS
-    background (the tiles, the houses band, `/login`).
+    background (the tiles, the manifesto band, the houses band, `/login`).
   - The bands are built from the SHARED 2026 figures, not from home-only
     classes: `.photo-band` for the hero / manifesto / houses bands and
     `.tile-wall` + `.tile` for the two shop banners (`direction-2026.css`).
@@ -455,20 +457,30 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     rung on the seeded catalogue and are both named by the design);
     `pickCollections()` — the seasonal slug list, topped up from the rest of the
     catalogue so the row still shows four tiles when a slug is retired, never
-    repeating one the hero or featured band already holds; `bandPhotographs()`;
+    repeating one the hero or featured band already holds;
     `brandDesignCounts()`; `houseLabel()` (the hero's house line, see above).
-  - **The manifesto band is the only one still fed by `bandPhotographs()`** (the
-    others are art-directed now). It prefers COLLECTION images over product
-    images: the collection rows are commissioned interiors, while most product
-    photography in the catalogue is a finished good on white linen, which
-    disappears under a scrim and takes the copy with it (only 6 of 42 imaged
-    products even carry an `application`). Deterministic — catalogue order, no
-    sampling — because this page is prerendered, and it never hands out a
-    picture the latest-collections row is already showing.
+    `bandPhotographs()` is still exported and tested but **has no caller left** —
+    the manifesto band was the last one, and it takes committed art now. Keep it
+    or delete it, but do not describe it as live.
+  - **The manifesto band takes committed art** (`src/assets/img/aterlier-about-bg.jpg`,
+    through `getImage()` because it is a CSS background). It used to be the one
+    band still fed by `bandPhotographs()` — collection interiors first, product
+    shots only to top up, because most product photography in the catalogue is a
+    finished good on white linen that disappears under a scrim and takes the copy
+    with it. Committed art removes that gamble, and the band no longer changes
+    when the catalogue does.
   - The scrims run deeper than the mock's (`.photo-band::after` 0.62,
-    `.home-manifesto::after` 0.58 flat). The mock is drawn over its own chosen
-    photography; those bands take whatever the catalogue holds. `/login` is the
-    exception and went the other way — see its own entry.
+    `.home-manifesto::after` 0.58 flat). Those values were set when the bands
+    took whatever the catalogue held; every band is art-directed now, so they can
+    be lifted per band if a chosen photograph reads as buried — which is exactly
+    what `/login` did, see its own entry.
+  - **There is no outage state on this page.** It used to render "The catalogue
+    is unavailable right now" when both `products` and `collections` came back
+    empty; that block is gone (with `.home-outage`). Every band the API feeds
+    already omits itself when it has nothing, and the art-directed bands, the
+    hero photographs and the copy all still render with the API down — so the
+    page reads as finished, and an apology under a complete-looking home read as
+    a bug rather than as an outage.
   - **Both shop banners link to `/products`**, not to a pre-filtered grid: "by
     type" and "by application" name the library's own two facet dimensions, and
     picking a value would promise one thing and show another.
