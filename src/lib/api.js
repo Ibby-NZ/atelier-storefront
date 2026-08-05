@@ -5,6 +5,13 @@
 // ApiError carrying a user-friendly message; callers can either catch it or use
 // safeFetch to get a plain { data, error } result for rendering an error state.
 
+import { BREAK_GLASS } from './breakGlassConfig.js'
+import {
+  browserStorage,
+  readBreakGlassSession,
+  OFFLINE_WRITE_MESSAGE,
+} from './breakGlass.js'
+
 const API_BASE_URL =
   import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:3001'
 
@@ -50,8 +57,26 @@ async function parseBody(response) {
   }
 }
 
+// A break-glass session (./breakGlass.js) is local-only and carries no API
+// cookie, so anything it submits — an order request, a checkout — would be
+// refused server-side the moment the API recovers. Refuse it here instead, with
+// a sentence that says the service is offline rather than letting a shopper
+// believe an order went through. Reads are left alone: they also see nothing
+// without the cookie, and letting them through keeps the failure honest.
+// /auth/* is exempt so logging out still works.
+function blockedWhileOffline(path, method) {
+  if (method === 'GET' || method === 'HEAD') return false
+  if (path.startsWith('/auth/')) return false
+  return readBreakGlassSession(browserStorage(), BREAK_GLASS) !== null
+}
+
 // Throws ApiError on network failure or non-2xx. Returns parsed JSON otherwise.
 export async function apiFetch(path, options = {}) {
+  const method = String(options.method || 'GET').toUpperCase()
+  if (blockedWhileOffline(path, method)) {
+    throw new ApiError(OFFLINE_WRITE_MESSAGE, 0)
+  }
+
   const url = `${API_BASE_URL}${path}`
 
   let response

@@ -43,7 +43,7 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   - `ApiError` carries `.status` AND `.body` (the parsed JSON error body). For a
     422 the API sends `{ message, errors: [{ field, message }] }`; read
     `err.body?.errors` to show validation messages inline (see
-    `OrderRequestForm.jsx`). `.message` is still the human-friendly fallback.
+    `RequestList.jsx`). `.message` is still the human-friendly fallback.
   - Base URL from `PUBLIC_API_BASE_URL` (falls back to `http://localhost:3001`).
     The `PUBLIC_` prefix is REQUIRED for the value to reach browser islands; a
     non-prefixed var is server-only in Astro.
@@ -109,7 +109,7 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     detail and the brands index. Fraunces display, `--paper` ground, claret
     accent, brass hairlines, uppercase eyebrows, `.btn`.
   - **The earlier platform handoff** (`design_handoff_atelier_platform/`) still
-    covers everything neither set has drawn: cart, checkout, register, the trade
+    covers everything neither set has drawn: cart, checkout, the trade
     application, the journal, contact, account.
 
   Plain CSS, no framework, no build step beyond Astro.
@@ -245,6 +245,67 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   `src/lib/home.test.js`. See the `/` section under Pages for what each one is
   protecting.
 
+### The trade gate (`src/lib/tradeGate.js`)
+
+`brands.trade_only` (API-side, defaulting CLOSED) decides **which houses'
+designs a viewer may see at all**. A signed-out visitor browses only the house's
+own workroom, `atelier-textiles-nz`; every maison Atelier represents is reserved
+for approved trade — and for **staff**, who have to be able to check the live
+storefront.
+
+- **It is NOT the trade PRICING gate.** `priceInfo()`/`trade_price_cents` is
+  approved trade ALONE (staff never receive it) and decides what a figure says;
+  this gate decides whether a design is on the site, and staff DO pass it. A
+  shopper can be past one and not the other, so **neither may be derived from
+  the other** — read the API's own answer in both cases.
+- **The gate is silent unless it is named**, which is the only reason this
+  module exists: a gated grid just looks small, and every represented house's
+  page reads as though Atelier held nothing from it. `TRADE_GATE_COPY`
+  (`library` / `design` / `house`) is the one voice all four surfaces speak in,
+  plus `TRADE_GATE_PAGE` for the 403's head tags.
+- `isTradeGateError(err)` — a **403** carrying `body.trade_only === true`.
+  Duck-typed on `.status`/`.body` so the module never imports `lib/api.js`; a
+  404 stays a 404 and an outage stays an outage (inviting someone to apply for a
+  trade account to fix a typo would be worse than either).
+- `isTradeGatedList(body)` — `meta.trade_gated === true` on
+  `GET /catalogue/products`. **Strict**, so an older API or an unparsed body
+  reads as "not gated": announcing a gate that is not there is worse than
+  silence, and silence is what the surfaces already did.
+- `signInHref(path)` — `/login?redirect=…` under LoginForm's own acceptance rule
+  (same-site absolute path, `//` refused), so the link can never be one that
+  island would then throw away.
+- Pure — no DOM, no fetch, no React; the `.astro` pages import it in frontmatter
+  and the islands in the browser. Guarded by `src/lib/tradeGate.test.js`,
+  which also asserts no gate copy offers the standard account the storefront no
+  longer has.
+
+Where it surfaces:
+- **`/products`** — `ProductLibrary.jsx` reads `meta.trade_gated` off the same
+  response it already keeps `products` from and renders `.library-gate` above
+  the grid. Never shown to an entitled viewer: the API sets the flag false for
+  them.
+- **`/products/[slug]`** — a THIRD frontmatter outcome beside 404 and `apiDown`.
+  The page answers **403** and hands `tradeGated` to the island; a genuine 404
+  still 404s and an outage still falls through to the island untouched.
+- **`ProductDetail.jsx`** gained a `gated` status and **owns the panel**, which
+  is why the island is still mounted on a gated page. The frontmatter fetch is
+  anonymous (Astro's server fetch carries no browser cookie), so "gated" there
+  means "gated for a guest"; the island's credentialed refetch is the one that
+  can disagree, and when it succeeds the shopper must end up on the product. A
+  second copy of the panel in the `.astro` would still be sitting above it.
+  A 403 from the island's own fetch renders the panel, never `.error-state`.
+- **`/brands/[slug]`** — `brand.trade_only` alone (no viewer test: this page has
+  no viewer) renders `.house-trade`. Without it a represented house shows no
+  design count and no "View all products", and reads as a house we hold nothing
+  from. An entitled shopper sees the note too, so it is worded as how the house
+  is held, not as a refusal. (The collection tiles are no longer part of that
+  list — they render off `/catalogue/collections`, which the gate does not
+  touch, so a gated house still shows its wall.)
+- **`/brands`** — its counts and its "in focus" photography come from an
+  anonymous product list, i.e. the public subset. Nothing prints a nought (both
+  were already `> 0`-guarded) and the strip now runs on editorial imagery alone,
+  so it can hold fewer than three houses — hence the singular/plural heading.
+
 ## Pages
 
 - **`/products` (US-017)** — `src/pages/products.astro` renders `ProductLibrary.jsx`
@@ -356,12 +417,17 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     defaults to the first in-stock colourway (else the first listed) so the CTA is
     live on arrival. Both the thumbnail strip and the colourway grid set it.
   - Purchase action by type: finished good → Add to cart (with a quantity
-    stepper), enabled only when the **selected** colourway is in stock; fabric
-    with any in-stock colourway → Request order; fabric all out of stock →
-    Request backorder + lead-time note. Request buttons link to
-    `/order-request?product=<slug>&sku=<selected>[&backorder=1]` — the form
-    preselects that SKU.
+    stepper), enabled only when the **selected** colourway is in stock; fabric →
+    **Add to request** (a typed metres field, `.metres-field`, because metres are
+    decimal and a − / + stepper is the wrong control). An out-of-stock colourway
+    is still added — the button reads "Add to backorder request" and the
+    lead-time note stays — because the backorder acceptance is asked once on the
+    request page, over the whole list, not per product. Fabric no longer links
+    out to a one-product form: it writes to the request list
+    (`src/lib/requestList.js`) exactly as a finished good writes to the cart.
   - Add to cart stores the selected colourway's SKU, name and image (see Cart).
+    Add to request stores the same plus the colourway's `in_stock` and the
+    product's `lead_time` (see Request list).
   - Price rendering is the shared `priceInfo()` in `src/lib/catalogue.js`.
   - **Maison layout** (design: "Maison Product"): `1.15fr / 1fr` with a 4.5rem
     gutter; a squared 4/5 hero over 64px thumbnails; on the right a brass rule, a
@@ -509,25 +575,55 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   (`WEB-<id>`), and only THEN clears the cart. Money is formatted with the
   shared `src/lib/money.js` `formatMoney(cents, currency)`.
 
-- **`/order-request` (US-020)** — `src/pages/order-request.astro` renders
-  `OrderRequestForm.jsx` as a single `client:load` island. Reached from a fabric
-  product page as `/order-request?product=<slug>[&backorder=1]`. The island reads
-  the query string (`window.location.search`, SSR-guarded), loads the product's
-  colourways via `GET /catalogue/products/:slug` (colourway = SKU picker),
-  prefills name/email from `GET /auth/me` (401 = guest, ignored), and POSTs
-  `{ lines: [{ sku, qty_metres, cut_requirements }], contact: { name, email,
-  phone }, accepted_lead_time }` to `POST /orders/request`. The **backorder**
-  variant (`?backorder=1`) shows the lead-time note and an "I accept the quoted
-  lead time" checkbox that is REQUIRED before submit (sets `accepted_lead_time`).
-  Validation is two-layer: client checks (metres > 0, colourway chosen, email
-  present, checkbox for backorder), then server 422 field errors mapped from
-  `err.body.errors` field paths (`lines[0].qty_metres` → metres, `contact.email`
-  → email) shown inline; other errors show form-level. Success replaces the form
-  with the request number and "in touch within 24 hours".
+- **`/order-request` (US-020) is a CART, not a form** — `order-request.astro`
+  renders `RequestList.jsx` as a single `client:load` island. It used to be one
+  form per product, so a shopper wanting three cloths filed three separate
+  requests and the back office reconciled three orders by hand; the product page
+  now adds to the request list and this page reviews and sends the whole list as
+  the multi-line `POST /orders/request` the API has always accepted. Per line:
+  metres, cut requirements, remove; plus contact details, and one submit.
+  - POSTs `{ lines: [{ sku, qty_metres, cut_requirements }], contact: { name,
+    email, phone }, accepted_lead_time }`. Prefills name/email from
+    `GET /auth/me` (401 = guest, ignored).
+  - **The legacy deep link still works.** `?product=<slug>[&sku=][&backorder=1]`
+    adds that colourway (the named SKU, else the first in stock, else the first
+    listed) to the list on arrival, then `history.replaceState`s the query away
+    so a refresh cannot add it twice. A `useRef` guard covers StrictMode's
+    double effect — merge-by-SKU sums metres, so a second add would silently
+    double the cut.
+  - **Every line is re-fetched on arrival** (`GET /catalogue/products/:slug` per
+    distinct slug, in parallel, folded back through `applyProductRefresh`).
+    Stock state decides whether the lead-time acceptance is required, and a list
+    built last week must not answer with last week's stock. A **404** marks the
+    line `unavailable` and blocks submit with "remove this line"; **any other
+    failure leaves the line alone** — an unreachable API is not evidence a
+    product was deleted.
+  - The "I accept the quoted lead time" checkbox appears when ANY line is out of
+    stock, and is required before submit. It also appears when the API says so:
+    `in_stock` is a boolean, so a colourway with 2m left reads "in stock" and is
+    still short for a 40m cut — the 422 for that carries no field path, so the
+    handler matches /lead time/i on the message and reveals the checkbox rather
+    than leaving the shopper to re-press a button that will fail again.
+  - Validation is two-layer: client checks (every line's metres > 0, no
+    unavailable line, email present, checkbox when needed), then server 422
+    field errors mapped from `err.body.errors` — `lines[N].qty_metres` is mapped
+    back to line N **of this list's own order**, which is what was posted, and
+    `contact.email` to the email field. Success replaces the page with the
+    request number (`REQ-` or `BO-`), then **clears the list** — leaving it
+    behind invites a second identical request on the next visit.
 
-- **`/login`, `/register`, `/trade-application` (US-021)** — each an Astro page
-  wrapping a single `client:load` form island (`LoginForm.jsx`,
-  `RegisterForm.jsx`, `TradeApplicationForm.jsx`).
+- **`/login`, `/trade-application` (US-021)** — each an Astro page wrapping a
+  single `client:load` form island (`LoginForm.jsx`, `TradeApplicationForm.jsx`).
+  - **There is no customer registration.** `/register` and `RegisterForm.jsx`
+    were deleted: the client has no standard-customer account product and does
+    not want one, so a **trade application is the only way to make an account**
+    — and, since the trade gate below, the only way to see the represented
+    houses at all. `POST /auth/register` still exists API-side and is still what
+    the trade application builds on; nothing in this repo calls it. Both the
+    sign-in fine print and the application's own closing line used to point at
+    `/register`; neither does, and `.auth-alt` (commerce.css / primitives.css)
+    is left with no callers. Guest checkout and guest order lookup never
+    depended on an account and are unaffected.
   - **`/login` is the 2026 direction** (design: Figma "Sign in Page 2", node
     9350:361), `<Layout bleed overlay>` + `src/styles/auth.css`: a full-bleed
     interior photograph under a flat 50% scrim, the header floating over it, and
@@ -535,9 +631,9 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     outlined transparent inputs, the underlined `Sign in`. The mock labels both
     fields with placeholders alone; each keeps a real `sr-only` `<label>`
     because a placeholder disappears the moment someone types. The mock also
-    omits the routes to register and the trade application, which cannot simply
-    go (a signed-out visitor can reach them from nowhere else), so they sit
-    under the action as fine print rather than as a third action.
+    omits the route to the trade application, which cannot simply go (a
+    signed-out visitor can reach it from nowhere else), so it sits under the
+    action as fine print rather than as a second action.
     - **The photograph is committed art** (`src/assets/img/sign-in-bg.jpg`,
       through `getImage()` because it is a CSS background). It used to be live
       catalogue data — a hand-picked collection slug with `bandPhotographs()`
@@ -552,32 +648,39 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
       art-directed interior they only buried it.
     - Figma draws a SECOND sign-in ("Sign in Page 1", 9350:316: a 622px photo
       left, the form right on cream). It was not built — the client picked
-      Page 2. Page 1 is the obvious model if `/register` and
-      `/trade-application` are ever brought into the direction; both are still
-      on the Maison `.auth-form` in `commerce.css`, since inventing them in a
-      language the Figma never drew them in would be guessing.
-  - Login/register POST to
-  `/auth/login` / `/auth/register`; on success the API sets the session cookie
+      Page 2. Page 1 is the obvious model if `/trade-application` is ever
+      brought into the direction; it is still on the Maison `.auth-form` in
+      `commerce.css`, since inventing it in a language the Figma never drew it
+      in would be guessing.
+  - Login POSTs to
+  `/auth/login`; on success the API sets the session cookie
   and the island does `window.location.href = '/'` (login honours a same-site
-  `?redirect=` path — off-site/`//` values are rejected). Trade-application POSTs
-  to `/auth/trade-application` and does NOT redirect — it shows a confirmation
-  that approval is **manual** (role=trade, `trade_approved=false`; no self-serve
-  approval endpoint exists). Errors surface inline from `ApiError.message` (the
-  API sends friendly `{ error }` on 401/409); register/trade check
-  `password.length >= 8` client-side to avoid the raw schema-400 message.
+  `?redirect=` path — off-site/`//` values are rejected; `signInHref()` in
+  `lib/tradeGate.js` builds those links under the same rule). Trade-application
+  POSTs to `/auth/trade-application` and does NOT redirect — it shows a
+  confirmation that approval is **manual** (role=trade, `trade_approved=false`;
+  no self-serve approval endpoint exists). Errors surface inline from
+  `ApiError.message` (the API sends friendly `{ error }` on 401/409); the trade
+  form checks `password.length >= 8` client-side to avoid the raw schema-400
+  message.
   **Auth helpers live in `src/lib/auth.js`**: `fetchCurrentUser()` (GET
   `/auth/me` → `user` or null, swallows 401), `logout()` (POST `/auth/logout`,
-  never throws), `accountLabel(user)` (name or email). `/auth/me`,
-  register and login all return a `{ user }` envelope — read `body.user`.
-- **`/account`, `/order-lookup` (US-022)** — order history + status. `/account`
-  (`Account.jsx`, `client:load`) resolves auth at runtime: `fetchCurrentUser()`;
-  no user → `window.location.href = '/login?redirect=/account'` (satisfies the
-  "unauthenticated → login" criterion), else `GET /orders/mine` → `{ orders }`
-  listed newest-first. It also renders `tradeStatusNote(user)` (see
-  `src/lib/account.js`) under the greeting — **this is the only place a trade
-  applicant learns anything**: approval is a manual flag flip in the CRM with no
-  email, and until this existed a pending account and an approved one looked
-  identical from the storefront. `/order-lookup` (`OrderLookupForm.jsx`) is PUBLIC — order
+  never throws), `accountLabel(user)` (name or email). `/auth/me`
+  and login both return a `{ user }` envelope — read `body.user`.
+- **`/account`, `/order-lookup` (US-022)** — `/account` is now the multi-panel
+  trade client portal; **see the "Account portal" section below for how it is
+  built**, and treat that as the source of record. What still holds here:
+  `Account.jsx` (`client:load`) resolves auth at runtime with
+  `fetchCurrentUser()`, and no user → `window.location.href =
+  '/login?redirect=/account'` (satisfies the "unauthenticated → login"
+  criterion). It renders `tradeStatusNote(user)` (see `src/lib/account.js`)
+  under the greeting — **this is the only place a trade applicant learns
+  anything**: approval is a manual flag flip in the CRM with no email, and until
+  this existed a pending account and an approved one looked identical from the
+  storefront. Orders are one panel among six now (paged via `GET
+  /orders/mine?page=&limit=`, not a single unbounded list), and **log out lives
+  inside the Account panel**, not beside the greeting. `/order-lookup`
+  (`OrderLookupForm.jsx`) is PUBLIC — order
   number + email → `GET /orders/lookup?order_number=&email=`; a 404 (either key
   wrong) shows a friendly "no order matches" message, never an enumeration
   signal. Order rendering (status pill, line table, totals, invoice reference)
@@ -586,9 +689,12 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   (`orders.map((o) => orderCard(o))`) — NOT `<OrderCard/>`. A shared component
   used only in JSX would trip `no-unused-vars` (no React plugin); a called
   function counts as a use. Order money fields are integer cents rendered with
-  `formatMoney`; totals rows omit when null (fabric requests are priced later by
-  the back office, so subtotal/total sit at 0 and `xero_invoice_ref` is null
-  until confirmation — the invoice row only appears once set).
+  `formatMoney`; an order whose TOTAL IS ZERO shows "Priced on confirmation"
+  instead of money (`hasQuotedTotal` in `src/lib/reorder.js`) — a fabric request
+  is created with every money column at 0 and nothing ever fills them in, so
+  printing them verbatim put "$0.00" on every fabric order ever placed. The test
+  is the total, not the status: the zeros survive confirmation, payment and
+  shipping.
 - **Header account island** — `Header.astro` renders `AccountNav.jsx`
   (`client:load`). Because the store is a static build, login state is resolved
   at runtime: the island calls `fetchCurrentUser()` and renders the design's
@@ -596,10 +702,11 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   with the name carried in `aria-label` rather than on screen. It renders the
   guest destination while `/auth/me` is in flight — guest is the common case and
   both states are the same 24px box, so nothing moves either way.
-  - **Log out moved to `/account`** (`Account.jsx`, beside the greeting). The
-    2026 header is an icon row with no room for a name or a button, so the
-    account page is now the only place a session can be ended — if that page
-    ever loses the button, a signed-in visitor is stuck.
+  - **Log out moved to `/account`** — specifically into the portal's **Account
+    panel** (`detailsPanel` in `src/lib/accountPanels.jsx`). The 2026 header is
+    an icon row with no room for a name or a button, so that panel is now the
+    only place a session can be ended — if it ever loses the button, a signed-in
+    visitor is stuck.
 
 - **Site chrome (2026)** — `Header.astro` / `Footer.astro` / `Wordmark.astro` /
   `chrome.css`, built from the Figma Header (3376:24, Theme=Light at 3376:4) and
@@ -608,7 +715,12 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     wordmark absolutely centred, `Contact` + three 24px icons (search, account,
     cart) right; 32px above the row, 18px below, 24px between every item. The
     icons are inline SVG, not `<img>`, so `stroke="currentColor"` follows the
-    theme. Geometry is converted from the mock's 1280px frame to the site's own
+    theme. A **fourth** icon, `RequestIndicator.jsx` (scissors, the fabric
+    request list), sits before the cart and **renders nothing while the list is
+    empty** — the drawn header keeps its three icons in the state the mock was
+    drawn in, and a shopper who has actually built a request list can still
+    reach it from every page instead of having to remember the URL. Same
+    argument as the cart's count badge. Geometry is converted from the mock's 1280px frame to the site's own
     `.container` (96rem / 3rem) so the wordmark, the page bands and the footer
     stay on one column.
   - **Two themes, one markup.** `.site-header--overlay` (from `Layout`'s
@@ -769,45 +881,56 @@ name + `View collection`) → the related-reading band.
   `.house-facts` (12px Inter 600, muted label left / umber value right, black
   hairline per row) — deliberately not `primitives.css`'s `.spec-rows`, which is
   the Maison figure with mono values on a greige rule.
-- **Two actions, both underlined text** (`.cta-underline`): `Visit website` —
-  the house's own site (`brand.website_url`, staff-set in the CRM's Houses &
-  collections screen), opened in a new tab, no URL on file → no action; and
-  `View all products` → `/products?brand=<slug>`, the second action the
-  "Product Page" frame draws, shown only when `designCount > 0` so it can never
-  land on an empty grid. `Visit website` replaced `Shop {name}` (client
-  decision, page feedback Aug 2026).
-- **Tiles carry no description.** The mock puts the name and `View collection`
-  on the photograph and nothing under it. `collectionTiles()` still returns
-  `description` (the CMS card / API text) — it is simply not rendered here, and
-  is there for whatever renders a collection next.
+- **Actions, underlined text** (`.cta-underline`): `Visit website` — the house's
+  own site (`brand.website_url`, staff-set in the CRM's Houses & collections
+  screen), opened in a new tab, no URL on file → no action. It replaced
+  `Shop {name}` (client decision, page feedback Aug 2026) and is the ONLY action
+  the redrawn "Brand Page" frame (9379:2647) carries: the collection wall below
+  is how that frame gets a shopper to the grid. `View all products` →
+  `/products?brand=<slug>` survives as the FALLBACK for a house with no
+  collections to tile — `tiles.length === 0 && designCount > 0`, so it never
+  duplicates the wall and never lands on an empty grid.
+- **Tiles carry a season label and no description.** The mock puts a small light
+  label, the name and `View collection` on the photograph, and nothing under it.
+  The label is the half of the CRM's collection name that follows a pipe —
+  "Chilgrove Collection | Spring 2024" is drawn as *Spring 2024* over *Chilgrove
+  Collection* (`splitCollectionName`, first pipe only; most collections have
+  none and simply get no label). `.tile-heading` groups the two so `.tile-body`'s
+  own gap stays between the name and the action. `collectionTiles()` still
+  returns `description` (the CMS card / API text) — it is simply not rendered
+  here, and is there for whatever renders a collection next.
 - **The related-reading band is not in the mock** — the Figma's house page ends
   at the tiles. It stays because the journal ties posts to houses and dropping
   it would strip content the CMS publishes; it is painted umber so it reads as
   the footer's opening rather than as a leftover from the Maison direction.
 - **The collection tiles are driven by the live catalogue, decorated by
   editorial** (`collectionTiles` in `src/lib/collections.js`, pure + tested):
-  `safeFetch('/catalogue/collections?brand=')` supplies the tiles. **The gate is
-  BRAND-level, not per collection** (client's rule, re-confirmed on the
-  manuel-canovas feedback and again on the 4 Aug 2026 roster): the section
-  renders when the house itself has
-  reachable products (`brandHasProducts` = the facts list's `designCount > 0`),
-  and then EVERY live collection tiles — memberships are mostly still unassigned
-  in the CRM, and a per-collection `product_count > 0` gate hid whole houses.
-  Nothing under the house means NO section at all, heading included — which is
-  what the fourteen represented-only houses the API now seeds (Alpaka, Armani
-  Casa, Le Crin, … — houses Atelier represents but holds nothing from) rely on:
-  each renders its umber band, facts list and `Visit website` action and stops
-  there.
-  de Le Cuona and No.9 Thompson are in the same position with collections but no
-  products. A
-  stocked collection links `/products?brand=&collection=`; a memberless one
-  falls back to `/products?brand=` so a tile never lands on an empty grid. Tile
-  copy/photo precedence: EmDash/markdown card (matched by its `collection` slug
-  field, else by heading == collection name case-insensitive) → the API
-  collection's own `description`/`image_url` (seeded from the atelier.co.nz
-  snapshot, CRM-editable) → name over the weave. An unmatched card renders
-  nothing — editorial cannot invent a shop destination; `card.link` is
-  legacy/unused here.
+  `safeFetch('/catalogue/collections?brand=')` supplies the tiles. **There is no
+  product gate on the section any more** (client decision, 5 Aug 2026 — the wall
+  is what the Figma brand page IS, so a house with collections and no wall reads
+  as a house we hold nothing from). EVERY live collection tiles whenever the API
+  returns any; a house with none renders no section at all, heading included —
+  which is what the fourteen represented-only houses (Alpaka, Armani Casa, Le
+  Crin, … — houses Atelier represents but holds nothing from) render: umber
+  band, facts list, `Visit website`, stop.
+  - **The superseded rule** was brand-level (`brandHasProducts` = the facts
+    list's `designCount > 0`, from the manuel-canovas feedback and the 4 Aug 2026
+    roster). It was never per collection — memberships are mostly unassigned in
+    the CRM and a per-collection `product_count > 0` gate hid whole houses.
+    Dropping it changes three pages: de Le Cuona, No.9 Thompson and Loro Piana
+    have collections but no products, so their tiles now land on the house's own
+    (empty) library filter — "0 designs / Nothing matches those filters",
+    with `Clear all` as the way out. For a **trade-gated** house the same link
+    lands on the library's gate note instead, which is the better answer than
+    the silence it replaced.
+  - A stocked collection links `/products?brand=&collection=`; a memberless one
+    falls back to `/products?brand=`. Tile copy/photo precedence:
+    EmDash/markdown card (matched by its `collection` slug field, else by
+    heading == collection name case-insensitive) → the API collection's own
+    `description`/`image_url` (seeded from the atelier.co.nz snapshot,
+    CRM-editable) → name over the weave. An unmatched card renders nothing —
+    editorial cannot invent a shop destination; `card.link` is legacy/unused
+    here.
 - `slideshow[1..]` is no longer rendered as a scrolling gallery (the design has
   one banner). Nothing is lost on the seeded page: the collection cards carry the
   same three images as their `featuredImage`.
@@ -942,6 +1065,64 @@ markdown collections (above) remain the shipped baseline.
   Bearer <token>`) — see `README.md`.
 - Beta rough edges + workarounds: `tasks/emdash-blockers.md`.
 
+## Account portal (`/account`)
+
+- One prerendered page, one island (`Account.jsx`), **six panels behind the URL
+  HASH** — not six routes. Every page here is `prerender = true`, so separate
+  account URLs would be six identical static shells whose content is fetched at
+  runtime regardless; the hash is shareable, back-button-safe and needs no
+  routing. `src/lib/accountSections.js` decides which panels exist,
+  `src/lib/accountPanels.jsx` draws them (plain functions called normally, the
+  `orderView.jsx` convention — the store ESLint has no React plugin, so a
+  JSX-only sub-component reference trips `no-unused-vars`).
+- **Panels are lazy and cached per section.** Loading orders + samples +
+  invoices + price lists for a visitor who came to check their last order would
+  make the common case slow.
+- **The nav is presentation, never authorisation.** The API scopes every
+  response to the session, so a tampered nav reveals nothing — but the link
+  state it reads comes from `GET /account/summary` and nowhere else. Do not
+  derive it from the user object or cache it: a client-derived value would make
+  the nav an access decision taken in the browser.
+- **Three audiences, none of which may look broken.** A plain customer sees
+  Overview / Orders / Account and never calls `/account/summary`. An approved
+  trade account **not yet linked** to its Dynamics customer sees the trade
+  panels marked `pending-link` with an explanation — "0 invoices" would be a lie
+  by omission, since the record exists and the back office simply has not
+  matched the login to it yet. A linked one sees everything.
+- **Reorder rebuilds the basket; it never re-submits** (`src/lib/reorder.js`).
+  Fabric lines refill the request list, finished goods refill the cart, and a
+  mixed order fills both and lands on `/order-request`. A server-side "place it
+  again" would skip the back office's stock and shading check (FR-5) — the one
+  step the fabric flow exists for — and would re-reserve metres with nobody
+  looking. Rebuilt lines carry `in_stock: false` deliberately: what was in stock
+  then says nothing about now, and false is the safe direction (it shows the
+  lead-time checkbox; the opposite mistake is a 422 at submit).
+- **`hasQuotedTotal` decides whether an order shows money at all.**
+  `createOrderRequest` writes zero into every money column and nothing ever
+  fills them in — the amount is set by hand in Xero at confirmation — so an
+  unpriced order reads "Priced on confirmation". Keyed on the **total being
+  zero, not on the status**: the zeros survive confirmation, payment and
+  shipping, which are exactly the orders a client opens.
+- `formatMoney` takes CENTS, `formatAmount` takes a DECIMAL — legacy Dynamics
+  invoice totals are `numeric` in the invoice's own currency (and arrive as
+  strings), so passing one to `formatMoney` divides a real invoice by a hundred.
+- The CSV download goes through `apiDownload` (fetch + Blob), **not** a bare
+  `<a href>`. The session cookie is `SameSite=Lax`, so a plain link WOULD
+  authenticate — which is the problem: any third-party page could then trigger a
+  credentialed download of a client's price list. Fetching keeps it
+  script-initiated and CORS-checked.
+- Every panel inherits the break-glass branch: an offline session has no API
+  cookie, so the whole portal says so rather than rendering a stack of 401s.
+- Pure logic is covered by `accountSections.test.js` and `reorder.test.js`; the
+  panels and the island need a live API and belong in an end-to-end run.
+- **The island's effects are the untested surface, and it has already bitten.**
+  The first version of the per-panel fetch listed `panels` — the state it writes
+  — in its own dependency array, so React ran the cleanup and discarded the
+  result before it arrived and every panel sat on "Loading…" for ever. `npm test`
+  is `node --test` over pure modules only, so nothing in the suite could see it.
+  Dedupe through a ref (`requestedRef`), never by depending on the state the
+  effect sets, and read any new effect here twice.
+
 ## Cart
 
 Client-side cart lives in `localStorage` under key `atelier_cart` (array of
@@ -959,7 +1140,49 @@ compares against the exported `STORAGE_KEY` rather than re-implementing either. 
 `setCartQty(sku, qty)` (qty ≤ 0 removes), `removeFromCart(sku)`, `clearCart()`,
 and read helpers `cartCount(items?)` / `cartSubtotalCents(items?)` (US-019). Any
 island that mutates the cart MUST go through these so the header stays live. The
-cart only ever holds finished goods (fabrics use the order-request flow).
+cart only ever holds finished goods (fabrics use the request list below).
+
+## Request list (cut-to-order fabric)
+
+The cart's sibling, in `localStorage` under `atelier_request_list`, written only
+through **`src/lib/requestList.js`**. Line shape reuses the cart's vocabulary so
+one set of markup and CSS renders both — `{ sku, slug, name, brand, colourway,
+image_url }` — plus `in_stock`, `lead_time`, `metres`, `cut_requirements` and a
+refresh-set `unavailable`.
+
+- **Why not just use the cart.** Fabric is decimal metres, carries per-line cut
+  requirements, has no price until the back office quotes one, and ends in
+  `POST /orders/request` rather than a Stripe payment. Folded into the cart, a
+  metre would have to pretend to be a unit and a priceless line would have to
+  pretend to cost 0 — and `cartSubtotalCents` would total a number that means
+  nothing. Everything else mirrors cart.js deliberately: array in localStorage,
+  merge-by-SKU on add, immutable updates, and a same-tab `REQUEST_EVENT`
+  (`atelier-request-change`) because the native `storage` event only fires in
+  OTHER tabs. `RequestIndicator.jsx` listens to both.
+- **The list transforms are pure functions over an array** (`mergeRequestLine`,
+  `withRequestMetres`, `withRequestNote`, `withoutRequestLine`,
+  `applyProductRefresh`, `toRequestPayloadLines`, `hasBackorderLine`…), with the
+  storage wrappers as two lines each on top. That is what makes them testable in
+  Node with no DOM — `src/lib/requestList.test.js`, 16 tests. Add logic there,
+  not in the island.
+- **`normaliseMetres` rounds to 2dp**: `0.1 + 0.2` is `0.30000000000000004` and
+  unrounded that is what gets POSTed. It also clamps to `MAX_METRES` (999) and
+  returns 0 for anything unusable, leaving the caller to decide whether 0 means
+  "reject" (an edit) or "fall back to 1" (an add).
+- **`withRequestMetres` does NOT remove at zero** — this is the one place it
+  deliberately diverges from the cart's `setCartQty`. Editing an inline metres
+  field means passing through `''` and `'0.'` on the way to `'0.5'`, and
+  treating those as a delete makes the line vanish under the cursor. Removal is
+  the explicit Remove button. The island pairs this with a per-SKU **draft**
+  string: every keystroke updates the draft, only a usable figure commits to
+  storage, and blur drops the draft so the field snaps back to what was actually
+  saved.
+- **Unknown stock reads as made-to-order, not as in stock** (`in_stock:
+  item.in_stock === true`). That is the safe direction: it shows a lead-time
+  checkbox that may not be needed, where the opposite mistake is a 422 at submit.
+- A repeat add **refreshes the cloth and keeps the shopper's inputs** — name,
+  image and stock come from the new add, metres are summed, and the cut
+  requirements already typed against that SKU survive.
 
 ## Staging gate (server.mjs)
 
@@ -1004,10 +1227,51 @@ sits behind HTTP Basic Auth and is blocked from search indexing.
   baked at **build** time — launch needs the flag in build AND runtime env,
   then a rebuild. EmDash's injected `/sitemap.xml` stays behind the auth gate.
 
+## Break-glass (offline) sign-in
+
+An emergency, API-independent login for the account area: `src/lib/breakGlass.js`
+(+ `sha256.js`, `breakGlassConfig.js`), reached from `LoginForm` only after a
+live attempt failed unreachably (`isApiUnreachable`: ApiError status 0 or ≥ 500).
+A 401 stays a 401 — a wrong password is not an outage.
+
+- **Weigh it before enabling it, and it ships disabled.** These pages are
+  prerendered, so with the API down the site still browses completely; what
+  breaks (cart, checkout, orders, trade pricing) is exactly what a local session
+  cannot fake. All this buys is a labelled account shell instead of a bounce to
+  `/login`. **If the goal is "let staff in when everything is down", the right
+  tool is the `SITE_AUTH_USER`/`SITE_AUTH_PASS` gate in `server.mjs`** — it is
+  already API-independent and its credential never reaches the browser bundle.
+  The same feature is far more useful in atelier-crm, whose demo screens run off
+  local data.
+- **It authenticates nothing**: no API cookie, so `/orders/mine` and every other
+  endpoint still refuse it. `readOfflineUser` (`src/lib/auth.js`) draws it as
+  `role: 'customer'`, `trade_approved: false` — entitled to nothing, so no trade
+  price is ever shown that the API would not serve.
+- **Off unless configured**: `PUBLIC_BREAKGLASS_EMAIL` +
+  `PUBLIC_BREAKGLASS_PASSWORD_SHA256`, both required. Astro inlines them, so a
+  change needs a **rebuild** — and the digest ships **publicly in the bundle of
+  a public site**. One unsalted SHA-256 is not a password KDF: the passphrase
+  MUST be long and random. Rotate by changing the var and rebuilding; live
+  sessions die because `readBreakGlassSession` re-checks the stored email.
+- **Not `crypto.subtle`** — WebCrypto is secure-context only, so on a plain-http
+  box it is `undefined` and the emergency login would fail where it is most
+  needed. Hence the hand-rolled `sha256.js`, which also runs under `node --test`.
+- Session is **sessionStorage** (dies with the tab), 12 h expiry, consulted by
+  `fetchCurrentUser` only when the API produced no user. `Account.jsx` renders a
+  dedicated `offline` state (it skips `/orders/mine`, which could only fail),
+  and `src/lib/api.js` refuses every non-GET to a non-`/auth/*` path with
+  `OFFLINE_WRITE_MESSAGE` — a shopper must never think an order went through.
+  `logout()` drops the local session **first**, which is also what lets its own
+  request past that guard.
+- Guarded by `src/lib/breakGlass.test.js` (16 tests, pure). Verified in a real
+  browser against the built site with the API blocked: wrong passphrase stays on
+  `/login`, right one signs in, `/account` shows the offline state, a POST is
+  refused locally while a GET still goes to the network, log out clears it.
+
 ## Env
 
 Copy `.env.example` to `.env` (gitignored): `PUBLIC_API_BASE_URL`, `SITE_URL`,
-plus the staging-gate vars above.
+plus the staging-gate vars above and the optional break-glass pair.
 
 `SITE_URL` is the public origin of the deployment. `astro.config.mjs` reads it
 with Vite's `loadEnv` (`import.meta.env` is NOT available in a config file) and

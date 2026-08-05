@@ -1,5 +1,6 @@
 ---
 import CartIndicator from './CartIndicator.jsx'
+import RequestIndicator from './RequestIndicator.jsx'
 import AccountNav from './AccountNav.jsx'
 import Wordmark from './Wordmark.astro'
 
@@ -73,6 +74,10 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
         </svg>
       </a>
       <AccountNav client:load />
+      {/* The fabric request list. Renders nothing until it holds something, so
+          the drawn header keeps its three icons and a shopper who has built a
+          list can still reach it from any page. */}
+      <RequestIndicator client:load />
       <CartIndicator client:load />
     </div>
   </div>
