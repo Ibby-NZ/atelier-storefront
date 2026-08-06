@@ -11,11 +11,29 @@ import { Image } from 'astro:assets'
 // because a slide at fractional opacity becomes a stacking context and takes
 // its copy down with it.
 //
-// The photographs are commissioned banner art shipped in `src/assets/img`, not
-// catalogue rows: the collection's own `image_url` is a room shot cropped for a
-// 4:5 tile and does not hold a full-bleed 88vh frame. Everything else on the
-// slide — house, name, description — is still live API data, so a collection
-// renamed in the CRM renames itself here.
+// WHICH collections these are is the office's, read from `featured_rank`; the
+// page hands them over already in rank order. The photograph each one shows is
+// a chain (collectionArtwork() in lib/home.js), and this component renders all
+// three rungs of it:
+//   - `slide.image` — commissioned banner art shipped in `src/assets/img`,
+//     sized and hashed by the build. This is the drawn state.
+//   - `slide.src` — the collection's own catalogue photograph, for a collection
+//     the office featured that nothing was commissioned for. It is a room shot
+//     cropped for a 4:5 tile rather than an 88vh frame, so it is a fallback and
+//     not the intent — but it is that collection's own picture, which a generic
+//     stand-in would not be.
+//   - neither — the slide paints the umber ground (`.is-plain`), the same
+//     answer /brands/[slug] gives a house with no banner photography. Never a
+//     broken <img>, and never another collection's photograph under this
+//     collection's name.
+// Everything else on the slide — house, name, description — is live API data,
+// so a collection renamed in the CRM renames itself here.
+//
+// With nothing featured at all (the API was down at build time, or the office
+// has featured nothing) the band keeps its umber ground and its own headline:
+// the page is `overlay`, so the header is floating in here with its type
+// reversed to bone, and letting the hero collapse would leave it on the cream
+// tile wall below.
 //
 // Rotation is progressive enhancement. The first slide is marked active in the
 // HTML, so with no JavaScript the hero is exactly the single-photograph band it
@@ -29,7 +47,8 @@ import { Image } from 'astro:assets'
  *   house?: string,
  *   description?: string|null,
  *   href: string,
- *   image: ImageMetadata,
+ *   image?: ImageMetadata|null,
+ *   src?: string|null,
  * }} HeroSlide
  */
 
@@ -37,7 +56,7 @@ const { slides = [], rotateMs = 7000, title } = Astro.props
 ---
 
 <section
-  class="photo-band home-hero"
+  class:list={['photo-band', 'home-hero', { 'is-empty': slides.length === 0 }]}
   data-hero
   data-rotate={String(rotateMs)}
   aria-roledescription="carousel"
@@ -46,14 +65,30 @@ const { slides = [], rotateMs = 7000, title } = Astro.props
   {/*
     The page's one <h1>. Each slide's own headline is an <h2>: a rotating <h1>
     would name whichever collection happened to be showing as the subject of the
-    whole page, and three of them would leave the document with three.
+    whole page, and three of them would leave the document with three. With no
+    slides it is the band's only line, so it is shown rather than screen-reader
+    only — and there is still exactly one either way.
   */}
-  <h1 class="sr-only">{title}</h1>
+  {slides.length > 0 && <h1 class="sr-only">{title}</h1>}
+
+  {
+    slides.length === 0 && (
+      <div class="container home-hero-empty">
+        <h1 class="photo-band-title">{title}</h1>
+        <a class="cta-underline cta-underline-light cta-underline-lg" href="/products">
+          Browse the library
+        </a>
+      </div>
+    )
+  }
 
   {
     slides.map((slide, index) => (
       <article
-        class:list={['home-hero-slide', { 'is-active': index === 0 }]}
+        class:list={[
+          'home-hero-slide',
+          { 'is-active': index === 0, 'is-plain': !slide.image && !slide.src },
+        ]}
         data-hero-slide
         role="group"
         aria-roledescription="slide"
@@ -62,16 +97,27 @@ const { slides = [], rotateMs = 7000, title } = Astro.props
         inert={index === 0 ? undefined : true}
       >
         {/* Decorative: the headline beside it already names the collection. */}
-        <Image
-          class="home-hero-photo"
-          src={slide.image}
-          alt=""
-          widths={[960, 1440, 1920, 2560]}
-          sizes="100vw"
-          format="webp"
-          loading={index === 0 ? 'eager' : 'lazy'}
-          fetchpriority={index === 0 ? 'high' : 'auto'}
-        />
+        {slide.image && (
+          <Image
+            class="home-hero-photo"
+            src={slide.image}
+            alt=""
+            widths={[960, 1440, 1920, 2560]}
+            sizes="100vw"
+            format="webp"
+            loading={index === 0 ? 'eager' : 'lazy'}
+            fetchpriority={index === 0 ? 'high' : 'auto'}
+          />
+        )}
+        {!slide.image && slide.src && (
+          <img
+            class="home-hero-photo"
+            src={slide.src}
+            alt=""
+            loading={index === 0 ? 'eager' : 'lazy'}
+            fetchpriority={index === 0 ? 'high' : 'auto'}
+          />
+        )}
         <div class="photo-band-body">
           <div class="container photo-band-row">
             <h2 class="photo-band-title">

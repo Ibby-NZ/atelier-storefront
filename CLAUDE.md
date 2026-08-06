@@ -499,16 +499,14 @@ Where it surfaces:
     Giverny, Mazan, Cappuccino, Feuillage, Larsen 2024 — is a real row of that
     endpoint carrying its own name, description and house, so the hero, the row
     and the featured band are one collection each and the copy is the client's,
-    not invented. Only the CHOICE is seasonal: `FEATURED_COLLECTIONS` (slug +
-    banner art + fallback labels, currently Nature's Opera / Larsen 2024 /
-    Manuel Canovas 2024), `FEATURED_SLUG` and `LATEST_SLUGS` in the frontmatter,
-    alongside the three blocks of static copy (`BANNERS`, `MANIFESTO`,
-    `HOUSES`). There is no CMS field behind a season yet and those are the whole
-    hand-edit list — the chrome no longer carries any, the announcement bar and
-    the mega-menu feature card having gone with the Maison header. A slug
-    retired in the CRM falls back to the name/house in the constant (the hero
-    still opens on its photograph); the sections with no art of their own are
-    omitted rather than rendering an empty frame.
+    not invented. **The CHOICE is live too** — `featured_rank`, set by the office
+    in the CRM (see `## Featured` at the foot of this file). The frontmatter's
+    `FEATURED_COLLECTIONS`, `FEATURED_SLUG` and `LATEST_SLUGS` slug arrays are
+    gone; what is left hand-edited is the three blocks of static copy (`BANNERS`,
+    `MANIFESTO`, `HOUSES`) and the two art registries, which say which
+    photograph belongs to which collection rather than what to feature. The
+    sections with no art of their own are still omitted rather than rendering an
+    empty frame.
   - **The featured band carries a fact list** (`.house-facts`, the house page's
     own figure reused): House, Origin, Designs held. `product_count` is
     deliberately NOT one of them — collection membership is staff-assigned in
@@ -521,9 +519,11 @@ Where it surfaces:
     follows so it never lands on an empty grid (collection filter → the house's
     grid → the house's page; de Le Cuona and No.9 Thompson are both on the third
     rung on the seeded catalogue and are both named by the design);
-    `pickCollections()` — the seasonal slug list, topped up from the rest of the
-    catalogue so the row still shows four tiles when a slug is retired, never
-    repeating one the hero or featured band already holds;
+    `featuredCollections()`/`collectionKey()`/`collectionArtwork()`/
+    `pickFeature()` (see `## Featured`); `pickCollections()` — the row it is
+    handed, de-duplicated on the `(house, collection)` pair and topped up from
+    the rest of the catalogue so it still shows four tiles when the office has
+    featured three, never repeating one the hero or featured band already holds;
     `brandDesignCounts()`; `houseLabel()` (the hero's house line, see above).
     `bandPhotographs()` is still exported and tested but **has no caller left** —
     the manifesto band was the last one, and it takes committed art now. Keep it
@@ -732,9 +732,9 @@ Where it surfaces:
   - **The announcement bar and the mega-menu are gone**, with
     `src/lib/mega-menu.js`. The Figma has neither, and the mega-menu's job (by
     type / by application / the houses) is the library's own facet sidebar. Two
-    of the site's three hardcoded seasonal-copy blocks went with them; the
-    home's `HERO_SLUG`/`FEATURED_SLUG`/`LATEST_SLUGS` are the whole hand-edit
-    list now.
+    of the site's three hardcoded seasonal-copy blocks went with them, and the
+    home's slug arrays went with `featured_rank` (see `## Featured`), so no
+    screen picks a collection by hardcoded slug any more.
   - **Nav labels are the design's**: Story → `/story`, Journal → `/resources`
     (Brands and Products match their routes). There is no Home item — the
     wordmark is the way home. The current section is marked with the
@@ -1294,3 +1294,56 @@ rel="canonical">` and `og:url`. It is **build time**: unset, those URLs bake as
 - The build needs no API and no database. That is what `safeFetch` in
   `src/lib/api.js` is for, and EmDash's SQLite state under `data/` is gitignored
   and created on demand — a clean checkout builds.
+
+## Featured
+
+What the storefront features is the office's decision, held in `featured_rank`
+on `brands` and `collections` and edited in the CRM. Every public catalogue
+response carries the column and is already ordered by it
+(`featured_rank ASC NULLS LAST`, then the endpoint's own name/id tail), so a
+screen filters and slices — it never re-derives a choice.
+
+- **The database owns the ORDER; the page owns the COMPOSITION.** The API hands
+  over one ranked list. That the home's first three are the hero and what is left
+  leads the "Latest collections" row is decided in `src/pages/index.astro`, and is
+  deliberately not encoded in the schema — there is no slot or section column to
+  read.
+- **`featuredCollections()` (`src/lib/home.js`) re-sorts, and that is not
+  redundant.** `featured_rank` carries no unique index on purpose, so two rows
+  may share a rank; the tie breaks on the order the API gave. A filter alone
+  would pass an unordered list through silently. A rank that is not a positive
+  integer reads as "not featured" rather than sorting ahead of rank 1.
+- **Everything featured is keyed on the `(house, collection)` PAIR**
+  (`collectionKey()`), never the slug alone: `collections_brand_id_slug_unique`
+  is per house, so two maisons may both hold a "2024". That applies to the art
+  registries and to de-duplicating the row, and it is the same posture the API's
+  reorder endpoints take.
+- **The artwork fallback chain is three rungs and never borrows**
+  (`collectionArtwork()`): the art commissioned for THIS collection, keyed by its
+  pair → the collection's own catalogue photograph → no photograph, and the
+  caller paints its designed ground (`.home-hero-slide.is-plain`, the umber band
+  `/brands/[slug]` gives a house with no banner imagery). It never falls back to
+  another collection's picture — a hero captioned "Nature's Opera" over Larsen's
+  interior is worse than a plain band — and never emits an `<img>` with nothing
+  behind it.
+- **An art registry is not a merchandising choice.** `HERO_ART` and `FEATURE_ART`
+  in the homepage frontmatter say which commissioned photograph belongs to which
+  collection. The office can reorder, add and drop featured collections without
+  anyone editing them; a featured collection with no entry is normal.
+- **The featured band shows the collection its portrait was shot for**
+  (`pickFeature()`), not the top-ranked one — its frame is 40vw beside the copy,
+  not 88vh behind it, so it is genuinely art-directed. That is why reordering the
+  hero does not move the band, and it is what keeps today's page identical: the
+  portrait belongs to Larsen 2024, which the office has at rank 2. It falls back
+  to the first featured collection with a photograph of its own, and the band is
+  omitted when nothing featured has a picture at all.
+- **A page whose whole composition is API-driven needs an outage state again.**
+  The home used to survive a build-time outage because its slugs, names and art
+  were hardcoded; now nothing featured means no hero, and the page is `overlay`,
+  so a collapsed hero would leave the header's bone type on the cream tile wall.
+  `CollectionHero` therefore renders an umber `is-empty` band carrying the site's
+  own headline. `safeFetch` still means the build itself always succeeds.
+- **The storefront asymmetry is real and the CRM says so.** The home is
+  `prerender = true`, so a featured *collection* changes at the next site build,
+  while `/brands` is `prerender = false` and a featured *house* appears
+  immediately.
