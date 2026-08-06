@@ -6,10 +6,14 @@ import CollectionHero from '../components/CollectionHero.astro'
 import { safeFetch } from '../lib/api.js'
 import {
   brandDesignCounts,
-  collectionBySlug,
+  collectionArtwork,
   collectionHref,
+  featuredCollections,
   houseLabel,
+  HERO_SLOTS,
+  LATEST_SLOTS,
   pickCollections,
+  pickFeature,
 } from '../lib/home.js'
 
 // Commissioned banner art, shipped with the site rather than fetched.
@@ -38,8 +42,9 @@ import manifestoArt from '../assets/img/aterlier-about-bg.jpg'
 // Feuillage, Larsen 2024 — is all LIVE DATA: every one of them is a row of
 // GET /catalogue/collections, carrying its own name, description, photograph
 // and house. So the page is merchandised out of the collections endpoint
-// rather than out of hardcoded copy, and only the CHOICE of collection is
-// seasonal (the three slug constants below).
+// rather than out of hardcoded copy — and since W7 the CHOICE is live too:
+// `featured_rank`, set by the office in the CRM, replaces the slug arrays this
+// frontmatter used to carry.
 //
 // Built at build time. Everything degrades to an empty section when the API is
 // down (safeFetch never throws), so the build always succeeds — the storefront
@@ -63,40 +68,32 @@ const collections = collectionList?.collections ?? []
 const { data: brandList } = await safeFetch('/catalogue/brands')
 const brands = brandList?.brands ?? []
 
-// --- Seasonal merchandising ------------------------------------------------
-// The featured collections and four blocks of copy, hand-edited each season.
-// Same convention (and same reason) as Header.astro's FEATURE and announcement
-// bar: there is no CMS field behind a season yet, and these are the whole list.
+// --- Commissioned art, keyed to the collection it was shot for --------------
+// WHAT the page features is no longer decided here: `featured_rank` is, set by
+// the office in the CRM. These registries only say which photograph belongs to
+// which collection, which is a fact about the art rather than a merchandising
+// choice — the office can reorder, add and drop featured collections without
+// anyone touching this file.
 //
-// Each featured collection carries its banner art and the labels to fall back
-// on. Everything the hero shows normally is live API data; the `name`/`house`
-// here only surface when the API is down or the slug has been retired, so the
-// page opens on a photograph and a title rather than on nothing. (The bands
-// further down still drop out in that case — they have no art of their own.)
-const FEATURED_COLLECTIONS = [
-  {
-    slug: 'nature-s-opera',
-    name: "Nature's Opera",
-    house: 'de Le Cuona',
-    image: natureOperaBanner,
-  },
-  { slug: 'larsen-2024', name: 'Larsen 2024', house: 'Larsen', image: larsenBanner },
-  {
-    slug: 'manuel-canovas-2024',
-    name: 'Manuel Canovas 2024',
-    house: 'Manuel Canovas',
-    image: manuelCanovasBanner,
-  },
-]
+// Keyed on the `(house, collection)` PAIR, because a collection slug is unique
+// per house and never globally: a slug-keyed map would hand another maison's
+// "2024" this one's photograph. See collectionKey() in lib/home.js.
+//
+// A featured collection with no entry here is normal, not an omission — it
+// falls back to its own catalogue photograph and then to a plain band, and
+// never to somebody else's picture (collectionArtwork()).
+const HERO_ART = {
+  'de-le-cuona/nature-s-opera': natureOperaBanner,
+  'larsen/larsen-2024': larsenBanner,
+  'manuel-canovas/manuel-canovas-2024': manuelCanovasBanner,
+}
 
-// The one that also gets the full band lower down, with its own portrait art.
-const FEATURED_SLUG = 'larsen-2024'
-const LATEST_SLUGS = [
-  'manuel-canovas-giverny',
-  'no-9-thompson-mazan-outdoor',
-  'pierre-frey-cappuccino',
-  'no-9-thompson-feuillage',
-]
+// The featured band's portrait is a different frame from a hero banner (40vw
+// beside the copy, not 88vh behind it), so it is its own registry — and it is
+// what decides WHICH featured collection the band shows. See pickFeature().
+const FEATURE_ART = {
+  'larsen/larsen-2024': featuredCollectionArt,
+}
 
 // The two doors into the catalogue. Both land on the library itself rather than
 // on a pre-filtered grid: "by type" and "by application" name the library's own
@@ -132,28 +129,34 @@ const designsPerHouse = brandDesignCounts(products)
 const houseDesigns = (collection) => designsPerHouse[collection?.brand?.slug] ?? 0
 const hrefFor = (collection) => collectionHref(collection, houseDesigns(collection))
 
-const heroSlides = FEATURED_COLLECTIONS.map((entry) => {
-  const collection = collectionBySlug(collections, entry.slug)
-  const name = collection?.name ?? entry.name
-  return {
-    key: entry.slug,
-    name,
-    // Two of the three are "<house> <year>", so the house line is dropped
-    // rather than stuttering it above the title — see houseLabel().
-    house: houseLabel(name, collection?.brand?.name ?? entry.house),
-    description: collection?.description ?? null,
-    href: collection ? hrefFor(collection) : '/products',
-    image: entry.image,
-  }
-})
+// The office's list, in the office's order. The DATABASE owns that order; this
+// page owns the composition — the first three are the hero, what is left leads
+// the latest row, and one of them carries the featured band. None of that is in
+// the schema, deliberately.
+const featuredList = featuredCollections(collections)
+const heroCollections = featuredList.slice(0, HERO_SLOTS)
 
-const featuredEntry =
-  FEATURED_COLLECTIONS.find((entry) => entry.slug === FEATURED_SLUG) ?? null
-const featuredLive = collectionBySlug(collections, FEATURED_SLUG)
-const featured = {
-  name: featuredLive?.name ?? featuredEntry?.name ?? '',
-  description: featuredLive?.description ?? null,
-  href: featuredLive ? hrefFor(featuredLive) : '/products',
+const heroSlides = heroCollections.map((collection) => ({
+  key: collection.slug,
+  name: collection.name,
+  // Two of the three the office features today are "<house> <year>", so the
+  // house line is dropped rather than stuttering it above the title — see
+  // houseLabel().
+  house: houseLabel(collection.name, collection.brand?.name),
+  description: collection.description ?? null,
+  href: hrefFor(collection),
+  ...collectionArtwork(HERO_ART, collection),
+}))
+
+// The band shows the collection its commissioned portrait was shot for, which
+// is why reordering the hero in the CRM does not move it. Null — nothing
+// featured has a picture at all — omits the band rather than framing nothing.
+const featuredLive = pickFeature(featuredList, FEATURE_ART)
+const featured = featuredLive && {
+  name: featuredLive.name,
+  description: featuredLive.description ?? null,
+  href: hrefFor(featuredLive),
+  ...collectionArtwork(FEATURE_ART, featuredLive),
 }
 
 // The fact list beside the featured collection. Every row is live data, and a
@@ -171,18 +174,21 @@ const featuredFacts = [
   { label: 'Designs held', value: featuredDesigns > 0 ? String(featuredDesigns) : null },
 ].filter((fact) => fact.value)
 
-const latest = pickCollections(collections, {
-  slugs: LATEST_SLUGS,
-  count: 4,
-  exclude: FEATURED_COLLECTIONS.map((entry) => entry.slug),
+// The office's choice first — the featured collections the hero did not take —
+// then the rest of the catalogue to fill the row out. Nothing already on the
+// page appears twice.
+const latest = pickCollections([...featuredList.slice(HERO_SLOTS), ...collections], {
+  count: LATEST_SLOTS,
+  exclude: [...heroCollections, featuredLive].filter(Boolean),
 })
 
 // --- Photography -----------------------------------------------------------
-// Every band on this page is art-directed now (the imports at the top). The
-// manifesto band was the last one still drawing a picture from the catalogue
-// via bandPhotographs(); it takes committed art like the rest, so the band no
-// longer changes with the catalogue and cannot land on a product shot that
-// disappears under its scrim.
+// The bands that carry no collection of their own are art-directed outright
+// (the imports at the top): the manifesto band was the last one drawing a
+// picture from the catalogue via bandPhotographs(), and it takes committed art
+// like the rest, so it cannot land on a product shot that disappears under its
+// scrim. The hero and the featured band are the two that follow a collection,
+// so they follow the art chain above instead.
 //
 // Art-directed bands paint their photograph as a background, so they go through
 // getImage() rather than <Image>: same webp derivative, no <img> to place.
@@ -203,7 +209,7 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
 <Layout
   title="Atelier Textiles — Curators of global design excellence"
   description="Fine fabrics and finished goods for makers and trade, sourced from houses across Aotearoa and beyond."
-  image={heroSlides[0]?.image?.src}
+  image={heroSlides[0]?.image?.src ?? heroSlides[0]?.src ?? undefined}
   bleed
   overlay
 >
@@ -273,40 +279,51 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     </div>
   </section>
 
-  <section class="home-featured">
-    <div class="container home-featured-inner">
-      <div class="home-featured-media">
-        <Image
-          src={featuredCollectionArt}
-          alt={featured.name}
-          widths={[622, 933, 1244]}
-          sizes="(max-width: 1024px) 100vw, 40vw"
-          format="webp"
-          loading="lazy"
-        />
-      </div>
-      <div class="home-featured-body">
-        <p class="badge-ochre">Featured collection</p>
-        <h2>{featured.name}</h2>
-        {featured.description && <p class="home-featured-copy">{featured.description}</p>}
-        {
-          featuredFacts.length > 0 && (
-            /* The house page's own fact list (editorial.css `.house-facts`),
-               reused verbatim — same figure, same rows, nothing new to style. */
-            <dl class="house-facts home-featured-facts">
-              {featuredFacts.map((fact) => (
-                <div class="house-fact">
-                  <dt>{fact.label}</dt>
-                  <dd>{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-          )
-        }
-        <a class="cta-underline" href={featured.href}>Explore collection</a>
-      </div>
-    </div>
-  </section>
+  {
+    featured && (
+      <section class="home-featured">
+        <div class="container home-featured-inner">
+          <div class="home-featured-media">
+            {/* Commissioned portrait, or the collection's own catalogue
+                photograph — the band only renders when it has one of the two,
+                so there is never an empty frame here. */}
+            {featured.image ? (
+              <Image
+                src={featured.image}
+                alt={featured.name}
+                widths={[622, 933, 1244]}
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                format="webp"
+                loading="lazy"
+              />
+            ) : (
+              <img src={featured.src} alt={featured.name} loading="lazy" />
+            )}
+          </div>
+          <div class="home-featured-body">
+            <p class="badge-ochre">Featured collection</p>
+            <h2>{featured.name}</h2>
+            {featured.description && <p class="home-featured-copy">{featured.description}</p>}
+            {featuredFacts.length > 0 && (
+              /* The house page's own fact list (editorial.css `.house-facts`),
+                 reused verbatim — same figure, same rows, nothing new to style. */
+              <dl class="house-facts home-featured-facts">
+                {featuredFacts.map((fact) => (
+                  <div class="house-fact">
+                    <dt>{fact.label}</dt>
+                    <dd>{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <a class="cta-underline" href={featured.href}>
+              Explore collection
+            </a>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   <section class="photo-band home-houses" style={bandStyle(housesArt.src)}>
     <div class="photo-band-body">
