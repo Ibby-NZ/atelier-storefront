@@ -15,6 +15,8 @@
 //
 // Pure functions, no fetching, no DOM — mirrors lib/catalogue.js.
 
+import { featuredByRank } from './featured.js'
+
 /** Hero slides, and tiles in the "Latest collections" row — the design's own. */
 export const HERO_SLOTS = 3
 export const LATEST_SLOTS = 4
@@ -85,38 +87,19 @@ export function collectionKey(collection) {
   return house && slug ? `${house}/${slug}` : null
 }
 
-/** A positive integer `featured_rank`, or null for "not featured". */
-function rankOf(collection) {
-  const rank = Number(collection?.featured_rank)
-  return Number.isInteger(rank) && rank > 0 ? rank : null
-}
-
 /**
  * The collections the office has featured, in the order it chose.
  *
- * The API already returns them first and in rank order, and this sorts anyway:
- * `featured_rank` carries no unique index (deliberately — a unique index would
- * make every step of a reorder a potential 409), so two collections may share a
- * rank, and the tie has to break on something. It breaks on the order the API
- * gave, which is that endpoint's own `name`/`id` tail — a filter alone would
- * pass an unordered list through silently.
- *
- * NULL means not featured; rank 0 and a negative are refused by the column's
- * CHECK, so they can only arrive from a source that is not the API, and they
- * read here as "not featured" rather than sorting ahead of rank 1.
+ * The rule itself — a positive integer rank, ties broken on the order the API
+ * gave — is `featuredByRank()` in lib/featured.js, because `/brands` reads the
+ * same column on its houses and the two must not drift.
  *
  * @param {Array<{ featured_rank?: number|null }>} collections
  * @param {number} [count] cap — the hero takes the first three
  * @returns {Array<object>} a new frozen list; the input is never reordered
  */
 export function featuredCollections(collections = [], count = Infinity) {
-  const featured = collections
-    .map((collection, order) => ({ collection, order, rank: rankOf(collection) }))
-    .filter((entry) => entry.rank !== null)
-    .sort((a, b) => a.rank - b.rank || a.order - b.order)
-    .map((entry) => entry.collection)
-
-  return Object.freeze(featured.slice(0, Math.max(0, count)))
+  return featuredByRank(collections, count)
 }
 
 /**

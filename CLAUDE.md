@@ -238,7 +238,10 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   `"France · est. 1935"`, degrading to the country alone; `countWord(n)` spells
   counts to twelve for the redesign's headings ("Six *colourways*", "Three
   *collections*") and falls back to digits past that. `houseMeta` is now
-  `/brands`'s alone — the homepage's maisons band went with the redesign.
+  `/brands`'s alone — the homepage's maisons band went with the redesign. It
+  also carries what `/brands` puts "in focus": `featuredHouses()`,
+  `houseArtwork()` and `FOCUS_SLOTS` (see `## Featured`), guarded by
+  `src/lib/houses.test.js`.
 - **`src/lib/home.js`** — the homepage's own rules (`collectionHref`,
   `pickCollections`, `bandPhotographs`, `brandDesignCounts`, `houseLabel`),
   guarded by
@@ -303,8 +306,12 @@ Where it surfaces:
   touch, so a gated house still shows its wall.)
 - **`/brands`** — its counts and its "in focus" photography come from an
   anonymous product list, i.e. the public subset. Nothing prints a nought (both
-  were already `> 0`-guarded) and the strip now runs on editorial imagery alone,
-  so it can hold fewer than three houses — hence the singular/plural heading.
+  were already `> 0`-guarded). The strip is the office's `featured_rank` choice
+  now (see `## Featured`), so the gate no longer decides WHICH houses are in it —
+  only whether each one has a photograph, and most do not, which is why an
+  unphotographed house paints the weave ground rather than being dropped. The
+  heading still counts what is actually in the strip, so a one- or two-house
+  choice reads as an edit — hence the singular/plural.
 
 ## Pages
 
@@ -1347,3 +1354,32 @@ screen filters and slices — it never re-derives a choice.
   `prerender = true`, so a featured *collection* changes at the next site build,
   while `/brands` is `prerender = false` and a featured *house* appears
   immediately.
+- **The rule itself lives once, in `src/lib/featured.js`** (`featuredRank`,
+  `featuredByRank`). `featuredCollections()` and `featuredHouses()` are named
+  wrappers over it, because both surfaces read the same column and a correction
+  to what counts as a rank must not land on only one of them.
+- **`/brands`'s "in focus" strip is `featuredHouses()`** (`src/lib/houses.js`),
+  and it REPLACED a derived guess — international, ranked by designs held, then
+  by name. That guess was unchangeable by the office and the trade gate had
+  already flattened it: every represented house reads 0 designs to an anonymous
+  visitor, so its count tie-break was inert and the order fell through to
+  alphabetical. `FOCUS_SLOTS` (3) is the design's row; a fourth featured house
+  is still one section down in the directory, which stays alphabetical
+  (`localeCompare`, so "de Le Cuona" files under D).
+- **A house's chain is `houseArtwork()` and it has the same three rungs**: the
+  editorial photograph published for THIS house (EmDash winning over the
+  markdown baseline, resolved by the page exactly as `/brands/[slug]` does) →
+  a design of this house's own from the catalogue → the shared `.weave` ground,
+  the stand-in the house page's collection tiles already use. It reads each map
+  at this house's slug and at no other key, so it can never caption another
+  maison's interior with this house's name.
+- **An unphotographed featured house is KEPT, not dropped.** The strip used to
+  exclude a house with no picture ("a grey rectangle beside a photograph"); once
+  the office chooses the list, excluding one silently deletes its choice from the
+  page — and under the trade gate, no photograph is the normal case rather than
+  the edge one. The weave tones rotate across the three cards (`houses.css`), for
+  the same reason the product grid rotates them.
+- **Nothing featured omits the strip, and that is the whole outage state here.**
+  `/brands` is not `overlay` and its directory, header and sourcing band render
+  without it, so — unlike the home's hero — no empty-band variant is needed. An
+  API outage still renders the page's own error line.
