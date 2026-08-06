@@ -1279,3 +1279,18 @@ passes it to Astro's `site`, which `Layout.astro` uses for `<link
 rel="canonical">` and `og:url`. It is **build time**: unset, those URLs bake as
 `http://localhost:4321`, so it belongs on the launch checklist beside
 `ALLOW_INDEXING` — set both in the build env and rebuild.
+
+## Foundations
+
+- `.github/workflows/ci.yml` runs this repo's three gates (`npm run lint`,
+  `npm test`, `npm run build`) on every pull request into `august-6th-updates`.
+  `permissions: contents: read`, so the job token cannot push, tag or write to
+  `main`. **No typecheck step — there is no TypeScript here**; a template that
+  adds one is wrong.
+- **Node 22 in CI, and the floor is real: `npm test` is `node --test
+  "src/**/*.test.js"`, and glob patterns in the built-in runner need Node >= 21.**
+  On an older runtime it matches no files and reports a green run over zero
+  tests — a passing CI that has tested nothing.
+- The build needs no API and no database. That is what `safeFetch` in
+  `src/lib/api.js` is for, and EmDash's SQLite state under `data/` is gitignored
+  and created on demand — a clean checkout builds.

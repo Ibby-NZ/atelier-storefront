@@ -1,0 +1,46 @@
+# atelier-storefront gates, run by GitHub rather than by the agent that wrote the
+# code.
+#
+# `npm test` is the **built-in** runner (`node --test "src/**/*.test.js"`), not
+# vitest, and glob patterns in it need Node >= 21 — an older runtime silently
+# matches no files and reports a green run over zero tests.
+#
+# `npm run build` needs no API and no database: `src/lib/api.js` exposes
+# `safeFetch` precisely so a build-time fetch cannot fail the build, and EmDash's
+# SQLite state under `data/` is gitignored and created on demand.
+#
+# There is no typecheck step because there is no TypeScript in this repo.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [august-6th-updates]
+
+# Read-only. This workflow can clone the repository and nothing else — it cannot
+# push, tag, or write to main.
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: lint + test + build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # .astro files are deliberately not linted (see CLAUDE.md) — real logic
+      # lives in .js/.jsx, which is what this covers.
+      - run: npm run lint
+
+      - run: npm test
+
+      - run: npm run build
