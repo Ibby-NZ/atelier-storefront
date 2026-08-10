@@ -145,7 +145,7 @@ export default function BespokeExplorer() {
           <form className="contact-form" onSubmit={onSubmit} noValidate>
             <h2>Enquire about {house.name}</h2>
             <p className="bespoke-form-lede">
-              Every piece is quoted individually — tell us what you have in mind
+              Every piece is quoted individually. Tell us what you have in mind
               and we will come back to you with a price.
             </p>
 
@@ -186,7 +186,7 @@ export default function BespokeExplorer() {
                 rows={6}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Sizes, colours, the room it's for — anything that helps us shape the quote…"
+                placeholder="Sizes, colours, the room it's for: anything that helps us shape the quote…"
               />
               {fieldErrors.message && <span className="field-error">{fieldErrors.message}</span>}
             </label>
