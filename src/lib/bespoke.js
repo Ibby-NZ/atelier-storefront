@@ -17,7 +17,7 @@ export const BESPOKE_HOUSES = Object.freeze([
     name: 'Pierre Frey',
     categories: Object.freeze(['Area rugs', 'Furniture']),
     blurb:
-      'The inventive Paris maison makes area rugs and furniture entirely to measure — sized, coloured and finished to your scheme by the same ateliers behind its fabric collections.',
+      'The inventive Paris maison makes area rugs and furniture entirely to measure, sized, coloured and finished to your scheme by the same ateliers behind its fabric collections.',
     images: Object.freeze([
       Object.freeze({
         src: 'https://www.atelier.co.nz/wp-content/uploads/2025/11/PF_2025_CAPPUCCINO_LE-REPOS-DU-TOUCAN_FP238_V1-scaled.jpg',
@@ -38,7 +38,7 @@ export const BESPOKE_HOUSES = Object.freeze([
     name: 'C&C Milano',
     categories: Object.freeze(['Bedding', 'Table linen']),
     blurb:
-      'The Milanese house of refined linens makes bedding and table linen to order — bed covers, sheeting, tablecloths and napery cut to your dimensions in its own Italian workrooms.',
+      'The Milanese house of refined linens makes bedding and table linen to order: bed covers, sheeting, tablecloths and napery cut to your dimensions in its own Italian workrooms.',
     images: Object.freeze([
       Object.freeze({
         src: 'https://www.atelier.co.nz/wp-content/uploads/2021/07/A5A0487-700x1050.jpg',
@@ -59,7 +59,7 @@ export const BESPOKE_HOUSES = Object.freeze([
     name: 'Loro Piana Interiors',
     categories: Object.freeze(['Throws', 'Cushions', 'Area rugs']),
     blurb:
-      'Cashmere, vicuña and the world’s finest fibres, made up as throws, cushions and area rugs to your specification — the house’s celebrated lofts translated for the home.',
+      'Cashmere, vicuña and the world’s finest fibres, made up as throws, cushions and area rugs to your specification. The house’s celebrated lofts, translated for the home.',
     images: Object.freeze([
       Object.freeze({
         src: 'https://www.atelier.co.nz/wp-content/uploads/2022/05/Doubling-Up-RGB_Oasis-Throws-700x1050.jpg',
@@ -80,7 +80,7 @@ export const BESPOKE_HOUSES = Object.freeze([
     name: 'Maria Flora',
     categories: Object.freeze(['Area rugs']),
     blurb:
-      'The Italian spinner and weaver of indoor-outdoor cloth makes area rugs to measure — woven to your size and palette, at home inside or under the sky.',
+      'The Italian spinner and weaver of indoor-outdoor cloth makes area rugs to measure, woven to your size and palette, at home inside or under the sky.',
     images: Object.freeze([
       Object.freeze({
         src: 'https://www.atelier.co.nz/wp-content/uploads/2021/05/ALBORAN0445-700x467.jpg',
@@ -97,7 +97,7 @@ export const BESPOKE_HOUSES = Object.freeze([
     name: 'de Le Cuona',
     categories: Object.freeze(['Throws', 'Cushions']),
     blurb:
-      'Famed for exquisitely understated linen and natural fibres, de Le Cuona makes throws and cushions to order — quietly luxurious pieces finished in the cloth of your choosing.',
+      'Famed for exquisitely understated linen and natural fibres, de Le Cuona makes throws and cushions to order: quietly luxurious pieces finished in the cloth of your choosing.',
     images: Object.freeze([
       Object.freeze({
         src: 'https://www.atelier.co.nz/wp-content/uploads/2022/05/deLeCuona-Cashmere-Velvet-CVE3-Speakeasy-SPK6-SPK7-Cashmere-Velvet-CVE2-Bearcat-BEA4-Old-Hollywood-OLH8-Lifestyle-Original-Large-700x933.jpg',

@@ -117,10 +117,8 @@ const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 220
   bleed
   overlay
 >
-  <section
-    class="photo-band house-hero"
-    style={`background-image: url(${heroImage.src});`}
-  >
+  <section class="photo-band photo-band--parallax house-hero">
+    <span class="photo-band-art" style={`background-image: url(${heroImage.src});`}></span>
     <div class="container photo-band-body">
       <div class="photo-band-row">
         <h1 class="photo-band-title">The World's Finest Design Houses</h1>

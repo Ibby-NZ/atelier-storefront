@@ -168,6 +168,82 @@ a.cta-underline-light:hover,
   );
 }
 
+/* --- Parallax art layer ---------------------------------------------------
+   A band paints its photograph as its OWN background, which cannot be
+   parallaxed without animating `background-position` — a repaint every frame.
+   A band that wants the effect moves the photograph onto a child layer and
+   transforms THAT, which the compositor can do on its own thread:
+
+     <section class="photo-band photo-band--parallax">
+       <span class="photo-band-art" style="background-image: url(…)"></span>
+       <div class="photo-band-body">…</div>
+     </section>
+
+   Both forms stay supported, and this is opt-in. A band with no
+   `.photo-band-art` keeps its own background and is untouched — which is what
+   leaves the home's hero rotator (a stack of crossfading slides with its own
+   machinery) alone.
+
+   The layer is 130% of the band and hung at -15%, so the band shows the MIDDLE
+   100/130 of it. That is the whole fallback story: with no animation — an
+   engine without scroll-driven timelines, or a reader who asked for reduced
+   motion — the art sits centred and correctly cropped, exactly as the
+   background version did. The animation only ever borrows the 15% of headroom
+   above and below.
+
+   **The two figures are in DIFFERENT bases and must be checked together.** The
+   headroom is a percentage of the BAND; a percentage inside `translate3d`
+   resolves against the moving element's OWN height, so the ±10% default
+   (`--band-parallax`) is 13% of the band — inside the 15% of headroom, with 2%
+   to spare. Setting the travel to the same figure as the headroom is the
+   obvious mistake and slides a hard edge into frame at the extremes. */
+.photo-band-art {
+  position: absolute;
+  inset-inline: 0;
+  top: -15%;
+  height: 130%;
+  background-size: cover;
+  background-position: center;
+  /* Only the layer moves; the scrim and the copy above it stay put. It sits
+     before `::after` in DOM order, so the scrim still paints over it. */
+  will-change: transform;
+}
+
+@keyframes photo-band-drift {
+  from {
+    transform: translate3d(0, calc(var(--band-parallax, 10%) * -1), 0);
+  }
+  to {
+    transform: translate3d(0, var(--band-parallax, 10%), 0);
+  }
+}
+
+/* **The timeline is declared on the BAND and consumed by NAME, and an anonymous
+   `view()` on the art layer does not work here.** `view()` resolves against the
+   subject's nearest SCROLLPORT, and `.photo-band` sets `overflow: hidden` to
+   clip the art — which makes the band itself a scroll container that never
+   scrolls, so the art's view progress sits pinned at 50% and nothing moves.
+   Naming it puts the subject one level out, where the nearest scrollport is the
+   document and the progress is the page's own.
+
+   `cover` runs the range from the band entering the viewport to leaving it, so
+   a band taller than the screen still gets its full travel. `both` holds the end
+   frames, or the art would snap back to centre the moment the band left. */
+.photo-band--parallax {
+  view-timeline-name: --photo-band;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .photo-band--parallax .photo-band-art {
+      animation: photo-band-drift linear both;
+      animation-duration: auto; /* the shorthand resets this to 0s */
+      animation-timeline: --photo-band;
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
 /* Copy hugs the bottom of the band, so the photograph stays the composition. */
 .photo-band-body {
   position: absolute;

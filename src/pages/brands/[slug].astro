@@ -148,10 +148,8 @@ if (notFound) {
           // top of the file. Same two lines of copy either way, so only the
           // frame around them changes.
           heroImage ? (
-            <section
-              class="photo-band house-banner"
-              style={`background-image: url(${heroImage})`}
-            >
+            <section class="photo-band photo-band--parallax house-banner">
+              <span class="photo-band-art" style={`background-image: url(${heroImage})`}></span>
               <div class="photo-band-body">
                 <div class="container house-banner-copy">
                   {brand?.country && <p class="badge-light">{brand.country}</p>}
