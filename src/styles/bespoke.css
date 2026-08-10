@@ -1,0 +1,81 @@
+/*
+ * Bespoke page (platform-handoff vocabulary, like the other enquiry pages).
+ * A house picker, that house's gallery + blurb, and the quote enquiry form.
+ * No monetary figure appears on this page by design — bespoke is quoted.
+ */
+
+.bespoke-explorer {
+  display: grid;
+  gap: var(--s6);
+  padding-bottom: var(--s6);
+}
+
+.bespoke-picker-field {
+  max-width: 26rem;
+}
+
+.bespoke-house h2 {
+  margin: 0 0 var(--s2);
+}
+
+.bespoke-categories {
+  font-size: var(--t-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 var(--s3);
+}
+
+.bespoke-blurb {
+  max-width: 38rem;
+  color: var(--ink-soft);
+  margin: 0 0 var(--s4);
+}
+
+.bespoke-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s3);
+}
+
+.bespoke-tile {
+  margin: 0;
+  border: 1px solid var(--hair);
+  overflow: hidden;
+}
+
+.bespoke-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}
+
+.bespoke-enquiry {
+  max-width: 30rem;
+  border-top: 1px solid var(--hair);
+  padding-top: var(--s5);
+}
+
+.bespoke-enquiry h2 {
+  margin: 0 0 var(--s2);
+}
+
+.bespoke-form-lede {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  margin: 0 0 var(--s4);
+}
+
+.bespoke-note {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  margin: var(--s3) 0 0;
+}
+
+@media (max-width: 640px) {
+  .bespoke-gallery {
+    grid-template-columns: 1fr;
+  }
+}
