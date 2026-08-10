@@ -2,13 +2,24 @@
 //
 // The 2026 home is merchandised out of the live COLLECTIONS endpoint rather
 // than the product grid: the hero, the "Latest collections" row and the
-// featured band are one collection each. WHICH collections is seasonal — a
-// slug list in the page frontmatter, the same hand-edit convention as the
-// header's announcement copy — so the two rules that must not drift with it
-// live here: how a collection resolves to a shop destination, and how the
-// seasonal list is topped up when a slug no longer exists.
+// featured band are one collection each. WHICH collections is no longer a slug
+// list in the page frontmatter — it is `featured_rank`, set by the office in the
+// CRM — so the rules that must not drift with it live here: which collections
+// are featured and in what order, how one resolves to a shop destination, which
+// photograph it shows, and how the row is topped up when the office has featured
+// fewer than it holds.
+//
+// **The database owns the ORDER; this page owns the COMPOSITION.** The API hands
+// over one ranked list; that the first three are the hero and the next four the
+// latest row is decided here and is deliberately not encoded in the schema.
 //
 // Pure functions, no fetching, no DOM — mirrors lib/catalogue.js.
+
+import { featuredByRank } from './featured.js'
+
+/** Hero slides, and tiles in the "Latest collections" row — the design's own. */
+export const HERO_SLOTS = 3
+export const LATEST_SLOTS = 4
 
 /**
  * Products held per house, keyed by brand slug.
@@ -60,17 +71,94 @@ export function collectionHref(collection, brandCount = 0) {
 }
 
 /**
- * One collection looked up by slug, or null.
+ * The `(house, collection)` PAIR that identifies a collection, or null.
  *
- * Returns null rather than throwing so a seasonal slug that has been renamed in
- * the CRM degrades to the section being omitted — the storefront must build and
- * render whatever the API happens to be serving.
+ * A collection slug is unique per HOUSE and never globally
+ * (`collections_brand_id_slug_unique`), so the pair is the only safe key: two
+ * maisons may both hold a "2024", and anything keyed on the slug alone — an art
+ * registry, a de-duplication set — would hand one of them the other's entry.
+ * Null for a collection with no house, which the caller treats as "no key" and
+ * never as a match.
  *
- * @param {Array<{ slug: string }>} collections
- * @param {string} slug
+ * @param {{ slug?: string, brand?: { slug?: string } }|null|undefined} collection
+ * @returns {string|null}
  */
-export function collectionBySlug(collections = [], slug) {
-  return collections.find((collection) => collection?.slug === slug) ?? null
+export function collectionKey(collection) {
+  const house = collection?.brand?.slug
+  const slug = collection?.slug
+  return house && slug ? `${house}/${slug}` : null
+}
+
+/**
+ * The collections the office has featured, in the order it chose.
+ *
+ * The rule itself — a positive integer rank, ties broken on the order the API
+ * gave — is `featuredByRank()` in lib/featured.js, because `/brands` reads the
+ * same column on its houses and the two must not drift.
+ *
+ * @param {Array<{ featured_rank?: number|null }>} collections
+ * @param {number} [count] cap — the hero takes the first three
+ * @returns {Array<object>} a new frozen list; the input is never reordered
+ */
+export function featuredCollections(collections = [], count = Infinity) {
+  return featuredByRank(collections, count)
+}
+
+/**
+ * The photograph a featured collection shows, as a chain:
+ *
+ *   1. the art commissioned FOR THIS collection, keyed by its `(house,
+ *      collection)` pair — an `ImageMetadata` the build sizes and hashes;
+ *   2. else the collection's own catalogue photograph, a plain URL;
+ *   3. else neither, and the caller paints its designed ground.
+ *
+ * The office can feature anything in the CRM, so most featured collections will
+ * eventually have no commissioned art — hence rung 2. What the chain never does
+ * is fall back to ANOTHER collection's photograph: a band captioned "Nature's
+ * Opera" over Larsen's interior is worse than a plain band, and the pair key is
+ * what stops a same-slug collision doing it by accident.
+ *
+ * @param {Record<string, object>} artwork  pair key → committed image
+ * @param {{ image_url?: string|null }} collection
+ * @returns {{ image: object|null, src: string|null }} at most one is set
+ */
+export function collectionArtwork(artwork, collection) {
+  const key = collectionKey(collection)
+  const committed = (key && artwork?.[key]) || null
+  if (committed) return Object.freeze({ image: committed, src: null })
+
+  const url = collection?.image_url
+  const src = typeof url === 'string' && url.trim() ? url : null
+  return Object.freeze({ image: null, src })
+}
+
+/**
+ * The collection the featured band shows, or null to omit the band.
+ *
+ * The band is a commissioned PORTRAIT beside the copy — a different frame from
+ * the hero's full-bleed banner — so the collection that owns that portrait is
+ * the one the band was drawn for. That, not "the highest-ranked one", is why
+ * reordering the hero in the CRM does not move this band, and it is what keeps
+ * today's page identical: the portrait belongs to Larsen 2024, which the office
+ * has at rank 2.
+ *
+ * Fall back to the first featured collection with a photograph of its own, so a
+ * completely re-chosen list still renders a band. Null when nothing featured has
+ * a picture at all — the page's standing rule is that a section with no art is
+ * omitted rather than framed around nothing.
+ *
+ * @param {Array<object>} featured  already in rank order
+ * @param {Record<string, object>} artwork  pair key → committed portrait
+ * @returns {object|null}
+ */
+export function pickFeature(featured = [], artwork = {}) {
+  const commissioned = featured.find((collection) => {
+    const key = collectionKey(collection)
+    return Boolean(key && artwork?.[key])
+  })
+  if (commissioned) return commissioned
+
+  return featured.find((collection) => collectionArtwork({}, collection).src) ?? null
 }
 
 /**
@@ -150,34 +238,33 @@ export function bandPhotographs({
 }
 
 /**
- * The "Latest collections" row: the seasonal slugs in the order given, topped
- * up from the rest of the catalogue to `count` and never repeating one that is
- * already spoken for elsewhere on the page.
+ * The "Latest collections" row: the given collections in the order given, taken
+ * until the row is full and never repeating one that is already spoken for
+ * elsewhere on the page.
  *
- * Topping up is what keeps the row full when a slug is retired: the design's
- * four tiles are a composition, and three of them reads as a bug rather than as
- * an edit. `exclude` carries the hero's and the featured band's collections so
- * the page never shows the same collection twice.
+ * The caller hands over the featured collections the hero did not take, followed
+ * by the whole catalogue — so the row is the office's choice first and a top-up
+ * after. Topping up is what keeps the row full when the office has featured only
+ * three: the design's four tiles are a composition, and three of them reads as a
+ * bug rather than as an edit.
  *
- * @param {Array<{ slug: string }>} collections
- * @param {{ slugs?: string[], count?: number, exclude?: string[] }} [options]
+ * De-duplication is on the `(house, collection)` PAIR, not the slug: the input
+ * deliberately repeats itself, and two houses' "2024" are two different tiles.
+ *
+ * @param {Array<{ slug: string, brand?: { slug?: string } }>} collections
+ * @param {{ count?: number, exclude?: Array<object> }} [options] `exclude`
+ *   carries the hero's and the featured band's collections
  */
 export function pickCollections(collections = [], options = {}) {
-  const { slugs = [], count = 4, exclude = [] } = options
-  const spokenFor = new Set(exclude)
+  const { count = LATEST_SLOTS, exclude = [] } = options
+  const spokenFor = new Set(exclude.map(collectionKey).filter(Boolean))
   const chosen = []
 
-  const take = (collection) => {
-    if (!collection || spokenFor.has(collection.slug)) return
-    spokenFor.add(collection.slug)
-    chosen.push(collection)
-  }
-
-  slugs.forEach((slug) => {
-    if (chosen.length < count) take(collectionBySlug(collections, slug))
-  })
   collections.forEach((collection) => {
-    if (chosen.length < count) take(collection)
+    const key = collectionKey(collection)
+    if (chosen.length >= count || !key || spokenFor.has(key)) return
+    spokenFor.add(key)
+    chosen.push(collection)
   })
 
   return Object.freeze(chosen.slice(0, count))

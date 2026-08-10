@@ -244,9 +244,70 @@
   margin: 0;
 }
 
+/* Cloth is bought by the metre — decimal, so the finished good's − / + stepper
+   is the wrong control and this is a typed field instead. It borrows
+   `.qty-field`'s 48px shell so the two product types put the same-sized object
+   beside the same button, with the unit set inside the frame rather than as a
+   floating label. */
+.metres-field {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: var(--s1);
+  height: 48px;
+  padding-inline: var(--s4);
+  border: var(--hair);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  transition: border-color var(--quick), box-shadow var(--quick);
+}
+
+.metres-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-wash);
+}
+
+.metres-field:hover:not(:focus-within) {
+  border-color: var(--brass);
+}
+
+.metres-field input {
+  width: 3.5rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .metres-field input:focus {
   outline: none;
-  box-shadow: none;
+}
+
+.metres-field input[aria-invalid="true"] {
+  color: var(--clay);
+}
+
+.metres-unit {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+/* The purchase row is a flex line; a validation message under it is a row of
+   its own, like the notes above. */
+.purchase > .field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* Spec sheet — hairline rows from `.spec-rows`; only the top margin is local. */
+.detail-specs {
+  margin: 2.75rem 0 0;
 }
 
 .metres-field input[aria-invalid="true"] {

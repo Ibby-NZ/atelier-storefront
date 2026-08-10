@@ -3,10 +3,13 @@ import assert from 'node:assert/strict'
 import {
   bandPhotographs,
   brandDesignCounts,
-  collectionBySlug,
+  collectionArtwork,
   collectionHref,
+  collectionKey,
+  featuredCollections,
   houseLabel,
   pickCollections,
+  pickFeature,
 } from './home.js'
 
 const collection = (slug, brandSlug, productCount = 0) => ({
@@ -14,6 +17,13 @@ const collection = (slug, brandSlug, productCount = 0) => ({
   name: slug,
   product_count: productCount,
   brand: { slug: brandSlug, name: brandSlug },
+})
+
+/** A collection as the API sends it: featured, with its own photograph. */
+const featuredRow = (slug, brandSlug, rank, image_url = null) => ({
+  ...collection(slug, brandSlug),
+  featured_rank: rank,
+  image_url,
 })
 
 const LIVE = [
@@ -68,25 +78,83 @@ test('collectionHref encodes slugs and survives a brandless collection', () => {
   assert.equal(collectionHref(null), '/products')
 })
 
-test('collectionBySlug returns null rather than throwing on a retired slug', () => {
-  assert.equal(collectionBySlug(LIVE, 'larsen-2024')?.slug, 'larsen-2024')
-  assert.equal(collectionBySlug(LIVE, 'gone'), null)
-  assert.equal(collectionBySlug(undefined, 'gone'), null)
-})
-
-test('pickCollections keeps the seasonal order', () => {
-  const picked = pickCollections(LIVE, {
-    slugs: ['larsen-2024', 'nature-s-opera'],
-    count: 2,
-  })
-  assert.deepEqual(
-    picked.map((entry) => entry.slug),
-    ['larsen-2024', 'nature-s-opera']
+test('collectionKey is the (house, collection) pair, never the slug alone', () => {
+  assert.equal(collectionKey(collection('larsen-2024', 'larsen')), 'larsen/larsen-2024')
+  assert.notEqual(
+    collectionKey(collection('2024', 'larsen')),
+    collectionKey(collection('2024', 'dedar'))
   )
 })
 
-test('pickCollections tops the row up when a seasonal slug is gone', () => {
-  const picked = pickCollections(LIVE, { slugs: ['larsen-2024', 'retired'], count: 4 })
+test('collectionKey yields null for a collection with no house to pair it to', () => {
+  assert.equal(collectionKey({ slug: 'orphan' }), null)
+  assert.equal(collectionKey({ brand: { slug: 'larsen' } }), null)
+  assert.equal(collectionKey(null), null)
+  assert.equal(collectionKey(undefined), null)
+})
+
+test('featuredCollections takes only the featured rows, in the office order', () => {
+  const rows = [
+    featuredRow('third', 'a', 3),
+    { ...collection('unfeatured', 'b'), featured_rank: null },
+    featuredRow('first', 'c', 1),
+    featuredRow('second', 'd', 2),
+  ]
+  assert.deepEqual(
+    featuredCollections(rows).map((entry) => entry.slug),
+    ['first', 'second', 'third']
+  )
+})
+
+test('featuredCollections breaks a shared rank on the order the API gave', () => {
+  // featured_rank carries no unique index on purpose, so two collections really
+  // can share one — the tie has to break on something deterministic.
+  const rows = [featuredRow('b', 'x', 2), featuredRow('a', 'y', 2), featuredRow('lead', 'z', 1)]
+  assert.deepEqual(
+    featuredCollections(rows).map((entry) => entry.slug),
+    ['lead', 'b', 'a']
+  )
+})
+
+test('featuredCollections treats a rank that is not a positive integer as unfeatured', () => {
+  const rows = [
+    featuredRow('zero', 'a', 0),
+    featuredRow('negative', 'b', -1),
+    featuredRow('fractional', 'c', 1.5),
+    featuredRow('blank', 'd', ''),
+    featuredRow('text', 'e', 'first'),
+    featuredRow('real', 'f', 4),
+  ]
+  assert.deepEqual(
+    featuredCollections(rows).map((entry) => entry.slug),
+    ['real']
+  )
+})
+
+test('featuredCollections caps the list and leaves its input alone', () => {
+  const rows = [featuredRow('c', 'a', 3), featuredRow('a', 'b', 1), featuredRow('b', 'c', 2)]
+  assert.deepEqual(
+    featuredCollections(rows, 2).map((entry) => entry.slug),
+    ['a', 'b']
+  )
+  assert.deepEqual(
+    rows.map((entry) => entry.slug),
+    ['c', 'a', 'b']
+  )
+  assert.deepEqual(featuredCollections(rows, 0), [])
+  assert.deepEqual(featuredCollections(), [])
+})
+
+test('pickCollections keeps the order it is handed', () => {
+  const picked = pickCollections(LIVE, { count: 2 })
+  assert.deepEqual(
+    picked.map((entry) => entry.slug),
+    ['nature-s-opera', 'manuel-canovas-giverny']
+  )
+})
+
+test('pickCollections tops the row up and never repeats a collection', () => {
+  const picked = pickCollections([LIVE[2], ...LIVE], { count: 4 })
   assert.equal(picked.length, 4)
   assert.equal(picked[0].slug, 'larsen-2024')
   assert.equal(new Set(picked.map((entry) => entry.slug)).size, 4)
@@ -94,9 +162,8 @@ test('pickCollections tops the row up when a seasonal slug is gone', () => {
 
 test('pickCollections never repeats a collection shown elsewhere on the page', () => {
   const picked = pickCollections(LIVE, {
-    slugs: ['nature-s-opera', 'manuel-canovas-giverny'],
     count: 4,
-    exclude: ['nature-s-opera', 'larsen-2024'],
+    exclude: [LIVE[0], LIVE[2]],
   })
   const slugs = picked.map((entry) => entry.slug)
   assert.ok(!slugs.includes('nature-s-opera'))
@@ -104,9 +171,19 @@ test('pickCollections never repeats a collection shown elsewhere on the page', (
   assert.equal(slugs[0], 'manuel-canovas-giverny')
 })
 
+test('pickCollections excludes on the pair, so two houses "2024" are two tiles', () => {
+  const mine = collection('2024', 'larsen')
+  const theirs = collection('2024', 'dedar')
+  const picked = pickCollections([mine, theirs], { count: 4, exclude: [mine] })
+  assert.deepEqual(
+    picked.map((entry) => entry.brand.slug),
+    ['dedar']
+  )
+})
+
 test('pickCollections returns what it can when the catalogue is short or empty', () => {
   assert.equal(pickCollections(LIVE.slice(0, 2), { count: 4 }).length, 2)
-  assert.deepEqual(pickCollections([], { slugs: ['larsen-2024'] }), [])
+  assert.deepEqual(pickCollections([], { count: 4 }), [])
   assert.deepEqual(pickCollections(), [])
 })
 
@@ -170,4 +247,65 @@ test('houseLabel yields null for a missing house rather than an empty line', () 
   assert.equal(houseLabel('Larsen 2024', null), null)
   assert.equal(houseLabel('Larsen 2024', '   '), null)
   assert.equal(houseLabel(null, 'Larsen'), 'Larsen')
+})
+
+// The committed art is an ImageMetadata the build produces; the chain only ever
+// passes it through, so a sentinel object stands in for one here.
+const LARSEN_BANNER = { src: '/_astro/larsen.webp' }
+const ART = { 'larsen/larsen-2024': LARSEN_BANNER }
+
+test('collectionArtwork prefers the art commissioned for that collection', () => {
+  assert.deepEqual(collectionArtwork(ART, featuredRow('larsen-2024', 'larsen', 1, '/room.jpg')), {
+    image: LARSEN_BANNER,
+    src: null,
+  })
+})
+
+test('collectionArtwork falls back to the collection own catalogue photograph', () => {
+  assert.deepEqual(collectionArtwork(ART, featuredRow('giverny', 'manuel-canovas', 2, '/g.jpg')), {
+    image: null,
+    src: '/g.jpg',
+  })
+})
+
+test('collectionArtwork reports no photograph rather than an empty src', () => {
+  assert.deepEqual(collectionArtwork(ART, featuredRow('bare', 'dedar', 3)), {
+    image: null,
+    src: null,
+  })
+  assert.deepEqual(collectionArtwork(ART, featuredRow('blank', 'dedar', 3, '   ')), {
+    image: null,
+    src: null,
+  })
+  assert.deepEqual(collectionArtwork(undefined, undefined), { image: null, src: null })
+})
+
+test('collectionArtwork keys on the pair, so a same-slug collection is not handed the art', () => {
+  // The regression the pair key exists to prevent: collection slugs are unique
+  // per house, so another maison may well hold a "larsen-2024" of its own.
+  const impostor = featuredRow('larsen-2024', 'dedar', 1, '/dedar.jpg')
+  assert.deepEqual(collectionArtwork(ART, impostor), { image: null, src: '/dedar.jpg' })
+})
+
+test('pickFeature takes the collection the portrait was shot for, not the top rank', () => {
+  const featured = [
+    featuredRow('nature-s-opera', 'de-le-cuona', 1, '/opera.jpg'),
+    featuredRow('larsen-2024', 'larsen', 2),
+  ]
+  assert.equal(pickFeature(featured, ART).slug, 'larsen-2024')
+})
+
+test('pickFeature falls back to the first featured collection with a picture', () => {
+  const featured = [
+    featuredRow('bare', 'dedar', 1),
+    featuredRow('giverny', 'manuel-canovas', 2, '/g.jpg'),
+    featuredRow('cappuccino', 'pierre-frey', 3, '/c.jpg'),
+  ]
+  assert.equal(pickFeature(featured, ART).slug, 'giverny')
+})
+
+test('pickFeature yields null when nothing featured has a photograph at all', () => {
+  assert.equal(pickFeature([featuredRow('bare', 'dedar', 1)], ART), null)
+  assert.equal(pickFeature([], ART), null)
+  assert.equal(pickFeature(), null)
 })

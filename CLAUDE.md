@@ -440,22 +440,18 @@ Where it surfaces:
     not to the product — so selection drives the whole page: hero image,
     displayed SKU, stock state, and what the primary action acts on. Selection
     defaults to the first in-stock colourway (else the first listed) so the CTA is
-    live on arrival. Since the August 2026 redraw the selector is the boxed
-    **Colour `<select>`** (the frame replaces the thumbnail strip and the
-    swatch wall with one dropdown — the photograph and the SKU line are where a
-    choice becomes visible).
-  - Purchase action by type, in the redraw's own labels: finished good →
-    **Add to cart** (filled `.action-fill`, quantity as a boxed number field),
-    enabled only when the **selected** colourway is in stock; fabric →
-    **"Add to quote"** (filled) beside **"Request a sample"** (outline, lands
-    on /contact) — the quote button writes to the request list
-    (`src/lib/requestList.js`) exactly as before; only the label changed with
-    the frame. Metres stay a typed field (`.metres-field`, decimal). An
-    out-of-stock colourway is still added — the button reads "Add to backorder
-    quote" and the lead-time note stays — because the backorder acceptance is
-    asked once on the request page, over the whole list, not per product.
+    live on arrival. Both the thumbnail strip and the colourway grid set it.
+  - Purchase action by type: finished good → Add to cart (with a quantity
+    stepper), enabled only when the **selected** colourway is in stock; fabric →
+    **Add to request** (a typed metres field, `.metres-field`, because metres are
+    decimal and a − / + stepper is the wrong control). An out-of-stock colourway
+    is still added — the button reads "Add to backorder request" and the
+    lead-time note stays — because the backorder acceptance is asked once on the
+    request page, over the whole list, not per product. Fabric no longer links
+    out to a one-product form: it writes to the request list
+    (`src/lib/requestList.js`) exactly as a finished good writes to the cart.
   - Add to cart stores the selected colourway's SKU, name and image (see Cart).
-    Add to quote stores the same plus the colourway's `in_stock` and the
+    Add to request stores the same plus the colourway's `in_stock` and the
     product's `lead_time` (see Request list).
   - Price rendering is the shared `priceInfo()` in `src/lib/catalogue.js`.
   - **2026 layout** (design: "Individual Product Page", 9422:4321): one
@@ -1409,14 +1405,7 @@ screen filters and slices — it never re-derives a choice.
   `featuredByRank`). `featuredCollections()` and `featuredHouses()` are named
   wrappers over it, because both surfaces read the same column and a correction
   to what counts as a rank must not land on only one of them.
-- **`/brands` reads featured differently since the August 2026 redraw**: the
-  "in focus" strip is gone — the wall of house tiles renders in the API's own
-  order, so the office's featured houses LEAD the wall instead of heading a
-  separate row, and the page's featured-collection band takes the first ranked
-  collection with a photograph. `featuredHouses()` (`src/lib/houses.js`)
-  survives, tested, with no storefront caller at present. The paragraph below
-  records the strip it used to drive:
-- The old strip was `featuredHouses()`,
+- **`/brands`'s "in focus" strip is `featuredHouses()`** (`src/lib/houses.js`),
   and it REPLACED a derived guess — international, ranked by designs held, then
   by name. That guess was unchangeable by the office and the trade gate had
   already flattened it: every represented house reads 0 designs to an anonymous

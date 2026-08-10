@@ -9,6 +9,13 @@
 // house's own story text — several of the seeded stories open with "Founded
 // 1935" / "Established 2006". A house whose story names no year simply shows its
 // country, which is what the design degrades to anyway.
+//
+// Since W7 this file also carries what `/brands` puts "in focus": the office's
+// own `featured_rank` choice and the photograph each chosen house shows.
+//
+// Pure functions, no fetching, no DOM.
+
+import { featuredByRank } from './featured.js'
 
 const FOUNDED = /\b(?:founded|established|est\.?)\s*(?:in\s+)?(1[5-9]\d{2}|20\d{2})\b/i
 
@@ -63,19 +70,30 @@ export function countWord(count) {
   return words[count] ?? String(count)
 }
 
-// --- Featured houses + artwork (ported with the August 2026 redraw) ---------
-// The office's own choice, `featured_rank` on brands, read through the shared
-// rule in lib/featured.js. `houseArtwork` is the tile-photograph chain the
-// brands wall and the story page's strip both use.
-
+/**
+ * Tiles in the "in focus" strip — the design's three-column row.
+ *
+ * The office may feature up to twelve houses (the API caps both lists there),
+ * so the strip takes the first three and the rest are still one alphabetical
+ * row down in the full directory. The DATABASE owns the order; the PAGE owns
+ * the composition, and this is the composition.
+ */
 export const FOCUS_SLOTS = 3
 
 /**
- * The houses the office has featured, in rank order.
+ * The houses the office has featured, in the order it chose.
+ *
+ * This replaced a derived guess — international, ranked by how many designs the
+ * anonymous catalogue showed, then by name — which nobody in the office could
+ * change and which the trade gate had already flattened to alphabetical, since
+ * every represented house reads 0 designs to a signed-out visitor.
+ *
+ * The rule is `featuredByRank()` in lib/featured.js, shared with the homepage's
+ * collections: same column, same meaning, one implementation.
  *
  * @param {Array<{ featured_rank?: number|null }>} brands
  * @param {number} [count]
- * @returns {Array<object>}
+ * @returns {Array<object>} a new frozen list; the input is never reordered
  */
 export function featuredHouses(brands = [], count = Infinity) {
   return featuredByRank(brands, count)
@@ -84,12 +102,26 @@ export function featuredHouses(brands = [], count = Infinity) {
 const imageSrc = (value) => (typeof value === 'string' && value.trim() ? value : null)
 
 /**
- * The photograph a house shows on its tile, as a chain: the editorial
- * photograph published FOR THIS house (EmDash winning over markdown — the
- * caller resolves that precedence) → a design of this house's own from the
- * catalogue → null, and the caller paints its designed ground (the shared
- * `.weave`). The chain never borrows another house's picture: every map is
- * read at this house's slug and at no other key.
+ * The photograph a house shows in the strip, as a chain:
+ *
+ *   1. the editorial photograph published FOR THIS house — its brand page's
+ *      first slideshow image, EmDash winning over the markdown baseline (the
+ *      caller resolves that precedence, exactly as /brands/[slug] does);
+ *   2. else a design of THIS house's own, from the catalogue;
+ *   3. else neither, and the caller paints its designed ground (the shared
+ *      `.weave` stand-in, the same answer the house page's collection tiles
+ *      give a collection with no photograph).
+ *
+ * What the chain never does is borrow ANOTHER house's picture: a tile captioned
+ * "de Le Cuona" over Pierre Frey's interior is worse than the plain weave,
+ * because the caption asserts the photograph belongs to that maison. Every map
+ * is read at this house's slug and at no other key.
+ *
+ * Rung 2 thins out under the trade gate — a represented house's designs are not
+ * in an anonymous product list at all — so for most of the directory the honest
+ * outcome is rung 3, and it must be a designed ground rather than an omission:
+ * dropping an unphotographed house would silently delete the office's choice
+ * from the page.
  *
  * @param {{ editorial?: Record<string, string>, catalogue?: Record<string, string> }} sources
  * @param {{ slug?: string }|null|undefined} house

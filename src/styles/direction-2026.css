@@ -273,6 +273,18 @@ a.cta-underline-light:hover,
   gap: var(--s6);
 }
 
+/* The season label and the name are one block: the tile body's own gap belongs
+   between the name and the action, and the label sits tight above the name the
+   way the mock draws it ("Spring 2024" over "Camber Wallpaper"). A tile with no
+   label — the home's two shop banners, and every collection the CRM names
+   without a season — simply holds one child and looks unchanged. */
+.tile-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2);
+}
+
 .tile-title {
   font-family: var(--font-grotesk);
   font-weight: 400;

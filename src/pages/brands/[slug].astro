@@ -103,12 +103,12 @@ const designCount = held?.meta?.total ?? null
 const tradeNote = Boolean(brand?.trade_only)
 
 // The collections grid is driven by the live catalogue and only decorated by
-// the editorial cards above. The gate is BRAND-level — the section shows when
-// Atelier holds products under the house (designCount, already fetched for the
-// facts list), whether or not memberships are assigned yet; a memberless
-// collection's tile falls back to the house grid so it never lands empty (see
-// lib/collections.js). safeFetch because this page must render with the API
-// down — the section degrades away, like the facts that depend on the API.
+// the editorial cards above. It shows whenever the house HAS collections — the
+// product-count gate it used to carry is gone, because the tile wall is the
+// design's own route into a house and a house with collections and no wall
+// reads as a house we hold nothing from (see lib/collections.js). safeFetch
+// because this page must render with the API down — the section degrades away,
+// like the facts that depend on the API.
 const { data: collectionsBody } = await safeFetch(
   `/catalogue/collections?brand=${encodeURIComponent(slug)}`
 )
@@ -116,7 +116,6 @@ const tiles = collectionTiles({
   collections: collectionsBody?.collections ?? [],
   cards,
   brandSlug: slug,
-  brandHasProducts: (designCount ?? 0) > 0,
 })
 
 const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
@@ -210,10 +209,13 @@ if (notFound) {
                   )
                 }
                 {
-                  // The mock's second action, on the "Product Page" frame. Shown
-                  // only where the grid it lands on has something in it — the
-                  // same designCount that gates the tiles below.
-                  (designCount ?? 0) > 0 && (
+                  // The FALLBACK route into the house's designs. The mock's
+                  // brand page has one action — "Visit website" — because the
+                  // collection tiles below it are how a shopper gets to the
+                  // grid; so this appears only where there is no tile wall to
+                  // do that job, and then only where the grid it lands on has
+                  // something in it.
+                  tiles.length === 0 && (designCount ?? 0) > 0 && (
                     <a class="cta-underline" href={`/products?brand=${slug}`}>
                       View all products
                     </a>
@@ -245,7 +247,10 @@ if (notFound) {
                 href={tile.href}
               >
                 <span class="tile-body">
-                  <span class="tile-title">{tile.heading}</span>
+                  <span class="tile-heading">
+                    {tile.season && <span class="badge-light">{tile.season}</span>}
+                    <span class="tile-title">{tile.heading}</span>
+                  </span>
                   <span class="cta-underline cta-underline-light">View collection</span>
                 </span>
               </a>

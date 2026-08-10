@@ -73,6 +73,18 @@
   transition: opacity 0.9s ease;
 }
 
+/* A featured collection with no photograph of its own: the umber ground the
+   house page gives a house with no banner imagery (editorial.css
+   `.house-band`), rather than a broken frame or somebody else's picture. There
+   is nothing to scrim, and the scrim over a flat ground only muddies it. */
+.home-hero-slide.is-plain {
+  background: var(--umber);
+}
+
+.home-hero-slide.is-plain::after {
+  content: none;
+}
+
 .home-hero-photo {
   position: absolute;
   inset: 0;
@@ -88,6 +100,25 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12) 58%);
+}
+
+/* Nothing featured — the office has featured no collection, or the API was down
+   when the page was built. The band keeps the umber ground so the floating
+   header's bone type still reads, and shrinks to its copy: 88vh of empty frame
+   reads as a photograph that failed to load rather than as a plain band. */
+.home-hero.is-empty {
+  height: auto;
+  min-height: 0;
+  background: var(--umber);
+}
+
+.home-hero-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s5);
+  /* Top padding holds the header, which is floating over this band. */
+  padding-block: var(--s10) var(--s8);
 }
 
 /* Bars rather than dots: the direction has no circles in it outside the cart
