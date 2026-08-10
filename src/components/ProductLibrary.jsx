@@ -14,7 +14,8 @@ import {
   TRADE_GATE_COPY,
 } from '../lib/tradeGate.js'
 
-// Product library island (US-017), Maison direction (design: "Maison Library").
+// Product library island (US-017), 2026 direction (design: Figma "Products
+// Page", node 9379:2732).
 // Fetches the website-visible catalogue once from GET /catalogue/products, then
 // searches, filters and sorts in-memory so the grid updates instantly with no
 // page reload. The catalogue is small (well under the API's max page size), so
@@ -43,19 +44,26 @@ import {
 // sub-component reference would trip no-unused-vars.
 const PAGE_LIMIT = 100
 
+// The mock's grid is three across and four deep, with a pagination row under
+// it. Paging is client-side over the already-filtered list — the island holds
+// the whole catalogue either way, so the page size is presentation, not a
+// fetch boundary.
+const CARDS_PER_PAGE = 12
+
 // Filter definitions. `type` picks how a product maps to an option; `control`
 // picks how it renders — `list` is a click-to-toggle facet list with live
 // counts in the sidebar, `select` is an underline dropdown under "More
 // filters". Order here is the order controls render in.
 const FILTERS = [
-  { key: 'brand', label: 'House', type: 'brand', control: 'list' },
+  // "Brands", not "House": the 2026 frame names the facet the way the nav does.
+  { key: 'brand', label: 'Brands', type: 'brand', control: 'list' },
   // Value is the collection SLUG (the brand-page tiles deep-link with it).
   // Slugs are unique per brand, not globally — matching on the slug alone
   // mirrors the API's `collection` filter, whose documented posture is "pair
   // it with brand"; the tiles always do. Most products carry no collection
   // (membership is staff-assigned in the CRM), and facetLists drops an empty
   // facet, so this list simply doesn't render until collections are in use.
-  { key: 'collection', label: 'Collection', type: 'collection', control: 'list' },
+  { key: 'collection', label: 'Collections', type: 'collection', control: 'list' },
   { key: 'product_type', label: 'Type', type: 'enum', control: 'list' },
   { key: 'application', label: 'Application', type: 'text', control: 'select' },
   { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
@@ -245,9 +253,14 @@ export default function ProductLibrary() {
   // Narrow viewports collapse the sidebar behind a toggle; above 1024px the CSS
   // shows it regardless, so this state is inert there.
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     writeUrlState(selection, query, sort)
+    // Any change to what the grid shows starts it from its first page — a
+    // filter applied while sitting on page 3 of the previous result set would
+    // otherwise open on an empty slice.
+    setPage(1)
   }, [selection, query, sort])
 
   useEffect(() => {
@@ -308,6 +321,34 @@ export default function ProductLibrary() {
     FILTERS.filter((filter) => selection[filter.key]).length + (needle ? 1 : 0)
   const hasActiveFilters = activeCount > 0
 
+  const totalPages = Math.max(1, Math.ceil(visible.length / CARDS_PER_PAGE))
+  const currentPage = Math.min(page, totalPages)
+  const pageItems = visible.slice(
+    (currentPage - 1) * CARDS_PER_PAGE,
+    currentPage * CARDS_PER_PAGE
+  )
+
+  // The mock's row: every page number with a hairline divider between, an
+  // ellipsis collapsing the middle when the count runs long. 1 and the last
+  // page always show; the window travels with the current page.
+  const pageNumbers = []
+  for (let n = 1; n <= totalPages; n += 1) {
+    if (n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1) {
+      pageNumbers.push(n)
+    } else if (pageNumbers[pageNumbers.length - 1] !== '…') {
+      pageNumbers.push('…')
+    }
+  }
+
+  const goToPage = (n) => {
+    setPage(n)
+    if (typeof document !== 'undefined') {
+      document
+        .querySelector('.library-shell')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   const onFilterChange = (key, value) =>
     setSelection((prev) => ({ ...prev, [key]: value }))
 
@@ -347,33 +388,29 @@ export default function ProductLibrary() {
         aria-label="Refine the library"
       >
         <label className="library-search">
-          <span className="library-eyebrow">Search</span>
-          <span className="library-search-field">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <circle cx="6" cy="6" r="4.6" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M9.6 9.6 13 13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-            <input
-              type="search"
-              value={query}
-              placeholder="Name, house, composition, SKU…"
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </span>
+          <span className="sr-only">Search the library</span>
+          <input
+            type="search"
+            value={query}
+            placeholder="Search name, house, composition…"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden="true">
+            <circle cx="7.2" cy="7.2" r="5.6" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M11.6 11.6 16 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
         </label>
 
         <div className="library-refine-row">
-          <p className="library-eyebrow is-muted">Refine</p>
-          {hasActiveFilters && (
-            <button type="button" className="library-clear" onClick={clearFilters}>
-              Clear all
-            </button>
-          )}
+          <p className="library-refine-label">Refine</p>
+          <button type="button" className="library-clear" onClick={clearFilters}>
+            Clear all
+          </button>
         </div>
 
         {facetLists.map(({ filter, options }) => (
           <div className="library-facet" key={filter.key}>
-            <p className="library-eyebrow" id={`facet-${filter.key}`}>
+            <p className="library-facet-head" id={`facet-${filter.key}`}>
               {filter.label}
             </p>
             <ul className="library-facet-list" aria-labelledby={`facet-${filter.key}`}>
@@ -387,10 +424,7 @@ export default function ProductLibrary() {
                       aria-pressed={active}
                       onClick={() => onFacetToggle(filter.key, option.value)}
                     >
-                      <span className="library-facet-name">
-                        <span className="library-facet-dot" aria-hidden="true" />
-                        <span className="library-facet-text">{option.label}</span>
-                      </span>
+                      <span className="library-facet-text">{option.label}</span>
                       <span className="library-facet-count">{option.count}</span>
                     </button>
                   </li>
@@ -400,11 +434,10 @@ export default function ProductLibrary() {
           </div>
         ))}
 
-        <div className="library-facet library-more">
-          <p className="library-eyebrow">More filters</p>
-          {selectSets.map(({ filter, options }) => (
-            <label className="filter" key={filter.key}>
-              <span>{filter.label}</span>
+        {selectSets.map(({ filter, options }) => (
+          <div className="library-facet" key={filter.key}>
+            <label className="filter">
+              <span className="library-facet-head">{filter.label}</span>
               <select
                 value={selection[filter.key]}
                 onChange={(event) => onFilterChange(filter.key, event.target.value)}
@@ -417,8 +450,8 @@ export default function ProductLibrary() {
                 ))}
               </select>
             </label>
-          ))}
-        </div>
+          </div>
+        ))}
       </aside>
 
       <div className="library-main">
@@ -426,14 +459,14 @@ export default function ProductLibrary() {
             a shopper who has scrolled the sidebar away must still meet it. */}
         {tradeGated && (
           <aside className="library-gate">
-            <p className="eyebrow-brass">Trade library</p>
+            <p className="badge-ochre">Trade library</p>
             <p className="library-gate-head">{TRADE_GATE_COPY.library.heading}</p>
             <p className="library-gate-body">{TRADE_GATE_COPY.library.body}</p>
             <p className="library-gate-actions">
-              <a className="btn" href={TRADE_APPLICATION_PATH}>
+              <a className="cta-underline" href={TRADE_APPLICATION_PATH}>
                 {TRADE_GATE_COPY.library.apply}
               </a>
-              <a className="link-cta" href={signInHref('/products')}>
+              <a className="cta-underline" href={signInHref('/products')}>
                 {TRADE_GATE_COPY.library.signIn}
               </a>
             </p>
@@ -465,7 +498,7 @@ export default function ProductLibrary() {
           </p>
         ) : (
           <ul className="product-grid">
-            {visible.map((product) => {
+            {pageItems.map((product) => {
               const price = priceInfo(product, viewer)
               const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
               const shown = product.colourways || []
@@ -536,6 +569,64 @@ export default function ProductLibrary() {
               )
             })}
           </ul>
+        )}
+
+        {totalPages > 1 && (
+          <nav className="library-pagination" aria-label="Pages">
+            <button
+              type="button"
+              className="library-page-arrow"
+              disabled={currentPage === 1}
+              onClick={() => goToPage(currentPage - 1)}
+              aria-label="Previous page"
+            >
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none" aria-hidden="true">
+                <path
+                  d="M6.2 1 2.8 4.5l3.4 3.5"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <span className="library-pages">
+              {pageNumbers.map((n, index) =>
+                n === '…' ? (
+                  <span key={`gap-${index}`} className="library-page-gap" aria-hidden="true">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={n}
+                    type="button"
+                    className={n === currentPage ? 'library-page is-current' : 'library-page'}
+                    aria-current={n === currentPage ? 'page' : undefined}
+                    onClick={() => goToPage(n)}
+                  >
+                    {n}
+                  </button>
+                )
+              )}
+            </span>
+            <button
+              type="button"
+              className="library-page-arrow"
+              disabled={currentPage === totalPages}
+              onClick={() => goToPage(currentPage + 1)}
+              aria-label="Next page"
+            >
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none" aria-hidden="true">
+                <path
+                  d="M2.8 1l3.4 3.5L2.8 8"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </nav>
         )}
       </div>
     </div>

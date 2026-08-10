@@ -1,0 +1,181 @@
+/*
+ * Our Story, 2026 direction (design: Figma "Story Page", node 9436:3043) —
+ * the direction's one DARK page. Every band sits on the umber ground:
+ * full-bleed photo bands (the shared .photo-band figure), split photo/copy
+ * sections, the strip of house tiles (the brands index's .house-card, its
+ * name label reversed here), and the showrooms band.
+ */
+
+.story-page {
+  background: var(--umber);
+  color: var(--bone-soft);
+}
+
+/* --- Photo bands ------------------------------------------------------------ */
+.story-hero {
+  min-height: 74vh;
+  display: flex;
+  align-items: flex-end;
+}
+
+.story-sourced,
+.story-showrooms {
+  min-height: 88vh;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* The bands' aside copy carries lists here (the showroom addresses). */
+.photo-band-aside ul.story-list {
+  margin: 0;
+}
+
+/* --- Split sections ---------------------------------------------------------- */
+.story-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.story-split-media {
+  min-height: 34rem;
+  background-size: cover;
+  background-position: center;
+}
+
+.story-split-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s5);
+  padding: var(--s10) clamp(var(--s6), 6vw, var(--s10));
+}
+
+.story-split-body h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.story-split-body p {
+  margin: 0;
+  max-width: 27rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--bone-soft);
+}
+
+/* The pronunciation half of "Atelier [ at–l–yey ]" drops to the muted bone,
+   the same figure as the hero's house line. */
+.story-pron {
+  color: var(--bone-muted);
+}
+
+/* The section label — the mock sets it in the tan the buttons use, which
+   reads where ochre would go muddy on umber. */
+.story-badge {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--tan);
+}
+
+/* Bulleted lists, both in the workspace split and the showrooms band. */
+.story-list {
+  margin: 0;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--bone-soft);
+}
+
+/* --- Brands strip ------------------------------------------------------------ */
+.story-brands {
+  padding-block: var(--s9);
+}
+
+.story-brands-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
+  margin-bottom: var(--s7);
+}
+
+.story-brands-head h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.story-brands-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The house tile's name label reverses onto the dark ground. */
+.story-brands .house-card-name {
+  color: var(--bone-soft);
+}
+
+.story-brands .house-card:hover .house-card-name {
+  color: #fff;
+}
+
+/* --- Responsive ----------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .story-hero {
+    min-height: 58vh;
+  }
+
+  .story-sourced,
+  .story-showrooms {
+    min-height: 62vh;
+  }
+
+  .story-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Photograph first in both splits when they stack. */
+  .story-split-reverse .story-split-media {
+    order: -1;
+  }
+
+  .story-split-media {
+    min-height: 22rem;
+  }
+
+  .story-split-body {
+    padding: var(--s8) var(--gutter);
+  }
+
+  .story-brands-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .story-brands-grid {
+    grid-template-columns: 1fr;
+  }
+}

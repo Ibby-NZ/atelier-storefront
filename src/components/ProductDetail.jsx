@@ -9,7 +9,6 @@ import {
   MAX_METRES,
 } from '../lib/requestList.js'
 import { priceInfo, productTypeLabel, weaveBackground, isFabric } from '../lib/catalogue.js'
-import { countWord } from '../lib/houses.js'
 import {
   isTradeGateError,
   signInHref,
@@ -17,9 +16,9 @@ import {
   TRADE_GATE_COPY,
 } from '../lib/tradeGate.js'
 
-// Product detail island (US-018), Maison direction (design: "Maison Product").
-// Fetches GET /catalogue/products/:slug for live availability and (for approved
-// trade users) trade pricing.
+// Product detail island (US-018), 2026 direction (design: Figma "Individual
+// Product Page", node 9422:4321). Fetches GET /catalogue/products/:slug for
+// live availability and (for approved trade users) trade pricing.
 //
 // `initialProduct` is the same product already resolved server-side by
 // products/[slug].astro. It is a SEED, not a replacement for the fetch: the
@@ -28,41 +27,42 @@ import {
 // (rather than "Loading product…") and the browser then refreshes it in place
 // with the shopper's own view. The fetch is therefore still unconditional.
 //
-// Maison layout: 1.15fr/1fr, a 4/5 squared hero over 64px colourway thumbnails,
-// and on the right a brass rule, a "Fabric · {House}" eyebrow, the display name
-// with its last word in italic, the selected colourway block, the claret mono
-// price, the action row, and the spec sheet as hairline rows. The colourway range
-// repeats below as labelled tiles.
+// 2026 layout: one raised surface-cream band, edge to edge (the page is
+// `bleed`) — the photograph on the left inside a subtle hairline, and on the
+// right the ochre "Fabric | House" badge, the display name, the lede, the
+// price, the Size and Colour controls, the hairline spec rows, the selected
+// colourway's SKU line and the action buttons (the direction's first real
+// buttons — filled tan primary, hairline outline secondary). Below the band, a
+// "Similar" strip of library cards from the same house.
 //
-// The colourway is the thing actually bought — every SKU on this page belongs to
-// a colourway, not the product — so selecting one drives the whole page: the
-// hero image, the SKU shown, the stock state, and what "Add to cart" or
-// "Request order" acts on. Selection defaults to the first in-stock colourway so
-// the primary action is live on arrival.
+// The colourway is the thing actually bought — every SKU on this page belongs
+// to a colourway, not the product — so the Colour select drives the whole
+// page: the hero image, the SKU shown, the stock state, and what the primary
+// action acts on. Selection defaults to the first in-stock colourway so the
+// primary action is live on arrival. (The redraw replaces the thumbnail strip
+// and the swatch wall with the one select — the photograph and the SKU line
+// are where a choice becomes visible.)
 //
-// Purchase action by type:
-//   finished good -> Add to cart (quantity stepper)
-//   fabric        -> Add to request list (metres field), cut to order and priced
-//                    by the back office; an out-of-stock colourway is added the
+// Purchase action by type, in the redraw's own labels:
+//   fabric        -> "Add to quote" (metres field), cut to order and priced by
+//                    the back office; an out-of-stock colourway is added the
 //                    same way and carries its lead-time note through to the
 //                    request page, where the whole list is sent as ONE request.
+//                    "Request a sample" sits beside it, landing on /contact.
+//   finished good -> "Add to cart" (quantity field).
 //
-// Fabric used to link straight out to a one-product form, so a shopper wanting
-// three cloths filed three separate requests. It now adds to
-// src/lib/requestList.js exactly as a finished good adds to the cart.
-//
-// THE TRADE GATE (lib/tradeGate.js) is why this island now has a fourth status.
+// THE TRADE GATE (lib/tradeGate.js) is why this island has a fourth status.
 // Designs from the maisons Atelier represents are served only to approved trade
 // and staff; everyone else gets 403 with `trade_only: true`. The page's server
 // render is anonymous, so `tradeGated` means "gated for a signed-out visitor" —
 // and this fetch, which does carry the cookie, is the one that can disagree.
 // Both directions matter and both are handled here:
-//   gated server-side, this fetch succeeds -> the shopper is entitled after all,
-//     and the panel is replaced by the product (the reason the .astro mounts the
-//     island on the gate page at all).
+//   gated server-side, this fetch succeeds -> the shopper is entitled after
+//     all, and the panel is replaced by the product (the reason the .astro
+//     mounts the island on the gate page at all).
 //   this fetch 403s -> the panel, not the generic error state. A 403 is an
-//     answer, not a failure, and "We could not load this right now" would send a
-//     shopper to refresh forever.
+//     answer, not a failure, and "We could not load this right now" would send
+//     a shopper to refresh forever.
 //
 // Everything renders inside one component: the store's ESLint has no React
 // plugin, so a JSX-only reference to a sub-component would trip no-unused-vars
@@ -82,6 +82,9 @@ const MAX_QTY = 99
 // Where the request list is reviewed and sent.
 const REQUEST_PATH = '/order-request'
 
+// How many cards the Similar strip shows (the mock's row).
+const SIMILAR_LIMIT = 4
+
 // The colourway a shopper should land on: the first one in stock, else the
 // first one at all. Returns null for a product with no colourways.
 function defaultColourway(colourways) {
@@ -89,21 +92,12 @@ function defaultColourway(colourways) {
   return colourways.find((colourway) => colourway.in_stock) || colourways[0]
 }
 
-// The redesign sets the last word of the display name in italic ("Ranfurly
-// *Bouclé*"). A single-word name stays upright: italicising the whole thing
-// reads as a different product rather than as an accent.
-function splitDisplayName(name) {
-  const words = String(name ?? '').trim().split(/\s+/)
-  if (words.length < 2) return { head: name ?? '', tail: '' }
-  return { head: words.slice(0, -1).join(' '), tail: words[words.length - 1] }
-}
-
 export default function ProductDetail({ slug, initialProduct = null, tradeGated = false }) {
   const [product, setProduct] = useState(initialProduct)
   // Seeded pages start ready, so there is no loading flash and the server's
   // markup matches the client's first render (a mismatch would fail hydration).
-  // A gated page starts on the panel for the same reason: server and client both
-  // begin from the prop, and only the credentialed fetch may move it.
+  // A gated page starts on the panel for the same reason: server and client
+  // both begin from the prop, and only the credentialed fetch may move it.
   const [status, setStatus] = useState(
     tradeGated ? 'gated' : initialProduct ? 'ready' : 'loading'
   )
@@ -113,8 +107,8 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   )
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(0) // how many were just added, 0 = nothing
-  // Fabric is bought by the metre, decimal — a stepper is the wrong control, so
-  // this is a typed field held as text until it is added.
+  // Fabric is bought by the metre, decimal — this is a typed field held as text
+  // until it is added.
   const [metres, setMetres] = useState('1')
   const [metresError, setMetresError] = useState('')
   const [requested, setRequested] = useState(0) // metres just added, 0 = nothing
@@ -122,13 +116,16 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   // cookie and therefore no viewer) — anything else fails hydration. Resolved
   // alongside the product below, and only ever selects price copy.
   const [viewer, setViewer] = useState(null)
+  // The Similar strip: other designs from the same house, fetched once the
+  // product (and its house) is known. Empty renders no section.
+  const [similar, setSimilar] = useState([])
 
   const seeded = Boolean(initialProduct)
 
-  // The hero crossfades on a colourway change (design: ~.5s). The outgoing image
-  // is painted as the frame's background while the incoming <img> fades in over
-  // it, so no second <img> and no extra state are needed — a ref written after
-  // render is exactly "the previous render's hero".
+  // The hero crossfades on a colourway change. The outgoing image is painted as
+  // the frame's background while the incoming <img> fades in over it, so no
+  // second <img> and no extra state are needed — a ref written after render is
+  // exactly "the previous render's hero".
   const previousHero = useRef(null)
 
   useEffect(() => {
@@ -163,10 +160,10 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
           setStatus('gated')
           return
         }
-        // A seeded page is already showing the real product, and a gated page is
-        // already showing the accurate reason it is not. A failed refresh means
-        // stock and trade pricing may be stale — it does not mean the product is
-        // gone, so it must not replace either with an error.
+        // A seeded page is already showing the real product, and a gated page
+        // is already showing the accurate reason it is not. A failed refresh
+        // means stock and trade pricing may be stale — it does not mean the
+        // product is gone, so it must not replace either with an error.
         if (seeded || tradeGated) return
         setError(err instanceof ApiError ? err.message : 'Unable to load this product.')
         setStatus('error')
@@ -177,6 +174,30 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     // `seeded`, not `initialProduct` itself: a boolean is a stable dependency,
     // where an object prop would re-run this effect on any identity change.
   }, [slug, seeded, tradeGated])
+
+  const brandSlug = product?.brand?.slug ?? null
+
+  // The Similar strip. Same-house designs first; losing it costs a section,
+  // never the page, so every failure collapses to an empty list.
+  useEffect(() => {
+    if (!brandSlug) {
+      setSimilar([])
+      return undefined
+    }
+    let active = true
+    apiFetch(`/catalogue/products?brand=${encodeURIComponent(brandSlug)}&limit=${SIMILAR_LIMIT + 1}`)
+      .then((body) => {
+        if (!active) return
+        const rows = Array.isArray(body?.products) ? body.products : []
+        setSimilar(rows.filter((row) => row.slug !== slug).slice(0, SIMILAR_LIMIT))
+      })
+      .catch(() => {
+        if (active) setSimilar([])
+      })
+    return () => {
+      active = false
+    }
+  }, [brandSlug, slug])
 
   const colourways = useMemo(() => product?.colourways ?? [], [product])
 
@@ -222,38 +243,39 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   // deliberately.
   if (status === 'gated') {
     return (
-      <div className="not-found trade-gate">
-        <p className="breadcrumb">
-          <a href="/products">← The Library</a>
-        </p>
-        <p className="eyebrow-brass">Trade library</p>
-        <h1>{TRADE_GATE_COPY.design.heading}</h1>
-        <p>{TRADE_GATE_COPY.design.body}</p>
-        <div className="cta-row">
-          <a className="btn" href={TRADE_APPLICATION_PATH}>
-            {TRADE_GATE_COPY.design.apply}
-          </a>
-          <a className="link-cta" href={signInHref(`/products/${encodeURIComponent(slug)}`)}>
-            {TRADE_GATE_COPY.design.signIn}
-          </a>
+      <div className="container detail-static">
+        <div className="not-found trade-gate">
+          <p className="breadcrumb">
+            <a href="/products">← The Library</a>
+          </p>
+          <p className="badge-ochre">Trade library</p>
+          <h1>{TRADE_GATE_COPY.design.heading}</h1>
+          <p>{TRADE_GATE_COPY.design.body}</p>
+          <div className="cta-row">
+            <a className="cta-underline" href={TRADE_APPLICATION_PATH}>
+              {TRADE_GATE_COPY.design.apply}
+            </a>
+            <a className="cta-underline" href={signInHref(`/products/${encodeURIComponent(slug)}`)}>
+              {TRADE_GATE_COPY.design.signIn}
+            </a>
+          </div>
         </div>
       </div>
     )
   }
 
   if (status === 'loading') {
-    return <p className="products-status">Loading product…</p>
+    return <p className="container detail-static products-status">Loading product…</p>
   }
   if (status === 'error') {
-    return <p className="error-state">{error}</p>
+    return <p className="container detail-static error-state">{error}</p>
   }
   if (!product) {
-    return <p className="products-empty">This product is not available.</p>
+    return <p className="container detail-static products-empty">This product is not available.</p>
   }
 
   const price = priceInfo(product, viewer)
   const fabric = isFabric(product)
-  const displayName = splitDisplayName(product.name)
   const specs = SPEC_FIELDS.filter(
     (field) => product[field.key] != null && product[field.key] !== ''
   )
@@ -283,8 +305,9 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     setAdded(qty)
   }
 
-  // Fabric is added per colourway, with its stock state, so the request page can
-  // decide whether the lead-time acceptance is required without re-deriving it.
+  // Fabric is added per colourway, with its stock state, so the request page
+  // can decide whether the lead-time acceptance is required without re-deriving
+  // it.
   const onAddToRequest = () => {
     if (!selected) return
     const wanted = normaliseMetres(metres)
@@ -309,71 +332,40 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     setRequested(wanted)
   }
 
+  // The lede under the name. The mock writes the fabric flow's own explainer
+  // there; a finished good has no equivalent copy, so it states the simpler
+  // truth of that flow instead.
+  const lede = fabric
+    ? 'Cut to order by the metre. We confirm stock and batch shading before invoicing. Add as many cloths as you like and send them as one request.'
+    : 'Dispatched from the Auckland workroom. Delivery details are collected securely at checkout.'
+
   return (
     <article className="product-detail">
-      <nav className="detail-breadcrumb">
-        <a href="/products">← The Library</a>
-        {product.brand?.slug && (
-          <>
-            {' · '}
-            <a href={`/brands/${product.brand.slug}`}>{product.brand.name}</a>
-          </>
-        )}
-      </nav>
-
-      <div className="detail-grid">
+      <div className="detail-band">
         <div className="detail-media">
-          <div className="detail-gallery">
-            <div
-              className="detail-hero-frame"
-              style={
-                outgoingHero
-                  ? { backgroundImage: `url(${outgoingHero})` }
-                  : heroWeave
-                    ? { background: heroWeave }
-                    : undefined
-              }
-            >
-              {heroImage ? (
-                <img
-                  key={heroImage}
-                  className="detail-hero"
-                  src={heroImage}
-                  alt={selected ? `${product.name} — ${selected.name}` : product.name}
-                />
-              ) : (
-                <div
-                  className="detail-hero detail-hero-placeholder"
-                  style={heroWeave ? { background: heroWeave } : undefined}
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-
-            {colourways.length > 1 && (
-              <div className="detail-thumbs" role="group" aria-label="Colourways">
-                {colourways.map((colourway) => (
-                  <button
-                    key={colourway.sku}
-                    type="button"
-                    className={
-                      colourway.sku === selectedSku
-                        ? 'detail-thumb is-selected'
-                        : 'detail-thumb'
-                    }
-                    aria-pressed={colourway.sku === selectedSku}
-                    onClick={() => chooseColourway(colourway.sku)}
-                    title={colourway.name}
-                    style={
-                      colourway.image_url
-                        ? { backgroundImage: `url(${colourway.image_url})` }
-                        : { background: weaveBackground(colourway.hex_tones) }
-                    }
-                  >
-                    <span className="sr-only">{colourway.name}</span>
-                  </button>
-                ))}
-              </div>
+          <div
+            className="detail-hero-frame"
+            style={
+              outgoingHero
+                ? { backgroundImage: `url(${outgoingHero})` }
+                : heroWeave
+                  ? { background: heroWeave }
+                  : undefined
+            }
+          >
+            {heroImage ? (
+              <img
+                key={heroImage}
+                className="detail-hero"
+                src={heroImage}
+                alt={selected ? `${product.name} — ${selected.name}` : product.name}
+              />
+            ) : (
+              <div
+                className="detail-hero detail-hero-placeholder"
+                style={heroWeave ? { background: heroWeave } : undefined}
+                aria-hidden="true"
+              />
             )}
           </div>
 
@@ -385,89 +377,39 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
         </div>
 
         <div className="detail-info">
-          <div className="brass-rule"></div>
-          <p className="detail-type">
-            {[productTypeLabel(product.product_type), product.brand?.name]
-              .filter(Boolean)
-              .join(' · ')}
+          <p className="detail-eyebrow">
+            {productTypeLabel(product.product_type)}
+            {product.brand?.name && (
+              <>
+                <span className="detail-eyebrow-sep" aria-hidden="true">
+                  |
+                </span>
+                {product.brand.slug ? (
+                  <a href={`/brands/${product.brand.slug}`}>{product.brand.name}</a>
+                ) : (
+                  product.brand.name
+                )}
+              </>
+            )}
           </p>
-          <h1 className="detail-name">
-            {displayName.head}
-            {displayName.tail && <em> {displayName.tail}</em>}
-          </h1>
 
-          {selected && (
-            <p className="detail-colourway-name">
-              {selected.name}
-              <span className="detail-selected-sku">{selected.sku}</span>
-            </p>
-          )}
+          <h1 className="detail-name">{product.name}</h1>
+
+          <p className="detail-lede">{lede}</p>
 
           <p className={price.muted ? 'detail-price muted' : 'detail-price'}>
             {price.label && <span className="detail-price-label">{price.label} </span>}
             {price.text}
-            {!price.muted && fabric && <span className="detail-price-unit">/ metre</span>}
+            {!price.muted && fabric && <span className="detail-price-unit">/ m</span>}
             {price.retail && <s className="detail-price-retail">{price.retail}</s>}
             {price.indicative && <span className="indicative-note">Indicative</span>}
           </p>
 
-          <div className="purchase">
-            {!fabric ? (
-              <>
-                <div className="qty-field">
-                  <span className="sr-only" id={`qty-label-${product.slug}`}>
-                    Quantity
-                  </span>
-                  <button
-                    type="button"
-                    className="qty-stepper"
-                    onClick={() => setQty((current) => Math.max(1, current - 1))}
-                    disabled={qty <= 1}
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-                  <span className="qty-value" aria-live="polite">
-                    {qty}
-                  </span>
-                  <button
-                    type="button"
-                    className="qty-stepper"
-                    onClick={() => setQty((current) => Math.min(MAX_QTY, current + 1))}
-                    disabled={qty >= MAX_QTY}
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={onAddToCart}
-                  disabled={!canAddToCart}
-                >
-                  Add to cart
-                </button>
-
-                {!selected && <p className="purchase-note">No colourway is listed to buy.</p>}
-                {selected && !selected.in_stock && (
-                  <p className="purchase-note">
-                    {selected.name} is out of stock.
-                    {anyInStock ? ' Choose another colourway above.' : ''}
-                  </p>
-                )}
-                {added > 0 && (
-                  <p className="purchase-added">
-                    {added} × {selected?.name} added to your cart.{' '}
-                    <a href="/cart">View cart</a>
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <label className="metres-field">
-                  <span className="sr-only">Metres wanted</span>
+          <div className="detail-controls">
+            {fabric ? (
+              <label className="detail-control">
+                <span className="detail-control-label">Size</span>
+                <span className="metres-field">
                   <input
                     type="number"
                     min={METRES_STEP}
@@ -475,6 +417,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                     step={METRES_STEP}
                     inputMode="decimal"
                     value={metres}
+                    aria-label="Metres wanted"
                     aria-invalid={metresError ? 'true' : undefined}
                     onChange={(event) => {
                       setMetres(event.target.value)
@@ -485,52 +428,52 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                   <span className="metres-unit" aria-hidden="true">
                     m
                   </span>
-                </label>
+                </span>
+              </label>
+            ) : (
+              <label className="detail-control">
+                <span className="detail-control-label">Quantity</span>
+                <span className="metres-field">
+                  <input
+                    type="number"
+                    min={1}
+                    max={MAX_QTY}
+                    step={1}
+                    inputMode="numeric"
+                    value={qty}
+                    aria-label="Quantity"
+                    onChange={(event) => {
+                      const next = Math.floor(Number(event.target.value))
+                      setQty(Number.isFinite(next) ? Math.min(MAX_QTY, Math.max(1, next)) : 1)
+                      setAdded(0)
+                    }}
+                  />
+                </span>
+              </label>
+            )}
 
-                <button
-                  type="button"
-                  className="btn btn-primary btn-lg"
-                  onClick={onAddToRequest}
-                  disabled={!selected}
-                >
-                  {selected && !selected.in_stock ? 'Add to backorder request' : 'Add to request'}
-                </button>
-
-                <a className="link-cta" href="/contact">
-                  Request a cutting
-                </a>
-
-                {metresError && <p className="field-error">{metresError}</p>}
-
-                {!selected ? (
-                  <p className="purchase-note">No colourway is listed to request.</p>
-                ) : selected.in_stock ? (
-                  <p className="purchase-note">
-                    Cut to order by the metre. We confirm stock and batch shading before
-                    invoicing. Add as many cloths as you like and send them as one request.
-                  </p>
-                ) : (
-                  <p className="purchase-note">
-                    {selected.name} is out of stock and will be backordered.{' '}
-                    {product.lead_time
-                      ? `Estimated lead time: ${product.lead_time}.`
-                      : 'Lead time confirmed on request.'}
-                    {anyInStock ? ' Another colourway above is in stock.' : ''}
-                  </p>
-                )}
-
-                {requested > 0 && (
-                  <p className="purchase-added">
-                    {requested} m × {selected?.name} added to your request list.{' '}
-                    <a href={REQUEST_PATH}>Review request</a>
-                  </p>
-                )}
-              </>
+            {colourways.length > 0 && (
+              <label className="detail-control">
+                <span className="detail-control-label">Colour</span>
+                <span className="detail-colour-select">
+                  <select
+                    value={selectedSku ?? ''}
+                    onChange={(event) => chooseColourway(event.target.value)}
+                  >
+                    {colourways.map((colourway) => (
+                      <option key={colourway.sku} value={colourway.sku}>
+                        {colourway.name}
+                        {colourway.in_stock ? '' : ' — out of stock'}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              </label>
             )}
           </div>
 
           {specs.length > 0 && (
-            <dl className="detail-specs spec-rows">
+            <dl className="detail-specs">
               {specs.map((field) => (
                 <div key={field.key}>
                   <dt>{field.label}</dt>
@@ -539,52 +482,145 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
               ))}
             </dl>
           )}
+
+          {selected && (
+            <p className="detail-selected">
+              {selected.name}
+              <span className="detail-eyebrow-sep" aria-hidden="true">
+                |
+              </span>
+              <span className="detail-selected-sku">{selected.sku}</span>
+            </p>
+          )}
+
+          <div className="detail-actions">
+            {fabric ? (
+              <>
+                <button
+                  type="button"
+                  className="action-fill"
+                  onClick={onAddToRequest}
+                  disabled={!selected}
+                >
+                  {selected && !selected.in_stock ? 'Add to backorder quote' : 'Add to quote'}
+                </button>
+                <a className="action-outline" href="/contact">
+                  Request a sample
+                </a>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="action-fill"
+                onClick={onAddToCart}
+                disabled={!canAddToCart}
+              >
+                Add to cart
+              </button>
+            )}
+          </div>
+
+          {metresError && <p className="field-error">{metresError}</p>}
+
+          {fabric ? (
+            <>
+              {!selected ? (
+                <p className="purchase-note">No colourway is listed to request.</p>
+              ) : (
+                !selected.in_stock && (
+                  <p className="purchase-note">
+                    {selected.name} is out of stock and will be backordered.{' '}
+                    {product.lead_time
+                      ? `Estimated lead time: ${product.lead_time}.`
+                      : 'Lead time confirmed on request.'}
+                    {anyInStock ? ' Another colourway is in stock.' : ''}
+                  </p>
+                )
+              )}
+              {requested > 0 && (
+                <p className="purchase-added">
+                  {requested} m × {selected?.name} added to your quote request.{' '}
+                  <a href={REQUEST_PATH}>Review request</a>
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              {!selected && <p className="purchase-note">No colourway is listed to buy.</p>}
+              {selected && !selected.in_stock && (
+                <p className="purchase-note">
+                  {selected.name} is out of stock.
+                  {anyInStock ? ' Choose another colourway.' : ''}
+                </p>
+              )}
+              {added > 0 && (
+                <p className="purchase-added">
+                  {added} × {selected?.name} added to your cart. <a href="/cart">View cart</a>
+                </p>
+              )}
+            </>
+          )}
         </div>
       </div>
 
-      <section className="detail-colourways">
-        <p className="eyebrow-brass">The range</p>
-        <h2>
-          {countWord(colourways.length)} <em>{colourways.length === 1 ? 'colourway' : 'colourways'}</em>
-        </h2>
-        {colourways.length ? (
-          <ul className="swatch-grid">
-            {colourways.map((colourway) => {
-              const classes = ['swatch']
-              if (!colourway.in_stock) classes.push('swatch-out')
-              if (colourway.sku === selectedSku) classes.push('is-selected')
-              const weave = weaveBackground(colourway.hex_tones)
+      {similar.length > 0 && (
+        <section className="container detail-similar" aria-label="Similar designs">
+          <div className="detail-similar-head">
+            <h2>Similar</h2>
+            {brandSlug && (
+              <a className="cta-underline cta-underline-lg" href={`/products?brand=${encodeURIComponent(brandSlug)}`}>
+                View all
+              </a>
+            )}
+          </div>
+          <ul className="product-grid detail-similar-grid">
+            {similar.map((row) => {
+              const rowPrice = priceInfo(row, viewer)
+              const weave = weaveBackground(row.colourways?.[0]?.hex_tones)
               return (
-                <li key={colourway.sku} className={classes.join(' ')}>
-                  <button type="button" onClick={() => chooseColourway(colourway.sku)}>
-                    {colourway.image_url ? (
-                      <img
-                        className="swatch-image"
-                        src={colourway.image_url}
-                        alt={colourway.name}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span
-                        className="swatch-tones"
-                        style={weave ? { background: weave } : undefined}
-                        aria-hidden="true"
-                      />
-                    )}
-                    <span className="swatch-name">{colourway.name}</span>
-                    <span className="detail-selected-sku">{colourway.sku}</span>
-                    <span className={colourway.in_stock ? 'swatch-stock in' : 'swatch-stock out'}>
-                      {colourway.in_stock ? 'In stock' : 'Out of stock'}
+                <li key={row.slug} className="product-card">
+                  <a href={`/products/${row.slug}`}>
+                    <span className="product-media">
+                      {row.image_url ? (
+                        <img
+                          className="product-image"
+                          src={row.image_url}
+                          alt={row.name}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span
+                          className="product-image-placeholder"
+                          style={weave ? { background: weave } : undefined}
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className={row.in_stock ? 'product-stock in' : 'product-stock out'}>
+                        {row.in_stock ? 'In stock' : 'Made to order'}
+                      </span>
                     </span>
-                  </button>
+                    <span className="product-card-body">
+                      <span className="product-brand">{row.brand?.name}</span>
+                      <h3>{row.name}</h3>
+                      <span className="product-specs">
+                        {[productTypeLabel(row.product_type), row.composition, row.width]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                      <span className={rowPrice.muted ? 'product-price muted' : 'product-price'}>
+                        {rowPrice.label && (
+                          <span className="detail-price-label">{rowPrice.label} </span>
+                        )}
+                        {rowPrice.text}
+                      </span>
+                    </span>
+                  </a>
                 </li>
               )
             })}
           </ul>
-        ) : (
-          <p className="products-empty">No colourways listed for this product.</p>
-        )}
-      </section>
+        </section>
+      )}
     </article>
   )
 }

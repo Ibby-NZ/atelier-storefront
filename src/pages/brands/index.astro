@@ -1,6 +1,7 @@
 ---
 export const prerender = false // on-demand so a newly created brand appears without a rebuild
 import { getCollection } from 'astro:content'
+import { getImage } from 'astro:assets'
 import Layout from '../../layouts/Layout.astro'
 import { safeFetch } from '../../lib/api.js'
 import { listEmdashBrandPages } from '../../lib/emdash.js'
@@ -12,13 +13,7 @@ import {
   houseMeta,
 } from '../../lib/houses.js'
 
-// Brands index, Maison direction. The redesign commit took the header, footer,
-// library, home, product detail and the brand DETAIL page; this index was left
-// on the old generic `.card-grid` of bordered boxes, which is why it read as a
-// different website. It is rebuilt here out of the same shared figures the rest
-// of the direction already uses — brass rule, scrim tiles, hairline index rows,
-// espresso band — so nothing new is invented and the page inherits every later
-// change to those primitives.
+// Brands index, 2026 direction (design: Figma "Brands Page", node 9379:3562).
 //
 // Three sections plus a closing band: the page header, the "in focus" strip of
 // the houses the OFFICE has featured, the full directory as hairline rows, and
@@ -27,30 +22,33 @@ import {
 // and footer.
 //
 // Rendered on demand — staff add brands through the CRM at runtime, so a
-// prerendered grid would be stale until the next deploy. safeFetch never throws,
-// so an API outage renders the error state rather than a 500.
+// prerendered grid would be stale until the next deploy. safeFetch never
+// throws, so an API outage renders the error state rather than a 500.
 const { data, error } = await safeFetch('/catalogue/brands')
 const brands = data?.brands ?? []
 
-// The catalogue is fetched for two reasons, neither of which is a product list:
-// it supplies the design counts, and it supplies fallback photography for a
-// house with no editorial page yet. Same 100 limit as the homepage.
-//
-// **This request is anonymous, so it is now the PUBLIC SUBSET** — the trade gate
-// (brands.trade_only; see lib/tradeGate.js) keeps every represented house's
-// designs out of it, leaving only Atelier's own workroom. Two consequences run
-// through the rest of this file, and both are handled by omission rather than by
-// printing a nought: every represented house counts 0 designs (so no count is
-// rendered for it), and none of them can contribute product photography any
-// more (so the "in focus" strip is fed by editorial imagery alone). The house
-// list itself is untouched — /catalogue/brands still returns every house to
-// everyone, because the directory is marketing.
+// The catalogue supplies fallback photography for a house with no editorial
+// page yet, and the design counts behind the featured band's "Explore
+// collection" ladder. **This request is anonymous, so it is the PUBLIC
+// SUBSET** — the trade gate keeps every represented house's designs out of it,
+// which is why editorial imagery is the only picture most houses can have
+// here. Same 100 limit as the homepage.
 const { data: catalogue } = await safeFetch('/catalogue/products?limit=100')
 const products = catalogue?.products ?? []
 
+// The featured-collection band at the foot of the page: the office's own
+// choice (featured_rank on collections, set in the CRM), decorated with the
+// collection's own catalogue photograph. A featured collection with no
+// photograph cannot art-direct a half-page frame, so the band takes the first
+// featured one that carries a picture, and is omitted when none does.
+const { data: collectionsBody } = await safeFetch('/catalogue/collections')
+const featured = featuredCollections(collectionsBody?.collections ?? [])
+const feature = featured.find((collection) => collection.image_url) ?? null
+const designCounts = brandDesignCounts(products)
+
 // Editorial imagery, resolved exactly as /brands/[slug] resolves it: the EmDash
-// CMS is the editor of record and WINS over the markdown baseline. Spreading the
-// EmDash map last is that precedence — per house, not per field.
+// CMS is the editor of record and WINS over the markdown baseline. Spreading
+// the EmDash map last is that precedence — per house, not per field.
 const imageEntries = (pairs) => Object.fromEntries(pairs.filter(([, image]) => image))
 
 const emPages = await listEmdashBrandPages()
@@ -104,29 +102,31 @@ const houses = [...decorated].sort((a, b) => a.name.localeCompare(b.name))
 // actually in the strip, so featuring one or two houses reads as an edit.
 const featured = featuredHouses(decorated, FOCUS_SLOTS)
 
-const houseCount = houses.length
+const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 2200 })
 ---
 
 <Layout
   title="The houses — Atelier Textiles"
   description="The maisons we represent in Aotearoa — French, Italian and British houses, and our own workroom."
   bleed
+  overlay
 >
-  <section class="container house-index-head">
-    <div class="brass-rule"></div>
-    <p class="eyebrow-wide">Our maisons</p>
-    <h1>The <em>houses</em></h1>
-    <p class="house-index-lede">
-      The houses we represent and the stories behind them — each held here by the
-      metre, cut to order.
-    </p>
-    {
-      houseCount > 0 && (
-        <p class="house-index-count">
-          {houseCount} {houseCount === 1 ? 'house' : 'houses'} represented
-        </p>
-      )
-    }
+  <section
+    class="photo-band house-hero"
+    style={`background-image: url(${heroImage.src});`}
+  >
+    <div class="container photo-band-body">
+      <div class="photo-band-row">
+        <h1 class="photo-band-title">The World's Finest Design Houses</h1>
+        <div class="photo-band-aside">
+          <p>
+            From the legendary textile mills of Europe to innovative global
+            creators, we are a boutique importer and distributor of the world's
+            most luxurious furnishing brands.
+          </p>
+        </div>
+      </div>
+    </div>
   </section>
 
   {
@@ -141,7 +141,7 @@ const houseCount = houses.length
   }
 
   {
-    !error && houseCount === 0 && (
+    !error && houses.length === 0 && (
       <div class="container house-index-state">
         <p class="empty-state">No houses to show yet.</p>
       </div>
@@ -190,23 +190,22 @@ const houseCount = houses.length
             </a>
           ))}
         </div>
-      </section>
-    )
-  }
-
-  {
-    houseCount > 0 && (
-      <section class="container house-directory">
-        <div class="section-head">
-          <h2>Every <em>house</em></h2>
-          <a href="/products">Browse the library</a>
-        </div>
-        <ul class="index-list">
+        <ul class="house-wall-grid">
           {houses.map((house) => (
             <li>
-              <a href={`/brands/${house.slug}`}>
-                <span class="index-name">{house.name}</span>
-                {house.meta && <span class="index-meta">{house.meta}</span>}
+              <a class="house-card" href={`/brands/${house.slug}`}>
+                {
+                  /* The mock centres each maison's own logotype on the tile.
+                     No logo assets exist in the catalogue, so the house NAME
+                     stands in, set in the display face — swap to an image the
+                     day a logo library lands. No <img> is ever emitted without
+                     a source: an unphotographed house paints the weave. */
+                }
+                <span class:list={['house-card-media', { weave: !house.image }]}>
+                  {house.image && <img src={house.image} alt="" loading="lazy" />}
+                  <span class="house-card-logo">{house.name}</span>
+                </span>
+                <span class="house-card-name">{house.name}</span>
               </a>
             </li>
           ))}
@@ -215,19 +214,28 @@ const houseCount = houses.length
     )
   }
 
-  <section class="band-dark house-enquiry">
-    <div class="container">
-      <div class="band-dark-head">
-        <div>
-          <p class="eyebrow-brass">Sourcing</p>
-          <h2>Looking for a house <em>we do not list?</em></h2>
+  {
+    feature && (
+      <section class="house-feature">
+        <div
+          class="house-feature-media"
+          style={`background-image: url(${feature.image_url});`}
+          role="img"
+          aria-label={`${feature.name} — ${feature.brand?.name ?? 'featured collection'}`}
+        >
         </div>
-        <a class="band-dark-link" href="/contact">Talk to us</a>
-      </div>
-      <p class="house-enquiry-copy">
-        We source beyond the houses shown here. Tell us the design, the reference
-        or the mill and we will find it.
-      </p>
-    </div>
-  </section>
+        <div class="house-feature-body">
+          <p class="badge-ochre">Featured collection</p>
+          <h2>{feature.name}</h2>
+          {feature.description && <p class="house-feature-copy">{feature.description}</p>}
+          <a
+            class="cta-underline"
+            href={collectionHref(feature, designCounts[feature.brand?.slug] ?? 0)}
+          >
+            Explore collection
+          </a>
+        </div>
+      </section>
+    )
+  }
 </Layout>

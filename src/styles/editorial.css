@@ -447,30 +447,36 @@
   background: var(--shell);
 }
 
+/* The August 2026 redraw (9379:2647): two TEXT columns — the blurb on the
+   left, the body copy and the actions on the right, a wide gutter between. */
 .house-intro-inner {
   display: grid;
-  grid-template-columns: minmax(0, 466fr) minmax(0, 371fr); /* the mock's two columns */
-  gap: var(--s9);
+  grid-template-columns: minmax(0, 400fr) minmax(0, 340fr);
+  justify-content: space-between;
+  gap: var(--s9) clamp(var(--s8), 14vw, 16rem);
   align-items: start;
-  padding-block: 6.375rem; /* the mock's 102px */
+  padding-block: var(--s9);
+}
+
+.house-intro-blurb,
+.house-intro-body {
+  min-width: 0;
 }
 
 .house-intro-body {
   display: flex;
   flex-direction: column;
   gap: var(--s6); /* 32px */
-  min-width: 0;
 }
 
-/* The house blurb: 24px Inter medium, umber, tight leading — the mock's own
-   "Text Wrapper" head style, not a serif lede. */
+/* The house blurb: the redraw sets it small — 16px Inter medium, umber. */
 .house-lede {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  line-height: 1.5;
+  letter-spacing: 0;
   color: var(--umber);
   text-wrap: pretty;
 }
@@ -537,10 +543,10 @@
 }
 
 /* --- Facts ---------------------------------------------------------------- */
-/* Label left, value right, a hairline under every row but the last: the mock's
-   371px "Frame 2". Deliberately NOT `.spec-rows` from primitives.css — that is
-   the Maison figure (mono values, greige rule) and this one is 12px Inter
-   semibold on a black hairline. */
+/* Label left, value right, a hairline under every row but the last. The house
+   page itself dropped this figure with the August 2026 redraw (9379:2647 has
+   no facts column) — the HOMEPAGE's featured-collection band still renders it
+   (`.house-facts.home-featured-facts` in index.astro), so the figure stays. */
 .house-facts {
   margin: 0;
   font-family: var(--font-ui);

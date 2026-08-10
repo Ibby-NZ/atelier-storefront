@@ -1,18 +1,21 @@
 ---
 import Wordmark from './Wordmark.astro'
 import { getCollection } from 'astro:content'
+import { SOCIAL } from '../lib/site.js'
 
-// Site footer, 2026 direction (design: Figma 7307:930, repeated verbatim at the
-// foot of the Brand and Product Page frames).
+// Site footer, 2026 direction — the August 2026 redraw (Footer instance on the
+// Brands/Products/Story frames, master 9434:7202 family): a recessed cream band
+// (--shell-subtle) carrying the wordmark over the social icons on the left, two
+// columns of 14px links in the middle, and the newsletter block on the right.
+// It replaced the single-row umber footer, which itself replaced the Maison
+// four-column one — the showroom addresses, phone and email still live in
+// src/lib/site.js and still render on /contact, where the design puts them.
 //
-// One umber band over a hairline: the wordmark at 175.656px on the left, one
-// row of 12px links on the right. It replaced the Maison footer's four link
-// columns — the showroom addresses, phone, email and social links that lived
-// there are still in src/lib/site.js and still render on /contact, which is
-// where the design puts them.
+// The newsletter has no service behind it (meeting decision: newsletters are
+// journal posts), so the form lands on /contact rather than pretending to
+// subscribe — a dead "Join us" that swallowed the address would be worse.
 //
-// Privacy Policy and Terms & Conditions are the design's last two links and the
-// only two with no route behind them. They render when (and only when) someone
+// Privacy Policy and Terms & Conditions render when (and only when) someone
 // adds src/content/pages/privacy.md or terms.md — the page collection already
 // drives /story and /contact the same way. Shipping the links against missing
 // pages would put two 404s in the footer of every page on the site.
@@ -22,28 +25,71 @@ import { getCollection } from 'astro:content'
 // state, not a fault.
 const pageIds = new Set((await getCollection('page')).map((entry) => entry.id))
 
-const links = [
+const shopLinks = [
   { href: '/products', label: 'Products' },
   { href: '/brands', label: 'Brands' },
   { href: '/story', label: 'Our Story' },
   { href: '/resources', label: 'Journal' },
+]
+
+const companyLinks = [
   { href: '/trade-application', label: 'Trade Account' },
   { href: '/contact', label: 'Contact' },
   pageIds.has('privacy') ? { href: '/privacy', label: 'Privacy Policy' } : null,
   pageIds.has('terms') ? { href: '/terms', label: 'Terms & Conditions' } : null,
 ].filter(Boolean)
+
+const socialHref = (label) => SOCIAL.find((s) => s.label === label)?.href
 ---
 
 <footer class="site-footer">
   <div class="container site-footer-inner">
-    <a class="site-footer-brand" href="/" aria-label="Atelier Textiles — home">
-      <Wordmark width="175.656px" />
-    </a>
+    <div class="site-footer-brand-col">
+      <a class="site-footer-brand" href="/" aria-label="Atelier Textiles — home">
+        <Wordmark width="175.656px" />
+      </a>
 
-    <nav class="site-footer-nav" aria-label="Footer">
-      <ul>
-        {links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
-      </ul>
-    </nav>
+      <div class="site-footer-socials">
+        {socialHref('Facebook') && (
+          <a href={socialHref('Facebook')} aria-label="Atelier Textiles on Facebook">
+            <svg viewBox="0 0 8.9 16" width="9" height="16" fill="none" aria-hidden="true">
+              <path fill="currentColor" d="M8.66715 0.00583706H6.50811C5.9666 -0.0236412 5.4248 0.0587787 4.91928 0.247535C4.41376 0.43629 3.95629 0.72699 3.57773 1.10002C3.19917 1.47304 2.90834 1.91971 2.72485 2.40988C2.54137 2.90006 2.46951 3.42232 2.51412 3.94144V5.75629H0.339188C0.294579 5.75629 0.250407 5.76474 0.209203 5.78116C0.167999 5.79758 0.130573 5.82164 0.0990659 5.85197C0.067559 5.8823 0.0425571 5.91831 0.0255002 5.95795C0.00844322 5.99758 -0.000332326 6.04005 9.304e-06 6.08293V8.42837C9.304e-06 8.5149 0.035744 8.59788 0.0993596 8.65906C0.162975 8.72024 0.24925 8.75461 0.339188 8.75461H2.51412V15.6737C2.51412 15.7602 2.54985 15.8432 2.61347 15.9044C2.67708 15.9656 2.76336 15.9999 2.8533 15.9999H5.37451C5.41912 15.9999 5.46329 15.9915 5.5045 15.9751C5.5457 15.9587 5.58313 15.9346 5.61463 15.9043C5.64614 15.8739 5.67114 15.8379 5.68821 15.7983C5.70527 15.7587 5.71405 15.7162 5.71404 15.6733V8.75461H7.99368C8.03972 8.75466 8.08528 8.74561 8.12746 8.72803C8.16964 8.71045 8.20752 8.68471 8.23871 8.65243C8.2699 8.62016 8.29372 8.58205 8.30867 8.54051C8.32363 8.49897 8.32939 8.4549 8.32559 8.41111L8.11743 6.06567C8.11049 5.98446 8.07178 5.90874 8.00909 5.85369C7.94639 5.79864 7.86435 5.76835 7.77937 5.75888H5.71404V4.13153C5.71404 3.32651 5.90109 2.91775 6.92263 2.91775H8.66715C8.75709 2.91775 8.84337 2.88338 8.90698 2.8222C8.9706 2.76102 9.00633 2.67804 9.00633 2.59151V0.331901C9.00633 0.245369 8.9706 0.162386 8.90698 0.101204C8.84337 0.0400236 8.75709 0.00583706 8.66715 0.00583706Z"/>
+            </svg>
+          </a>
+        )}
+        {socialHref('Instagram') && (
+          <a href={socialHref('Instagram')} aria-label="Atelier Textiles on Instagram">
+            <svg viewBox="28.2725 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+              <path fill="currentColor" d="M39.5 0C40.7657 0.000123963 41.979 0.527282 42.874 1.46484C43.7691 2.40252 44.2724 3.67421 44.2725 5V11C44.2725 12.3259 43.7692 13.5984 42.874 14.5361C41.9789 15.4736 40.7656 15.9999 39.5 16H33.0449C31.7793 15.9999 30.5651 15.4736 29.6699 14.5361C28.7748 13.5984 28.2725 12.3259 28.2725 11V5C28.2726 3.67421 28.7749 2.40252 29.6699 1.46484C30.565 0.527282 31.7792 0.000123963 33.0449 0H39.5ZM36.2725 4.5C34.3395 4.5 32.7725 6.067 32.7725 8C32.7725 9.933 34.3395 11.5 36.2725 11.5C38.2055 11.5 39.7725 9.933 39.7725 8C39.7725 6.067 38.2055 4.5 36.2725 4.5ZM36.2725 6C37.377 6 38.2725 6.89543 38.2725 8C38.2725 9.10457 37.377 10 36.2725 10C35.1679 10 34.2725 9.10457 34.2725 8C34.2725 6.89543 35.1679 6 36.2725 6ZM40.0225 3.25C39.6083 3.25 39.2725 3.58579 39.2725 4C39.2725 4.41421 39.6083 4.75 40.0225 4.75C40.4367 4.75 40.7725 4.41421 40.7725 4C40.7725 3.58579 40.4367 3.25 40.0225 3.25Z"/>
+            </svg>
+          </a>
+        )}
+      </div>
+    </div>
+
+    <div class="site-footer-links">
+      <nav class="site-footer-nav" aria-label="Footer">
+        <ul>
+          {shopLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        </ul>
+      </nav>
+
+      <nav class="site-footer-nav" aria-label="Footer company">
+        <ul>
+          {companyLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        </ul>
+      </nav>
+
+      <form class="site-footer-newsletter" action="/contact" method="get">
+        <p class="site-footer-newsletter-head">Receive our Newsletter</p>
+        <input
+          type="email"
+          name="newsletter"
+          placeholder="Enter your email..."
+          aria-label="Email address"
+        />
+        <button class="site-footer-join" type="submit">Join us</button>
+      </form>
+    </div>
   </div>
 </footer>

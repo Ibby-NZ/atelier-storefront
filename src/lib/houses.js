@@ -25,6 +25,8 @@ const FOUNDED = /\b(?:founded|established|est\.?)\s*(?:in\s+)?(1[5-9]\d{2}|20\d{
  * @param {{ story?: string|null }|null} brand
  * @returns {number|null}
  */
+import { featuredByRank } from './featured.js'
+
 export function foundedYear(brand) {
   const match = brand?.story ? FOUNDED.exec(brand.story) : null
   return match ? Number(match[1]) : null

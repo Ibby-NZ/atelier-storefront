@@ -125,25 +125,27 @@ const productLdJson = productLd
   : null
 ---
 
-<Layout title={title} description={description} image={socialImage} type="product">
+<Layout title={title} description={description} image={socialImage} type="product" bleed>
   {
     notFound ? (
-      <div class="not-found">
-        <p class="breadcrumb">
-          <a href="/products">← The Library</a>
-        </p>
-        <h1>Design not found</h1>
-        <p>
-          We could not find that design. It may have been retired, or the address
-          may be mistyped.
-        </p>
-        <div class="cta-row">
-          <a class="btn" href="/products">
-            Browse the library
-          </a>
-          <a class="link-cta" href="/contact">
-            Ask us to source it
-          </a>
+      <div class="container detail-static">
+        <div class="not-found">
+          <p class="breadcrumb">
+            <a href="/products">← The Library</a>
+          </p>
+          <h1>Design not found</h1>
+          <p>
+            We could not find that design. It may have been retired, or the address
+            may be mistyped.
+          </p>
+          <div class="cta-row">
+            <a class="cta-underline" href="/products">
+              Browse the library
+            </a>
+            <a class="cta-underline" href="/contact">
+              Ask us to source it
+            </a>
+          </div>
         </div>
       </div>
     ) : (
