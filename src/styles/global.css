@@ -15,18 +15,20 @@
  *   commerce.css    cart, checkout, orders, account, auth forms
  *   auth.css        sign-in screen (2026 direction)
  *   editorial.css   journal cards, long-form prose, house pages
- *   houses.css      brands index: focus strip, house directory, sourcing band
+ *   houses.css      brands index: photo hero, house tile wall, featured band
+ *   story.css       Our Story: the direction's one dark page
  *
- * TWO DIRECTIONS live here, deliberately. The Maison handoff
- * (design_handoff_atelier_platform / the Maison redesign) still dresses the
- * library, the product detail, the journal and commerce: warm paper ground, 1px
- * greige hairlines, claret used sparingly, Fraunces display. The client's Figma
- * file dresses the chrome, the home, the house pages and sign-in: cream shell,
- * umber bands, ochre accent, grotesk display, an underlined text action instead
- * of a button. `primitives.css` and `direction-2026.css` are the two vocabulary
- * sheets; do not promote a figure from one into the other, or a page nobody
- * redesigned changes shape. Light-only — neither handoff defines a dark
- * palette.
+ * TWO DIRECTIONS live here, deliberately — but since the August 2026 redraw
+ * the Figma direction dresses almost everything: the chrome, the home, the
+ * library, the product detail, the house pages, the story page and sign-in
+ * (cream shell #f9f4ed, umber bands #18100c, ochre accent, grotesk display,
+ * underlined actions plus the redraw's tan/outline buttons). The Maison
+ * handoff still dresses what nobody has redrawn: the journal, cart, checkout,
+ * account, contact and the trade application. `primitives.css` and
+ * `direction-2026.css` are the two vocabulary sheets; do not promote a figure
+ * from one into the other, or a page nobody redesigned changes shape.
+ * Light-only — neither handoff defines a dark palette (the story page's dark
+ * bands are the direction's own umber, not a dark mode).
  */
 
 @import "./tokens.css";
@@ -40,3 +42,4 @@
 @import "./auth.css";
 @import "./editorial.css";
 @import "./houses.css";
+@import "./story.css";

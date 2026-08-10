@@ -1,58 +1,67 @@
 /*
- * Library: the Maison page-header band, the sticky refine sidebar (search,
- * facet lists, underline selects), the results header and the product gallery
- * grid.
+ * Library: the umber hero band, the refine sidebar (boxed search, facet lists
+ * under hairline heads, boxed selects), the product card grid and the
+ * pagination row.
  *
- * Design source: "Maison Library" in the Maison redesign handoff — a linen
- * page-header band, a 16rem sidebar of facet rows instead of a horizontal
- * toolbar, squared corners throughout, 4/5 card imagery, brass eyebrows and a
- * hover that is border + shadow only (no lift).
+ * Design source: Figma "Products Page" (9379:2732), 2026 direction — the page
+ * opens on a full-bleed umber band with the header floating inside it, the body
+ * sits on the shell cream, the cards on the raised surface cream, and the ochre
+ * brand token carries the facet heads and the house badge. Everything here is
+ * token-driven; there is no hex in this file.
  *
- * `.product-card` is now the library's alone: the Maison homepage leads with
- * editorial bands (hero, tile wall, collection story) instead of a product grid,
- * so the treatment that used to be scoped under `.product-library` to protect
- * the home cards is simply the card.
+ * `.product-card` is the library's alone (the home leads with editorial bands),
+ * so the card treatment lives here rather than in a shared sheet.
  */
 
-/* --- Page header band ----------------------------------------------------- */
-/* Full-bleed linen under the site header; the inner .container keeps the copy
-   aligned with the header wordmark and the browse area below. */
-.library-head {
-  background: var(--surface);
-  border-bottom: var(--hair);
-  padding-block: var(--s9);
+/* --- Hero band ------------------------------------------------------------ */
+/* The header floats inside the band (`bleed overlay`), so the top padding is
+   what holds the copy clear of it; the copy itself hugs the foot of the band —
+   headline left, the one line of library copy right. */
+.library-hero {
+  background: var(--umber);
+  padding-block: 11rem var(--s7);
 }
 
-.library-head .page-intro {
-  max-width: none;
-  margin-bottom: 0;
+.library-hero-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s8);
 }
 
-.library-head .page-eyebrow {
-  letter-spacing: 0.26em;
+.library-hero-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
 }
 
-.library-head h1 {
+.library-hero h1 {
+  margin: 0;
+  font-family: var(--font-grotesk);
   font-weight: 400;
-  font-size: clamp(2.5rem, 1.8rem + 3vw, 4rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
+  font-size: var(--g-xl);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
 }
 
-.library-head h1 em {
-  font-style: italic;
-  font-weight: 300;
+.library-hero-note {
+  margin: 0;
+  flex: 0 1 17.1875rem; /* the mock's 275px column */
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--bone-soft);
 }
 
 .library-shell {
-  padding-block: var(--s8) var(--s10);
+  padding-block: var(--s10);
 }
 
 /* --- Browse layout -------------------------------------------------------- */
 .product-library {
   display: grid;
   grid-template-columns: 16rem minmax(0, 1fr);
-  gap: var(--s9);
+  gap: var(--s5);
   align-items: start;
   min-width: 0;
 }
@@ -65,61 +74,36 @@
 
 .library-main {
   min-width: 0;
-}
-
-/* Sidebar section eyebrows are brass in the Maison direction (handoff "Design
-   Tokens": eyebrow label brass or muted). `.is-muted` is the stone variant used
-   for the Refine row. */
-.library-eyebrow {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  line-height: 1.3;
-  color: var(--brass);
-}
-
-.library-eyebrow.is-muted {
-  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s7);
 }
 
 /* --- Search --------------------------------------------------------------- */
-/* A borderless input on a single ink underline — the sidebar's one heavy rule. */
+/* A boxed 44px field, hairline border, the magnifier at the right — the mock's
+   Select figure. */
 .library-search {
-  display: block;
-  border-bottom: 1px solid var(--ink);
-  padding-bottom: 0.6rem;
-}
-
-.library-search .library-eyebrow {
-  display: block;
-  margin-bottom: var(--s2);
-}
-
-.library-search-field {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  color: var(--muted);
-}
-
-.library-search-field svg {
-  flex: none;
+  gap: var(--s3);
+  height: 44px;
+  padding: 12px;
+  border: 1px solid var(--shell-line);
+  color: var(--shell-muted);
 }
 
 .product-library .library-search input {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  padding: 2px 0;
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   font-family: var(--font-ui);
-  font-size: var(--t-base);
-  color: var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--umber-soft);
 }
 
 .product-library .library-search input:hover,
@@ -129,59 +113,77 @@
   outline: none;
 }
 
-.product-library .library-search input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+.library-search:focus-within {
+  border-color: var(--umber);
 }
 
 .product-library .library-search input::placeholder {
-  font-family: var(--font-display);
-  font-style: italic;
-  color: var(--muted-soft);
+  color: var(--shell-muted);
+}
+
+.library-search svg {
+  flex: none;
 }
 
 /* --- Refine row ----------------------------------------------------------- */
 .library-refine-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--s4);
-  margin-top: var(--s7);
+  padding-block: 1.25rem;
 }
 
-/* Claret text on a claret underline — the one claret element in the sidebar. */
+.library-refine-label {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--shell-muted);
+}
+
+/* The direction's underlined ghost action at its 12px size. */
 .library-clear {
-  padding: 0 0 2px;
+  padding: 0 0 6px;
   border: 0;
-  border-bottom: 1px solid var(--accent);
+  border-bottom: 1px solid var(--umber-soft);
   background: none;
   font-family: var(--font-ui);
-  font-style: normal;
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.08em;
-  color: var(--accent);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--umber-soft);
   cursor: pointer;
   transition: color var(--quick), border-color var(--quick);
 }
 
 .library-clear:hover {
-  color: var(--accent-soft);
-  border-bottom-color: var(--accent-soft);
+  color: var(--ochre);
+  border-bottom-color: var(--ochre);
 }
 
-/* --- Facet lists ---------------------------------------------------------- */
-.library-facet {
-  margin-top: var(--s5);
-  padding-top: var(--s4);
-  border-top: var(--hair);
+/* --- Facet sections ------------------------------------------------------- */
+/* Each section is an ochre 12px head over a hairline, then its rows or its
+   boxed select. */
+.library-facet-head {
+  display: block;
+  margin: 0;
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--shell-line);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ochre);
 }
 
 .library-facet-list {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  margin: 0.85rem 0 0;
-  padding: 0;
+  gap: var(--s3);
+  margin: 0;
+  padding: 1.25rem 0;
   list-style: none;
 }
 
@@ -191,45 +193,24 @@
   justify-content: space-between;
   gap: var(--s4);
   width: 100%;
-  padding: 6px 0;
+  padding: 0;
   border: 0;
   background: none;
   text-align: left;
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: var(--t-base);
-  font-weight: 400;
-  color: var(--ink-soft);
+  font-weight: 600;
+  color: var(--umber-soft);
   transition: color var(--quick);
 }
 
 .library-facet-row:hover {
-  color: var(--accent);
+  color: var(--ochre);
 }
 
 .library-facet-row.is-active {
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.library-facet-name {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: 0;
-}
-
-.library-facet-dot {
-  flex: none;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--line);
-  transition: background var(--quick);
-}
-
-.library-facet-row.is-active .library-facet-dot {
-  background: var(--accent);
+  color: var(--ochre);
 }
 
 .library-facet-text {
@@ -239,66 +220,55 @@
 }
 
 .library-facet-count {
-  font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  color: var(--muted-soft);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--shell-muted);
 }
 
-/* --- More filters (underline selects) ------------------------------------- */
-.library-more {
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-}
-
-.library-more .library-eyebrow {
-  margin-bottom: -0.25rem;
-}
-
+/* --- Boxed selects -------------------------------------------------------- */
 .product-library .filter {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0;
   min-width: 0;
 }
 
-.product-library .filter > span {
-  font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  color: var(--ink-soft);
-}
-
-/* Underline-only controls: no box, brass on hover, claret when focused.
-   `appearance: none` is required — a bare `border: 0` still leaves the UA's own
-   rounded box and arrow on macOS, which is exactly the boxed look the Maison
-   direction drops. The chevron is therefore ours, as a background image. */
 .product-library .filter select,
 .product-library .library-sort select {
   width: 100%;
-  min-height: 38px;
-  padding: 0 22px 0 8px;
-  border: 0;
-  border-bottom: var(--hair);
+  min-height: 44px;
+  margin-top: 1.25rem;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--shell-line);
   border-radius: 0;
   appearance: none;
   -webkit-appearance: none;
   background-color: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23877c6b' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b6746' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 4px center;
-  font-size: var(--t-sm);
+  background-position: right 12px center;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--umber-soft);
   cursor: pointer;
 }
 
 .product-library .filter select:hover,
 .product-library .library-sort select:hover {
-  border-bottom-color: var(--brass);
+  border-color: var(--umber);
 }
 
 .product-library .filter select:focus,
 .product-library .library-sort select:focus {
-  border-bottom-color: var(--accent);
+  border-color: var(--umber);
   box-shadow: none;
+}
+
+/* The select sections keep their heads' hairline from .library-facet-head; the
+   select itself sits under it. */
+.product-library .filter .library-facet-head {
+  width: 100%;
 }
 
 /* --- Sidebar toggle (narrow viewports only) ------------------------------- */
@@ -308,55 +278,49 @@
   gap: var(--s2);
   height: 44px;
   padding: 0 18px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--umber);
   border-radius: 0;
-  background: var(--paper);
+  background: transparent;
   font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
+  font-size: var(--t-xs);
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink);
+  letter-spacing: 0;
+  color: var(--umber);
   cursor: pointer;
   transition: background var(--quick), color var(--quick);
 }
 
 .library-filters-toggle:hover {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--umber);
+  color: var(--bone);
 }
 
 .library-filters-badge {
-  font-family: var(--font-mono);
   font-size: var(--t-micro);
-  letter-spacing: 0;
-  color: var(--accent);
+  color: var(--ochre);
 }
 
 .library-filters-toggle:hover .library-filters-badge {
-  color: var(--paper);
+  color: var(--bone);
 }
 
 /* --- Trade gate notice ---------------------------------------------------- */
 /* Shown above the grid when the API served the public subset (meta.trade_gated;
-   see lib/tradeGate.js). It sits on `--surface` inside a hairline rather than in
-   the `.error-state` claret frame: nothing has gone wrong, and the claret would
-   read as a failed load. One claret element per screen is the direction's rule
-   and the outlined `.btn` already carries the emphasis. */
+   see lib/tradeGate.js). Raised surface cream inside the page ground; the
+   underlined actions are the direction's own. */
 .library-gate {
   padding: var(--s6);
-  margin-bottom: var(--s7);
-  border: var(--hair);
-  background: var(--surface);
+  background: var(--shell-surface);
 }
 
 .library-gate-head {
   margin: var(--s3) 0 0;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: var(--d-md);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 1.25rem;
   line-height: 1.2;
-  color: var(--ink);
+  letter-spacing: -0.01em;
+  color: var(--umber);
 }
 
 .library-gate-body {
@@ -364,7 +328,7 @@
   max-width: 48rem;
   font-size: var(--t-sm);
   line-height: 1.6;
-  color: var(--ink-soft);
+  color: var(--umber-soft);
 }
 
 .library-gate-actions {
@@ -381,17 +345,14 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s5);
-  padding-bottom: var(--s4);
-  margin-bottom: var(--s7);
-  border-bottom: var(--hair);
 }
 
 .library-count {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-sm);
-  color: var(--muted);
-  letter-spacing: 0.02em;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--shell-muted);
 }
 
 .library-sort {
@@ -400,63 +361,65 @@
   gap: 0.6rem;
 }
 
-.library-sort .library-eyebrow {
-  letter-spacing: 0.16em;
+.library-sort > span {
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--shell-muted);
 }
 
 .product-library .library-sort select {
   width: auto;
   min-height: 0;
-  padding: 0 18px 2px 4px;
-  background-position: right 0 center;
+  margin-top: 0;
+  padding: 0 22px 2px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--shell-line);
+  background-position: right 4px center;
 }
 
 /* --- Empty state ---------------------------------------------------------- */
 .library-empty {
   margin: 0;
   padding: var(--s8) 0;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--t-prose);
-  color: var(--muted);
+  font-size: 1rem;
+  color: var(--shell-muted);
 }
 
 /* --- Product gallery ------------------------------------------------------ */
+/* The mock's grid: three across, 12px between columns, 24px between rows. */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s8) var(--s6);
+  gap: var(--s5) var(--s3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* A card is a raised cream panel: photograph, then the house badge, the name
+   and the meta on 12px side padding. */
 .product-card {
   min-width: 0;
+  background: var(--shell-surface);
 }
 
 .product-card > a {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  height: 100%;
+  padding-bottom: var(--s3);
   color: inherit;
   text-decoration: none;
 }
 
-/* `.product-media` ships as a <span>, so it must be told to be a block. The
-   Maison crop is 4/5 and squared, and the hover moves the frame, not the type or
-   the image: border to brass plus a soft shadow, no lift and no zoom. */
 .product-media {
   display: block;
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 5; /* the mock's 275 × 343 */
   overflow: hidden;
-  border: var(--hair);
-  background: var(--paper);
-  transition: border-color var(--slow), box-shadow var(--slow);
-}
-
-.product-card > a:hover .product-media {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
+  background: var(--shell);
 }
 
 .product-image,
@@ -465,100 +428,142 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity var(--slow);
 }
 
-/* Availability sits on the image, on a paper chip so it stays legible over
-   any photograph. */
+.product-card > a:hover .product-image {
+  opacity: 0.92;
+}
+
+/* Availability sits on the photograph, on a surface-cream chip. The base
+   `.product-stock` in primitives.css is the Maison pill (hairline border,
+   status dot, sage/clay ink) — every part of that is overridden here, dot
+   included, because the mock's chip is plain ink on cream. */
 .product-media .product-stock {
   position: absolute;
-  left: 12px;
-  bottom: 12px;
+  left: 11px;
+  bottom: 13px;
   margin: 0;
-  padding: 6px 11px;
-  background: var(--paper);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: var(--s2);
+  border: 0;
+  border-radius: 0;
+  gap: 0;
+  background: var(--shell-surface);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--umber-soft);
+}
+
+.product-media .product-stock::before {
+  content: none;
 }
 
 .product-card-body {
-  display: block;
-  padding-top: var(--s5);
-}
-
-.product-card h2,
-.product-card h3 {
-  margin: var(--s2) 0 0;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.5rem;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-inline: var(--s3);
 }
 
 .product-card .product-brand {
   display: block;
   margin: 0;
-  letter-spacing: 0.22em;
-  color: var(--brass);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none; /* the Maison eyebrow base uppercases; the badge is sentence case */
+  color: var(--ochre);
 }
 
-/* Colourway strip on a card — 20px squares. */
+.product-card h2,
+.product-card h3 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 1.25rem; /* the mock's heading/sm */
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--umber);
+}
+
+/* Colourway strip — kept from the working page (the mock's card does not draw
+   one, but dropping working merchandising for a dummy-content frame would be
+   the wrong trade). Smaller and hairlined so it reads as meta. */
 .product-swatches {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin: 0.85rem 0 0;
+  gap: 5px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .product-swatch-dot {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   flex: none;
-  border: var(--hair);
-  background: var(--surface-deep);
+  border: 1px solid var(--shell-line-soft);
+  background: var(--shell);
 }
 
-/* "+3" overflow chip at the end of the strip. */
 .product-swatch-dot.is-more {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: auto;
-  min-width: 20px;
-  padding: 0 5px;
+  min-width: 14px;
+  padding: 0 4px;
   border-color: transparent;
   background: none;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--t-micro);
-  color: var(--muted);
+  font-weight: 600;
+  color: var(--shell-muted);
 }
 
-.product-card-body > .product-stock {
-  margin-top: var(--s3);
+.product-specs {
+  display: block;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--shell-muted);
 }
 
+/* The price line doubles as the card action. A real figure is money; the
+   no-price copy ("Sign in for trade pricing") is drawn as the direction's
+   underlined ghost action, which is exactly what the mock's card carries. */
 .product-price {
   display: block;
-  margin: 0.85rem 0 0;
-  font-family: var(--font-mono);
+  margin: var(--s1) 0 0;
+  font-family: var(--font-ui);
   font-size: var(--t-base);
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  color: var(--umber);
 }
 
 .product-price.muted {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--t-sm);
-  font-weight: 400;
-  color: var(--muted);
+  align-self: flex-start;
+  margin-top: var(--s1);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--umber-soft);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--umber-soft);
+}
+
+.product-card > a:hover .product-price.muted {
+  color: var(--ochre);
+  border-bottom-color: var(--ochre);
 }
 
 .product-price .detail-price-label {
@@ -571,40 +576,85 @@
   margin-top: var(--s1);
 }
 
-/* Meta line under the name: a joined "Fabric · 100% Linen · 140cm" string on
-   the current cards, a hairline <dl> on the older markup. Both are covered. */
-.product-specs {
-  display: block;
-  margin: 0.85rem 0 0;
-  font-size: var(--t-sm);
-  line-height: 1.5;
-  color: var(--muted);
-}
-
-.product-specs > div {
+/* --- Pagination ----------------------------------------------------------- */
+.library-pagination {
   display: flex;
-  justify-content: space-between;
-  gap: var(--s3);
-  padding: 6px 0;
-  border-bottom: var(--hair);
+  align-items: center;
+  justify-content: center;
+  gap: var(--s7); /* the mock's 40px */
+  padding-top: var(--s4);
 }
 
-.product-specs dt {
-  color: var(--muted);
+.library-page-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--umber-soft);
+  cursor: pointer;
+  transition: color var(--quick);
 }
 
-.product-specs dd {
-  margin: 0;
-  font-family: var(--font-mono);
+.library-page-arrow:hover:not(:disabled) {
+  color: var(--ochre);
+}
+
+.library-page-arrow:disabled {
+  color: var(--shell-line-soft);
+  cursor: default;
+}
+
+.library-pages {
+  display: flex;
+  align-items: center;
+}
+
+.library-page,
+.library-page-gap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 var(--s4);
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
   font-size: var(--t-xs);
-  color: var(--ink-soft);
-  text-align: right;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--shell-muted);
+  cursor: pointer;
+  transition: color var(--quick);
+}
+
+.library-page-gap {
+  cursor: default;
+}
+
+/* Hairline dividers between the numbers, as the mock draws them. After the
+   base block so the divider survives its `border: 0` reset. */
+.library-pages > * + * {
+  border-left: 1px solid var(--shell-line);
+}
+
+.library-page:hover {
+  color: var(--umber-soft);
+}
+
+.library-page.is-current {
+  color: var(--umber-soft);
+  cursor: default;
 }
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .library-head {
-    padding-block: var(--s7);
+  .library-hero {
+    padding-block: 9rem var(--s6);
   }
 
   .library-shell {
@@ -630,16 +680,25 @@
   .library-aside.is-open {
     display: block;
     padding-bottom: var(--s5);
-    border-bottom: var(--hair);
+    border-bottom: 1px solid var(--shell-line-soft);
   }
 
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s7) var(--s5);
   }
 }
 
 @media (max-width: 640px) {
+  .library-hero-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s5);
+  }
+
+  .library-hero-note {
+    flex: 0 1 auto;
+  }
+
   .library-main-head {
     flex-direction: column;
     align-items: stretch;
@@ -648,6 +707,5 @@
 
   .product-grid {
     grid-template-columns: 1fr;
-    gap: var(--s7);
   }
 }

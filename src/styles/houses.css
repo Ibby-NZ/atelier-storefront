@@ -1,186 +1,197 @@
 /*
- * Brands index (/brands), Maison direction.
- *
- * Its own file rather than more of editorial.css, which already carries the
- * brand DETAIL page, the journal and the company pages and is close to the
- * house 800-line ceiling.
- *
- * Everything structural is borrowed: `.brass-rule` / `.eyebrow-*` / `.scrim-tile`
- * / `.index-list` / `.band-dark` / `.section-head` from primitives.css.
- * What is below is only this page's geometry — the page is `bleed`, so
- * each section owns its own block padding.
+ * Brands index, 2026 direction (design: Figma "Brands Page", node 9379:3562):
+ * the photo hero (shared .photo-band figure, direction-2026.css), the wall of
+ * house tiles, and the featured-collection band. The brand DETAIL page's
+ * figures live in editorial.css / direction-2026.css, not here.
  */
 
-/* --- Page header ---------------------------------------------------------- */
-.house-index-head {
-  padding-block: var(--s9) var(--s7);
-  max-width: var(--container);
+/* The hero band. 74vh with the header floating inside it (`overlay`) — the
+   same treatment as the home's design-houses band, whose photograph and copy
+   this page shares. */
+.house-hero {
+  min-height: 74vh;
+  display: flex;
+  align-items: flex-end;
 }
 
-.house-index-head h1 {
-  margin: var(--s3) 0 0;
-  font-weight: 400;
-  font-size: var(--d-xl);
-  line-height: 1.02;
-}
-
-.house-index-lede {
-  margin: var(--s5) 0 0;
-  max-width: 34rem;
-  font-size: var(--t-prose);
-  line-height: 1.7;
-  color: var(--ink-soft);
-}
-
-/* The tally, set as a figure like every other number on the site. */
-.house-index-count {
-  margin: var(--s5) 0 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-/* Error / empty states sit where the sections would, so the page keeps its
-   rhythm when the API is down. */
 .house-index-state {
-  padding-block: var(--s6) var(--s9);
+  padding-block: var(--s8);
 }
 
-/* --- In focus ------------------------------------------------------------- */
-.house-focus {
-  padding-block: var(--s7) var(--s9);
+/* --- The wall --------------------------------------------------------------- */
+.house-wall {
+  padding-block: var(--s9) var(--s10);
 }
 
-.house-focus h2 {
-  margin: var(--s3) 0 2.5rem;
+.house-wall-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
+  margin-bottom: var(--s7);
+}
+
+.house-wall-head h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
   font-weight: 400;
-  font-size: 2rem;
+  font-size: var(--g-lg);
   line-height: 1.1;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.03em;
+  color: var(--umber);
 }
 
-.house-focus-grid {
+.house-wall-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.5rem;
+  gap: var(--s7) var(--s3); /* the mock's 12px columns, roomier rows */
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.house-focus-card {
+.house-card {
   display: block;
   min-width: 0;
   color: inherit;
   text-decoration: none;
 }
 
-/* Taller than the shared 3/4 tile and framed, matching the brand page's
-   collection tiles — these sit on paper, not in a hairline grid wall. */
-.house-focus-media {
-  aspect-ratio: 4 / 5;
-  border: var(--hair);
-  transition: border-color var(--slow), box-shadow var(--slow);
+/* The tile: photograph under a flat scrim with the maison's mark centred on
+   it. The mock's 371 × 497 frame. */
+.house-card-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 371 / 497;
+  overflow: hidden;
+  background-color: var(--shell-surface);
+  background-size: cover;
+  background-position: center;
 }
 
-.house-focus-card:hover .house-focus-media {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
+.house-card-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--zoom);
 }
 
-.house-focus-media .scrim-tile-label {
-  padding: var(--s5);
-  background: linear-gradient(to top, rgba(33, 28, 23, 0.5), transparent 40%);
+.house-card:hover .house-card-media img {
+  transform: scale(1.03);
 }
 
-/* Country · est. on one line, designs held on the next. */
-.house-focus-note {
+.house-card-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38); /* the mock's flat scrim under the mark */
+}
+
+/* The maison's own logotype in the mock; the house NAME stands in until a
+   logo library exists (see brands/index.astro). */
+.house-card-logo {
+  position: relative;
+  z-index: 1;
+  padding-inline: var(--s5);
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.house-card-name {
+  display: block;
+  margin-top: var(--s3);
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--umber-soft);
+}
+
+.house-card:hover .house-card-name {
+  color: var(--umber);
+}
+
+/* --- Featured collection band ------------------------------------------------
+   A recessed cream band, the collection's photograph filling the left half,
+   the copy centred in the right. */
+.house-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  background: var(--shell-subtle);
+}
+
+.house-feature-media {
+  min-height: 34rem;
+  background-size: cover;
+  background-position: center;
+}
+
+.house-feature-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: var(--s4);
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s5);
+  padding: var(--s9) clamp(var(--s6), 6vw, var(--s10));
 }
 
-.house-focus-meta {
-  font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.house-focus-held {
-  font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  color: var(--muted-soft);
-}
-
-/* --- Directory ------------------------------------------------------------ */
-.house-directory {
-  padding-block: var(--s7) var(--s10);
-  border-top: var(--hair);
-}
-
-.house-directory .section-head {
-  margin-bottom: var(--s6);
-}
-
-/* --- Sourcing enquiry ----------------------------------------------------- */
-.house-enquiry > .container {
-  padding-block: var(--s9);
-}
-
-.house-enquiry .band-dark-head {
-  margin-bottom: var(--s5);
-}
-
-.house-enquiry h2 {
-  margin: var(--s3) 0 0;
-  font-size: var(--d-lg);
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-}
-
-.house-enquiry-copy {
+.house-feature-body h2 {
   margin: 0;
-  max-width: 38rem;
-  font-size: var(--t-body);
-  line-height: 1.7;
-  color: rgba(247, 242, 233, 0.75);
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
+}
+
+.house-feature-copy {
+  margin: 0;
+  max-width: 29rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--umber-soft);
 }
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .house-index-head {
-    padding-block: var(--s7) var(--s6);
+  .house-hero {
+    min-height: 58vh;
   }
 
-  .house-focus-grid {
+  .house-wall {
+    padding-block: var(--s7) var(--s8);
+  }
+
+  .house-wall-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .house-focus {
-    padding-block: var(--s6) var(--s8);
+  .house-feature {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .house-directory {
-    padding-block: var(--s6) var(--s9);
-  }
-
-  .house-enquiry > .container {
-    padding-block: var(--s8);
+  .house-feature-media {
+    min-height: 22rem;
   }
 }
 
 @media (max-width: 640px) {
-  .house-focus-grid {
+  .house-wall-grid {
     grid-template-columns: 1fr;
-    gap: var(--s6);
   }
 
-  .house-enquiry .band-dark-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--s3);
+  .house-card-media {
+    aspect-ratio: 4 / 5;
   }
 }

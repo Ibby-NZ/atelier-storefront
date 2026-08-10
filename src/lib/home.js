@@ -21,6 +21,8 @@
  * @param {Array<{ brand?: { slug?: string } }>} products
  * @returns {Record<string, number>}
  */
+import { featuredByRank } from './featured.js'
+
 export function brandDesignCounts(products = []) {
   return products.reduce((counts, product) => {
     const slug = product?.brand?.slug
@@ -179,4 +181,17 @@ export function pickCollections(collections = [], options = {}) {
   })
 
   return Object.freeze(chosen.slice(0, count))
+}
+
+/**
+ * The collections the office has featured, in rank order (ported with the
+ * August 2026 redraw — the brands index's featured band reads it). The shared
+ * rule lives in lib/featured.js.
+ *
+ * @param {Array<{ featured_rank?: number|null }>} collections
+ * @param {number} [count]
+ * @returns {Array<object>}
+ */
+export function featuredCollections(collections = [], count = Infinity) {
+  return featuredByRank(collections, count)
 }

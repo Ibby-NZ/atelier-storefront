@@ -1,26 +1,210 @@
 ---
 export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+import { getCollection } from 'astro:content'
+import { getImage } from 'astro:assets'
 import Layout from '../layouts/Layout.astro'
-import { getEntry, render } from 'astro:content'
+import { safeFetch } from '../lib/api.js'
+import { listEmdashBrandPages } from '../lib/emdash.js'
+import { houseArtwork } from '../lib/houses.js'
+import { SHOWROOMS, SHOWROOM_HOURS } from '../lib/site.js'
+import heroBg from '../assets/img/story-hero-bg.jpg'
+import whyAtelier from '../assets/img/story-why-atelier.jpg'
+import sourcedBg from '../assets/img/story-sourced-bg.jpg'
+import workspaceImg from '../assets/img/story-workspace.jpg'
+import showroomsBg from '../assets/img/story-showrooms-bg.jpg'
 
-// Company story page, rendered from the `page` content collection (id "story").
-// Static — a CMS can later edit the markdown body without a code change.
-const entry = await getEntry('page', 'story')
-const Content = entry ? (await render(entry)).Content : null
-const title = entry?.data.title ?? 'Our Story'
+// Our Story, 2026 direction (design: Figma "Story Page", node 9436:3043) — the
+// direction's one DARK page: every band sits on the umber ground, alternating
+// full-bleed photo bands with split photo/copy sections, a strip of house
+// tiles, and the trade showrooms over the closing photograph.
+//
+// The copy is the frame's own and lives here, the way the home's manifesto and
+// banner copy do — this page stopped rendering the `page` content-collection
+// entry when it became art-directed (story.md remains as the baseline nothing
+// renders). The showroom addresses and hours deliberately do NOT: they come
+// from src/lib/site.js, the single source the footer and /contact already
+// read, so the design's transcription of them can never drift from the real
+// ones.
+//
+// The photography ships in src/assets/img (story-*.jpg, exported from the
+// frame's own placed images) through getImage — every one is a CSS background
+// under copy, the same treatment as the home's bands.
+//
+// Build-time fetch, like the home: the Brands strip freezes at the last build,
+// and safeFetch means an API outage just renders the page without the strip.
+const { data } = await safeFetch('/catalogue/brands')
+const brands = data?.brands ?? []
+
+const { data: catalogue } = await safeFetch('/catalogue/products?limit=100')
+const products = catalogue?.products ?? []
+
+// The strip's imagery resolves exactly as /brands resolves it: editorial
+// (EmDash over markdown) first, then the house's own catalogue photography,
+// else the weave. Four tiles, in the API's own order — featured houses lead.
+const imageEntries = (pairs) => Object.fromEntries(pairs.filter(([, image]) => image))
+const emPages = await listEmdashBrandPages()
+const mdPages = await getCollection('brandPage')
+
+const editorialImages = {
+  ...imageEntries(mdPages.map((page) => [page.data.brand, page.data.slideshow?.[0] ?? null])),
+  ...imageEntries(emPages.map((page) => [page.slug, page.slideshow?.[0] ?? null])),
+}
+
+const productImages = products.reduce((images, product) => {
+  const slug = product.brand?.slug
+  if (!slug || !product.image_url || images[slug]) return images
+  return { ...images, [slug]: product.image_url }
+}, {})
+
+const houses = brands.slice(0, 4).map((brand) => ({
+  ...brand,
+  image: houseArtwork({ editorial: editorialImages, catalogue: productImages }, brand),
+}))
+
+const [hero, why, sourced, workspace, showrooms] = await Promise.all([
+  getImage({ src: heroBg, format: 'webp', width: 2200 }),
+  getImage({ src: whyAtelier, format: 'webp', width: 1400 }),
+  getImage({ src: sourcedBg, format: 'webp', width: 2200 }),
+  getImage({ src: workspaceImg, format: 'webp', width: 1400 }),
+  getImage({ src: showroomsBg, format: 'webp', width: 2200 }),
+])
 ---
 
-<Layout title={`${title} — Atelier Textiles`}>
-  <article class="content-page">
-    <h1>{title}</h1>
-    {
-      Content ? (
-        <div class="prose">
-          <Content />
+<Layout
+  title="Our story — Atelier Textiles"
+  description="Atelier — n. 1640, from French: 'workshop'. A boutique importer and distributor bringing the world's finest furnishing houses to Aotearoa."
+  bleed
+  overlay
+>
+  <div class="story-page">
+    <section class="photo-band story-hero" style={`background-image: url(${hero.src});`}>
+      <div class="container photo-band-body">
+        <div class="photo-band-row">
+          <h1 class="photo-band-title">Our Story</h1>
+          <div class="photo-band-aside">
+            <p>n. 1640, from French atelier ‘workshop’; especially for an artist or designer.</p>
+          </div>
         </div>
-      ) : (
-        <p class="empty-state">This page has no content yet.</p>
+      </div>
+    </section>
+
+    <section class="story-split">
+      <div
+        class="story-split-media"
+        style={`background-image: url(${why.src});`}
+        role="img"
+        aria-label="An armchair upholstered in a geometric weave"
+      >
+      </div>
+      <div class="story-split-body">
+        <p class="story-badge">Why Atelier</p>
+        <h2>Atelier <span class="story-pron">[ at–l–yey ]</span></h2>
+        <p>
+          As our name suggests, Atelier is the ultimate setting for design. We
+          are more than just a boutique importer and distributor; we are a
+          dedicated workspace created specifically to inspire and elevate your
+          creative vision.
+        </p>
+      </div>
+    </section>
+
+    <section class="photo-band story-sourced" style={`background-image: url(${sourced.src});`}>
+      <div class="container photo-band-body">
+        <div class="photo-band-row">
+          <h2 class="photo-band-title">
+            <span class="photo-band-title-sub">Sourced from</span> the World's Design Capitals
+          </h2>
+          <div class="photo-band-aside">
+            <p>
+              We search the globe to curate the absolute best in interior
+              design. Our collections are carefully imported from the world's
+              leading design capitals—including Paris, London, Milan, Venice,
+              New York, and Bangkok. By bringing these international design
+              houses to New Zealand, we provide local designers with access to
+              unparalleled luxury and craftsmanship.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {
+      houses.length > 0 && (
+        <section class="story-brands">
+          <div class="container">
+            <div class="story-brands-head">
+              <h2>Brands</h2>
+              <a class="cta-underline cta-underline-light" href="/brands">View all</a>
+            </div>
+            <ul class="story-brands-grid">
+              {houses.map((house) => (
+                <li>
+                  <a class="house-card" href={`/brands/${house.slug}`}>
+                    <span class:list={['house-card-media', { weave: !house.image }]}>
+                      {house.image && <img src={house.image} alt="" loading="lazy" />}
+                      <span class="house-card-logo">{house.name}</span>
+                    </span>
+                    <span class="house-card-name">{house.name}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
       )
     }
-  </article>
+
+    <section class="story-split story-split-reverse">
+      <div class="story-split-body">
+        <p class="story-badge">The Workspace</p>
+        <h2>Inside the Atelier</h2>
+        <p>
+          Step inside our doors and discover a true creative workshop. Our
+          spaces house thousands of exquisite materials designed to help you
+          craft unique, bespoke interiors. We proudly supply:
+        </p>
+        <ul class="story-list">
+          <li>Beautiful fabrics and drapery</li>
+          <li>Luxury wall coverings</li>
+          <li>Bespoke trims</li>
+          <li>Premium towels and bed linen</li>
+          <li>Artisan rugs</li>
+          <li>Exclusive furniture pieces</li>
+        </ul>
+      </div>
+      <div
+        class="story-split-media"
+        style={`background-image: url(${workspace.src});`}
+        role="img"
+        aria-label="The Atelier workroom behind a patterned sheer"
+      >
+      </div>
+    </section>
+
+    <section class="photo-band story-showrooms" style={`background-image: url(${showrooms.src});`}>
+      <div class="container photo-band-body">
+        <div class="photo-band-row">
+          <h2 class="photo-band-title">Our Trade Showrooms</h2>
+          <div class="photo-band-aside">
+            <ul class="story-list">
+              {
+                SHOWROOMS.map((showroom) => (
+                  <li>
+                    {showroom.city}:{' '}
+                    {[
+                      showroom.name === 'Atelier Textiles' ? null : showroom.name,
+                      ...showroom.lines,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </li>
+                ))
+              }
+            </ul>
+            <p>Opening hours: {SHOWROOM_HOURS}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </Layout>

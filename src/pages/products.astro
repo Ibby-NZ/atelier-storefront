@@ -3,11 +3,14 @@ export const prerender = true // storefront pages stay static; EmDash routes ren
 import Layout from '../layouts/Layout.astro'
 import ProductLibrary from '../components/ProductLibrary.jsx'
 
-// Product library page (US-017), Maison direction (design: "Maison Library").
+// Product library page (US-017), 2026 direction (design: Figma "Products Page",
+// node 9379:2732).
 //
-// The page is `bleed` so the linen page-header band paints edge to edge; the
-// band and the browse area each carry their own `.container`, which keeps the
-// content column aligned with the site header and footer.
+// The page opens on a full-bleed umber band with the header floating inside it
+// (`bleed overlay`): an "Explore" badge over the display headline on the left,
+// the library's one line of copy on the right, both anchored to the foot of the
+// band. The band and the browse area each carry their own `.container`, which
+// keeps the content column aligned with the header wordmark and the footer.
 //
 // The grid and every control below the band are one client:load React island
 // reading GET /catalogue/products — the sidebar facets and the results share
@@ -18,14 +21,17 @@ import ProductLibrary from '../components/ProductLibrary.jsx'
   title="Products — Atelier Textiles"
   description="Search the full Atelier Textiles library of fabrics and finished goods by house, application, composition and colourway."
   bleed
+  overlay
 >
-  <section class="library-head">
-    <div class="container">
-      <div class="page-intro">
-        <p class="page-eyebrow">The Collection</p>
-        <h1>The <em>Library</em></h1>
-        <p>Every design we hold, from the houses we represent and our own workroom.</p>
+  <section class="library-hero">
+    <div class="container library-hero-row">
+      <div class="library-hero-heading">
+        <p class="badge-light">Explore</p>
+        <h1>Collections</h1>
       </div>
+      <p class="library-hero-note">
+        Every design we hold, from the houses we represent and our own workroom.
+      </p>
     </div>
   </section>
 
