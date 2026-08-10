@@ -12,6 +12,12 @@ import {
   houseArtwork,
   houseMeta,
 } from '../../lib/houses.js'
+import {
+  brandDesignCounts,
+  collectionHref,
+  featuredCollections,
+} from '../../lib/home.js'
+import brandsBanner from '../../assets/img/design-brands-banner-bg.jpg'
 
 // Brands index, 2026 direction (design: Figma "Brands Page", node 9379:3562).
 //
@@ -42,8 +48,8 @@ const products = catalogue?.products ?? []
 // photograph cannot art-direct a half-page frame, so the band takes the first
 // featured one that carries a picture, and is omitted when none does.
 const { data: collectionsBody } = await safeFetch('/catalogue/collections')
-const featured = featuredCollections(collectionsBody?.collections ?? [])
-const feature = featured.find((collection) => collection.image_url) ?? null
+const featuredCollectionsList = featuredCollections(collectionsBody?.collections ?? [])
+const feature = featuredCollectionsList.find((collection) => collection.image_url) ?? null
 const designCounts = brandDesignCounts(products)
 
 // Editorial imagery, resolved exactly as /brands/[slug] resolves it: the EmDash
