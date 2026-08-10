@@ -99,15 +99,19 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
 - **Styling** is the hand-built Atelier design system, and it runs **TWO
   directions at once**. Which one a screen wears is not a matter of taste — it
   is which handoff has drawn that screen.
-  - **2026 / Figma** (file `6iMAmsNk2HkmhfuqAimM5P`, "Atelier"): the SITE
-    CHROME, `/` (7307:617), `/brands/[slug]` (9350:479 + 9350:788) and `/login`
-    (9350:361). Grotesk display type, `--shell` cream ground, `--umber` dark
-    bands, `--ochre` accent, and an underlined text action — there is no button
-    of any kind anywhere in these frames.
+  - **2026 / Figma** (file `6iMAmsNk2HkmhfuqAimM5P`, "Atelier"), since the
+    **August 2026 redraw**: the SITE CHROME, `/` , `/products` (9379:2732),
+    `/products/[slug]` (9422:4321), `/brands` (9379:3562), `/brands/[slug]`
+    (9379:2647), `/story` (9436:3043) and `/login` (9350:361). Grotesk display
+    type, `--shell` cream ground (#f9f4ed since the redraw), `--umber` dark
+    bands (#18100c), `--ochre` accent (#8b6746), the underlined text action —
+    and, NEW with the product-detail frame, real buttons: the filled tan
+    `.action-fill` and hairline `.action-outline` (direction-2026.css). The
+    old "no button anywhere" rule described the pre-redraw frames only.
   - **Maison redesign** (`~/Documents/atelier-platform-demo/Atelier-storefront redesign (1).zip`
-    → `design_handoff_maison_redesign/`): the product library, the product
-    detail and the brands index. Fraunces display, `--paper` ground, claret
-    accent, brass hairlines, uppercase eyebrows, `.btn`.
+    → `design_handoff_maison_redesign/`): now historical — the library, the
+    product detail and the brands index moved to the 2026 frames above. Its
+    vocabulary (`primitives.css`) still dresses what nothing has redrawn.
   - **The earlier platform handoff** (`design_handoff_atelier_platform/`) still
     covers everything neither set has drawn: cart, checkout, the trade
     application, the journal, contact, account.
@@ -139,8 +143,10 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
       `.scrim-tile` (+`-label`) and `.spec-rows` (label left, mono value right).
       (`.bleed-hero` was here; it went when the house page stopped using it and
       left it with no callers.)
-    - **2026 → `direction-2026.css`**: `.cta-underline` (+`-lg` / `-light`, the
-      direction's only action), `.badge-ochre` / `.badge-light` (12px semibold
+    - **2026 → `direction-2026.css`**: `.cta-underline` (+`-lg` / `-light`),
+      `.action-fill` / `.action-outline` (the August 2026 redraw's buttons —
+      filled `--tan`, hairline outline; 16px Inter medium on 16/20 padding),
+      `.badge-ochre` / `.badge-light` (12px semibold
       label), `.photo-band` (+`-body/-row/-aside/-title/-title-sub`, a full-bleed
       background photograph with a bottom scrim and absolutely positioned copy)
       and `.tile-wall` / `.tile` (+`-body/-title`, the 2-up 626×700 photo tiles
@@ -316,7 +322,21 @@ Where it surfaces:
 ## Pages
 
 - **`/products` (US-017)** — `src/pages/products.astro` renders `ProductLibrary.jsx`
-  as a single `client:load` island. The island fetches the whole website
+  as a single `client:load` island. **2026 direction since the August 2026
+  redraw** (Figma "Products Page", 9379:2732): the page is `<Layout bleed
+  overlay>` opening on an umber hero band (the "Explore" badge, the
+  "Collections" display headline, the one line of copy on the right, the header
+  floating inside the band), then the browse area — boxed 44px search, "Refine"
+  row with an always-present "Clear all", facet lists under ochre 12px heads on
+  hairlines ("Brands", "Type" — the labels are the frame's), boxed selects for
+  the rest (no "More filters" group heading any more), and surface-cream cards
+  (photo, in-stock chip on the photograph, ochre house badge, 20px Inter-medium
+  name, muted spec line, and a price line that doubles as the underlined
+  "Sign in for trade pricing" ghost action when there is no visible figure).
+  **Client-side pagination**: `CARDS_PER_PAGE` (12, the mock's 3×4 grid) slices
+  the filtered list; the row under the grid is page numbers on hairline
+  dividers with prev/next arrows, and any filter/search/sort change resets to
+  page 1. The island still fetches the whole website
   catalogue once (`GET /catalogue/products?limit=100`; the catalogue is small,
   well under the API max) and **searches, filters and sorts in memory** —
   instant, no page reload, no per-request round trip. Filter options are derived
@@ -324,7 +344,9 @@ Where it surfaces:
   to friendly labels, other fields are raw strings). Reuse the
   fetch-all-then-filter shape for any small filtered list; switch to the API's
   server-side `q`/`sort`/filter params (they all exist) only if the set ever
-  exceeds the API page cap.
+  exceeds the API page cap. The colourway swatch strip and the sort/count row
+  are KEPT even though the mock's dummy cards do not draw them — working
+  merchandising is not dropped for a frame's placeholder content.
   - **Cards are merchandising, not a spec table**: the list endpoint now carries
     `image_url`, `in_stock`, `colourway_count` and a capped `colourways`
     strip, so each card shows a photograph (or the weave-gradient placeholder),
@@ -345,16 +367,14 @@ Where it surfaces:
     history entry.
   - Price rendering is the shared `priceInfo()` in **`src/lib/catalogue.js`**
     (see below); the island never re-implements FR-3.
-  - **Maison layout** (design: "Maison Library" in the Maison redesign handoff).
-    The page is `<Layout bleed>`: a full-bleed linen `.library-head` band, then
-    `.container.library-shell` around the island. The island itself is the
-    two-column grid — `16rem` sticky refine sidebar + results column — because
-    the facets and the grid share every piece of state.
-    - `FILTERS` gained a **`control`** field: `list` renders as a click-to-toggle
-      facet row with a live count (House, Collection, Type), `select` as an
-      underline dropdown under "More filters" (Application, Composition, Width,
-      Price band, Lead time). The URL keys and the filter semantics are
-      unchanged, so every existing deep link still resolves.
+  - **Layout**: the island is the two-column grid — `16rem` sticky refine
+    sidebar + results column — because the facets and the grid share every
+    piece of state.
+    - `FILTERS` carries a **`control`** field: `list` renders as a
+      click-to-toggle facet row with a live count (Brands, Collections, Type),
+      `select` as a boxed dropdown with its own ochre head (Application,
+      Composition, Width, Price band, Lead time). The URL keys and the filter
+      semantics are unchanged, so every existing deep link still resolves.
     - **`collection`** filters on `product.collection?.slug` (label from
       `.name`) — the key the brand-page collection tiles deep-link with
       (`/products?brand=&collection=`). Slugs are unique per brand, not
@@ -369,22 +389,20 @@ Where it surfaces:
       is on screen. An option that can no longer yield a result is dropped unless
       it is the selected one (which must stay clickable to switch off).
     - Facet rows are toggles (`onFacetToggle`): clicking the active row clears
-      it. The old removable `.facet-chip` row is gone — the sidebar shows active
-      state directly (claret text + claret dot), so chips were duplicate UI.
+      it; active state is ochre text.
     - Below 1024px the sidebar collapses behind a `.library-filters-toggle`
       button (`filtersOpen` state, `aria-expanded`/`aria-controls`); above it the
       CSS shows the sidebar regardless, so the state is inert there.
-  - **`.product-card` is the library's alone.** It used to be shared with the
-    homepage, so the Maison treatment was scoped under `.product-library` over an
-    untouched base block. The Maison homepage leads with editorial bands instead
-    of a product grid, so that split is gone: the base rules in `library.css`
-    *are* the Maison card (4/5 crop, squared, brass brand eyebrow, 20px swatches,
-    hover = border + shadow with **no** lift or zoom).
-  - **Deviations from the mock, deliberate:** Width stays in "More filters" even
-    though the mock lists only four selects — dropping it would silently remove a
-    working filter. Sidebar eyebrows and the card brand eyebrow are **brass**, per
-    the Maison token list — note this knowingly breaks the older "brass is never a
-    text colour" rule and is below WCAG AA at 11px.
+  - **`.product-card` is the library's alone** (the home leads with editorial
+    bands), and since the redraw it is ALSO borrowed by the product detail's
+    "Similar" strip — the base rules in `library.css` are the 2026 card. Two
+    Maison base figures still underlie it in primitives.css and are overridden
+    per property (`.product-stock`'s pill dot/border, `.product-brand`'s
+    uppercase) — check both before restyling either base.
+  - **Deviations from the mock, deliberate:** Width stays as a select even
+    though the mock lists only four — dropping it would silently remove a
+    working filter; the swatch strip and the count/sort row stay (working
+    merchandising over dummy-frame fidelity).
 
 - **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` is
   `prerender = false`. It had `getStaticPaths` enumerating website-visible
@@ -436,16 +454,18 @@ Where it surfaces:
     Add to request stores the same plus the colourway's `in_stock` and the
     product's `lead_time` (see Request list).
   - Price rendering is the shared `priceInfo()` in `src/lib/catalogue.js`.
-  - **Maison layout** (design: "Maison Product"): `1.15fr / 1fr` with a 4.5rem
-    gutter; a squared 4/5 hero over 64px thumbnails; on the right a brass rule, a
-    single brass `Fabric · {House}` eyebrow (the house is no longer a second line
-    under the title), the display name with its **last word in italic**
-    (`splitDisplayName` — a one-word name stays upright, since italicising the
-    whole thing reads as a different product), the selected colourway, the claret
-    mono price with `/ metre` for cloth, the action row (`Request order` +
-    underlined `Request a cutting`) and the spec sheet as shared `.spec-rows`.
-    The range repeats below under a brass "The range" eyebrow and a spelled-out
-    count ("Six *colourways*", `countWord()`).
+  - **2026 layout** (design: "Individual Product Page", 9422:4321): one
+    edge-to-edge surface-cream band (`.detail-band`, the page is `bleed`) —
+    photograph left in a subtle hairline, and on the right the ochre
+    `Fabric | House` badge (the house links to its page), the grotesk display
+    name, the lede (the fabric flow's explainer, moved up from the old
+    purchase note), the 24px price with `/ m` for cloth, the Size/Colour
+    controls, hairline `.detail-specs` rows (last row unruled), the
+    `Flax | PF-ATL-02` selected line and the action buttons. Below the band, a
+    **"Similar" strip** — up to four same-house cards fetched by the island
+    (`?brand=<slug>&limit=5`, self filtered out), reusing the library's
+    `.product-card`, with "View all" into the house's grid. The old "The
+    range" swatch wall is gone with the thumbnails.
   - **The hero crossfade needs no second `<img>`**: `previousHero` is a ref
     written in an effect (after paint), so during the render that changes the
     hero it still holds the outgoing image — painted as `.detail-hero-frame`'s
@@ -732,7 +752,7 @@ Where it surfaces:
     stay on one column.
   - **Two themes, one markup.** `.site-header--overlay` (from `Layout`'s
     `overlay` prop) makes the header `position: absolute` over the page's first
-    band and reverses its type to `--shell`. `absolute`, NOT `fixed`: the mock's
+    band and reverses its type to `--bone`. `absolute`, NOT `fixed`: the mock's
     header scrolls away with the hero, and a fixed bar would sit over the tiles
     below. **Nothing between `<body>` and the header may be positioned** or the
     overlay collapses onto the page ground.
@@ -746,17 +766,23 @@ Where it surfaces:
     (Brands and Products match their routes). There is no Home item — the
     wordmark is the way home. The current section is marked with the
     direction's underline, not a colour swap.
-  - **`Wordmark.astro` is the Figma logo export, INLINED.** The mark is
-    two-tone: "ATELIER" is always `--gold`, "TEXTILES" is ink on the paper
-    header and bone on a photograph or the umber footer. An `<img>` cannot
-    inherit that, so the ink paths carry `fill="currentColor"` and each caller
-    just sets `color`. 150px in the header, 175.656px in the footer, both the
-    mock's own widths.
-  - **Footer**: an umber band over one hairline (inside the container, as the
-    mock draws it), the wordmark left and one row of 12px links right. It
-    replaced the Maison footer's four columns — the showroom addresses, phone,
-    email and social links are still in `src/lib/site.js` and still render on
-    `/contact`, which is where the design puts them.
+  - **`Wordmark.astro` is the Figma logo export, INLINED.** Since the August
+    2026 redraw it is the NEW stacked mark ("New Atelier Logo", 9434:7358 —
+    script "atelier" over spaced TEXTILES caps), and it is **single-tone**: one
+    path on `fill="currentColor"`, so each caller just sets `color` (umber on
+    the cream header, bone on a photograph, `--umber-soft` in the footer). The
+    old two-tone gold/ink mark is gone; `--gold` survives only as a token.
+    130px in the header (~52px tall, so the wordmark now centres on the header
+    row instead of hanging from a fixed top), 175.656px in the footer.
+  - **Footer** (August 2026 redraw, master 9434:7202 family): a recessed cream
+    band (`--shell-subtle` #f0e3d3) — the wordmark over the Facebook/Instagram
+    icons on the left, two columns of 14px muted links (Products/Brands/Our
+    Story/Journal; Trade Account/Contact/Privacy/Terms), and the newsletter
+    block (18px head, boxed email input, underlined "Join us"). **The
+    newsletter has no service behind it** (newsletters are journal posts), so
+    the form lands on /contact rather than pretending to subscribe. The
+    showroom addresses, phone and email are still in `src/lib/site.js` and
+    still render on `/contact`.
   - **Privacy Policy and Terms & Conditions** are the mock's last two links and
     the only two with no content behind them. `/privacy` and `/terms` exist and
     render `page`-collection entries the way `/story` does, and the footer
@@ -842,12 +868,24 @@ the fallback baseline:
 layer is available at request time too, so these queries work on the on-demand
 brand pages below. Entry `id` is the filename slug.
 
-**`/brands` (`brands/index.astro`)** — API-driven grid of ALL houses via
-`safeFetch('/catalogue/brands')` (→ `{ brands }`, offline renders error state),
-each card links to `/brands/<slug>`. **`prerender = false`** so a brand created
-in `/admin/brands` appears without a rebuild; safeFetch still never throws, so
-an API outage renders the error state rather than a 500 — and the build no
-longer calls the API at all.
+**`/brands` (`brands/index.astro`)** — 2026 direction since the August 2026
+redraw (Figma "Brands Page", 9379:3562), `<Layout bleed overlay>`: a 74vh
+photo hero (the SAME commissioned photograph and copy as the home's
+design-houses band — the mock reuses the art, so the page reuses
+`design-brands-banner-bg.jpg`), then the **wall of house tiles** (3-up
+371×497, photograph under a flat 0.38 scrim with the maison's mark centred —
+no logo assets exist, so the house NAME stands in via `.house-card-logo`
+until a logo library lands), then the **featured-collection band**
+(`--shell-subtle`, photograph left / "Featured collection" badge + name +
+description + "Explore collection" right — the first `featured_rank`
+collection that carries a catalogue photograph, omitted when none does; the
+link goes through `collectionHref`'s ladder). The wall renders **in the API's
+own order** — featured houses lead it; the old "in focus" strip and the
+alphabetical directory rows are gone, as are `houseMeta` on cards and the
+espresso sourcing band. Still `safeFetch('/catalogue/brands')` and
+**`prerender = false`** so a brand created in `/admin/brands` appears without
+a rebuild; imagery resolves editorial (EmDash over markdown) → the house's own
+catalogue photography → the weave, exactly as before.
 
 **`/brands/[slug]` (`brands/[slug].astro`)** — **`prerender = false`**;
 `getStaticPaths` is gone. Resolved per request from three sources:
@@ -941,15 +979,12 @@ name + `View collection`) → the related-reading band.
 - `slideshow[1..]` is no longer rendered as a scrolling gallery (the design has
   one banner). Nothing is lost on the seeded page: the collection cards carry the
   same three images as their `featuredImage`.
-- The **facts list** is the mock's three rows — `Made in` / `Designs held` /
-  `Held at Atelier` — with `Founded` kept ahead of them where the house's own
-  story states a year (real sourced copy; the mock's row list is not
-  exhaustive). Founded comes from `foundedYear()` (the story
-  text, see home above) and is omitted when the story states none; `Designs held`
-  is `meta.total` from a `safeFetch` of `/catalogue/products?brand=<slug>&limit=1`
-  — a safeFetch because this page must render with the API down and the brand may
-  be editorial-only. The mock's "Archive: 25,000+ documents" is Pierre Frey copy
-  with no field behind it, so it is not invented for every house.
+- **The facts list is GONE** (August 2026 redraw, 9379:2647): the intro is two
+  TEXT columns now — the blurb on the left (16px Inter medium), the body copy
+  and the actions on the right. `foundedYear()` lost its caller here (the
+  homepage's featured band still renders `.house-facts`, which is why the
+  figure survives in editorial.css). The design-count fetch stays — it still
+  decides the "View all products" fallback action.
 
 **404 rule:** `!brand && !apiDown && !emPage && !mdPage`. So an API 404 with an
 editorial page still renders (preserving the old `getStaticPaths` UNION
@@ -975,7 +1010,19 @@ All static (content is build-time; no islands):
   `render(post)` inside `.prose`, shows date and `brands` tags (each links to
   `/brands/<slug>`). Slug = entry `.id` = filename (matches the `/resources/<id>`
   links from brand pages).
-- **`/story`, `/contact`, `/privacy`, `/terms`** (`story.astro`, `contact.astro`,
+- **`/story` is no longer one of these** — the August 2026 redraw (Figma
+  "Story Page", 9436:3043) made it the direction's one DARK page, fully
+  art-directed in `story.astro` + `story.css`: photo hero ("Our Story" + the
+  dictionary line), the "Why Atelier" split, the "Sourced from the World's
+  Design Capitals" band, a 4-up strip of house tiles (build-time fetch, the
+  brands wall's `.house-card` with its label reversed), the "Inside the
+  Atelier" split with the supply list, and the trade-showrooms band — whose
+  addresses and hours come from `src/lib/site.js`, never retyped. The copy is
+  the frame's own and lives in the page (the home's precedent);
+  `src/content/pages/story.md` remains as a baseline nothing renders. The five
+  photographs ship as `src/assets/img/story-*.jpg` (exported from the frame's
+  own placed images) through `getImage`.
+- **`/contact`, `/privacy`, `/terms`** (`contact.astro`,
   `privacy.astro`, `terms.astro`) — each renders one `page`-collection entry
   looked up by id with `getEntry('page', <id>)` then `render(entry)`. Falls back
   to an empty-state if the entry is missing. Seeded markdown:

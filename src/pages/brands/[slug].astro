@@ -7,7 +7,6 @@ import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
 import HouseTradeAccess from '../../components/HouseTradeAccess.jsx'
 import { collectionTiles } from '../../lib/collections.js'
 import { getEmdashBrandPage } from '../../lib/emdash.js'
-import { foundedYear } from '../../lib/houses.js'
 
 // One house page, 2026 direction, resolved per request so a brand created in
 // /admin/brands or a page published in the EmDash CMS appears without a
@@ -83,7 +82,6 @@ const { data: held } = await safeFetch(
   `/catalogue/products?brand=${encodeURIComponent(slug)}&limit=1`
 )
 const designCount = held?.meta?.total ?? null
-const founded = foundedYear(brand ?? { story: blurb })
 
 // The house directory stays PUBLIC — it is marketing, and the API still lists
 // every house to everyone. What is gated is what Atelier HOLDS: for a house with
@@ -119,18 +117,6 @@ const tiles = collectionTiles({
   cards,
   brandSlug: slug,
 })
-
-// The mock's three rows are Made in / Designs held / Held at Atelier. Founded
-// is kept ahead of them where the house's own story states a year — it is real,
-// sourced copy and the mock's row list is not exhaustive. The mock's
-// "Archive: 25,000+ documents" is Pierre Frey copy with no field behind it, so
-// it is not invented for every house.
-const facts = [
-  founded ? { label: 'Founded', value: String(founded) } : null,
-  brand?.country ? { label: 'Made in', value: brand.country } : null,
-  designCount ? { label: 'Designs held', value: `${designCount}` } : null,
-  { label: 'Held at Atelier', value: 'By the metre, cut to order' },
-].filter(Boolean)
 
 const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
 
@@ -183,10 +169,19 @@ if (notFound) {
           )
         }
 
+        {
+          /* The August 2026 redraw ("Brand Page", 9379:2647) sets the intro as
+             two TEXT columns: the blurb on the left, the body copy and the
+             actions on the right. The facts list (Made in / Designs held /
+             Held at Atelier) is gone from the frame and goes here too. */
+        }
         <section class="house-intro">
           <div class="container house-intro-inner">
-            <div class="house-intro-body">
+            <div class="house-intro-blurb">
               {blurb && <p class="house-lede">{blurb}</p>}
+            </div>
+
+            <div class="house-intro-body">
               {story && (
                 <div class="house-copy">
                   <PortableText value={story} />
@@ -240,15 +235,6 @@ if (notFound) {
                 tradeNote && <HouseTradeAccess client:load brandSlug={slug} />
               }
             </div>
-
-            <dl class="house-facts">
-              {facts.map((fact) => (
-                <div class="house-fact">
-                  <dt>{fact.label}</dt>
-                  <dd>{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
         </section>
 

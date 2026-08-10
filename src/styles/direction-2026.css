@@ -59,6 +59,59 @@ a.cta-underline-light:hover,
   color: #fff;
 }
 
+/* --- Buttons (August 2026 redraw) ------------------------------------------
+   The Individual Product Page frame (9422:4321) introduces the direction's
+   first real buttons: a filled tan primary and a hairline outline secondary,
+   16px Inter medium on 16/20 padding, squared. Until that frame the direction
+   had only the underlined text action — the "no buttons anywhere" note in
+   CLAUDE.md describes the earlier frames, not these. */
+.action-fill,
+.action-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  padding: 1rem 1.25rem;
+  border-radius: 0;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--umber);
+  cursor: pointer;
+  transition: background var(--quick), border-color var(--quick),
+    color var(--quick), filter var(--quick);
+}
+
+.action-fill {
+  border: 0;
+  background: var(--tan);
+}
+
+.action-fill:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.action-outline {
+  border: 1px solid var(--shell-line-strong);
+  background: transparent;
+}
+
+.action-outline:hover:not(:disabled) {
+  border-color: var(--umber);
+}
+
+.action-fill:disabled,
+.action-outline:disabled {
+  opacity: 0.45;
+  cursor: default;
+  filter: none;
+}
+
 /* --- Badge ---------------------------------------------------------------
    The Figma "Badge" (3369:16) with no fill: a 12px semibold label. Ochre where
    it sits on the cream ground (the house beside a collection, the "Featured

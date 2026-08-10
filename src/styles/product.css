@@ -1,64 +1,64 @@
 /*
- * Product detail, Maison direction (design: "Maison Product").
+ * Product detail, 2026 direction (design: Figma "Individual Product Page",
+ * node 9422:4321).
  *
- * 1.15fr / 1fr with a 4.5rem gutter: a squared 4/5 hero over 64px colourway
- * thumbnails on the left; on the right the brass rule, the brass "Fabric ·
- * {House}" eyebrow, the display name with an italic last word, the selected
- * colourway, the claret mono price, the action row and the spec sheet. The
- * colourway range repeats below as labelled tiles.
+ * One raised surface-cream band, edge to edge (the page is `bleed`): the
+ * photograph on the left inside a subtle hairline, the buy column on the
+ * right — ochre "Fabric | House" badge, grotesk display name, lede, price,
+ * the Size and Colour controls, hairline spec rows, the selected SKU line and
+ * the direction's buttons (.action-fill / .action-outline, direction-2026.css).
+ * Below the band, the "Similar" strip reuses the library's product cards
+ * (library.css).
  *
- * The spec rows and the brass rule are shared figures from primitives.css
- * (`.spec-rows`, `.brass-rule`) — the brand page uses the same ones.
+ * Shared classes that must survive any rework here: `.purchase-note` /
+ * `.request-note` (RequestList + CheckoutSuccess), `.purchase-added`,
+ * `.metres-field` / `.metres-unit` (RequestList), `.detail-selected-sku`
+ * (Cart + RequestList).
  */
 
-/* --- Product detail ------------------------------------------------------- */
-/* The redesign gives this page the full 96rem section frame, not a narrower
-   measure of its own. */
-.product-detail {
-  max-width: none;
+/* Non-band states (loading / error / gate) supply their own container on the
+   bleed page, plus the block padding `bleed` removed. */
+.detail-static {
+  padding-block: var(--s8) var(--s10);
 }
 
-.detail-grid {
+/* --- The band ------------------------------------------------------------- */
+.detail-band {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 4.5rem;
-  align-items: start;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--s9);
+  align-items: center;
+  padding: var(--s5) var(--s9) var(--s3) var(--s3);
+  background: var(--shell-surface);
 }
 
-.detail-media,
-.detail-gallery {
+.detail-media {
   min-width: 0;
 }
 
 /* --- Hero ----------------------------------------------------------------- */
 /* The frame holds the OUTGOING image as its background while the incoming one
-   fades in on top (ProductDetail.jsx keeps the previous hero in a ref), which is
-   the design's ~.5s crossfade on a colourway change. */
+   fades in over it — the crossfade needs no second <img>. */
 .detail-hero-frame {
   position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 622 / 692; /* the mock's frame */
   overflow: hidden;
-  border: var(--hair);
-  background-color: var(--surface);
+  border: 1px solid var(--shell-line-soft);
+  background-color: var(--shell);
   background-size: cover;
   background-position: center;
 }
 
 .detail-hero {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  background: var(--surface);
-  animation: hero-fade var(--zoom) both;
+  animation: detail-hero-fade var(--zoom) both;
 }
 
-.detail-hero-placeholder {
-  display: block;
-  transition: background var(--zoom);
-}
-
-@keyframes hero-fade {
+@keyframes detail-hero-fade {
   from {
     opacity: 0;
   }
@@ -67,169 +67,181 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .detail-hero {
-    animation: none;
-  }
+.detail-hero-placeholder {
+  animation: none;
 }
 
-.detail-thumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s3);
-  margin: var(--s4) 0 0;
-  padding: 0;
-  list-style: none;
+.detail-hires {
+  display: inline-block;
+  margin: var(--s3) 0 0 var(--s3);
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none; /* primitives' Maison version uppercases + tracks */
+  color: var(--umber-soft);
+  text-decoration: none;
+  border-bottom: 1px solid currentcolor;
+  padding-bottom: 4px;
 }
 
-.detail-thumb {
-  width: 64px;
-  height: 64px;
-  padding: 0;
-  overflow: hidden;
-  border: var(--hair);
-  background-color: var(--surface-deep);
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-  transition: box-shadow var(--quick), border-color var(--quick);
+.detail-hires:hover {
+  color: var(--ochre);
 }
 
-.detail-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.detail-thumb:hover {
-  border-color: var(--brass);
-}
-
-.detail-thumb.is-selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-/* --- Info column ---------------------------------------------------------- */
+/* --- Buy column ------------------------------------------------------------ */
 .detail-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s5);
   min-width: 0;
+  max-width: 35.125rem; /* the mock's 562px column */
 }
 
-/* "Fabric · Pierre Frey" — brass, wide tracking, one line (the house name is no
-   longer a second paragraph below the title). */
-.detail-info .detail-type {
-  margin: 0 0 var(--s3);
-  letter-spacing: 0.26em;
-  color: var(--brass);
+/* "Fabric | Pierre Frey" — ochre 12px semibold, the pipe regular. */
+.detail-eyebrow {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ochre);
+}
+
+.detail-eyebrow a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.detail-eyebrow a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.detail-eyebrow-sep {
+  font-weight: 400;
+  margin-inline: 0.4em;
+  color: inherit;
 }
 
 .detail-name {
   margin: 0;
+  font-family: var(--font-grotesk);
   font-weight: 400;
-  font-size: clamp(2.5rem, 1.8rem + 2.6vw, 3.5rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
+  font-size: var(--g-xl);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
 }
 
-.detail-name em {
-  font-style: italic;
-  font-weight: 300;
+.detail-lede {
+  margin: 0;
+  max-width: 29.125rem; /* the mock's 466px text wrapper */
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--umber-soft);
 }
 
-/* Selected colourway line */
-.detail-colourway-name {
-  margin: var(--s6) 0 0;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  line-height: 1.2;
-  color: var(--ink);
-}
-
-.detail-selected-sku {
-  display: block;
-  margin-top: 0.35rem;
-  font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  color: var(--muted);
-  letter-spacing: 0.06em;
-}
-
-/* Price block — the single claret figure on this screen. */
+/* --- Price ------------------------------------------------------------------
+   The mock's 24px Inter medium figure ("NZ$420 / m"). The muted variant is the
+   no-price copy line chosen by lib/catalogue.js `priceInfo`. */
 .detail-price {
-  margin: var(--s6) 0 0;
-  padding-top: var(--s5);
-  border-top: var(--hair);
-  font-family: var(--font-mono);
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.5rem;
   font-weight: 500;
-  font-size: 1.875rem;
-  line-height: 1.2;
-  color: var(--accent);
+  line-height: 1.1;
   letter-spacing: -0.01em;
+  color: var(--umber);
 }
 
 .detail-price.muted {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--t-body);
+  font-size: 1rem;
   font-weight: 400;
-  color: var(--ink-soft);
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--umber-soft);
 }
 
 .detail-price-label {
-  display: block;
-  margin-bottom: var(--s2);
-  font-style: normal;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--ochre);
+  margin-right: 0.35em;
 }
 
-/* "/ metre" — cloth is priced by the unit it is cut in. */
 .detail-price-unit {
-  margin-left: 0.35rem;
-  font-size: var(--t-base);
-  font-weight: 400;
-  color: var(--muted);
+  margin-left: 0.25em;
 }
 
-/* Retail struck through beside the claret trade figure. */
 .detail-price-retail {
-  margin-left: var(--s3);
-  font-family: var(--font-mono);
-  font-size: var(--t-body);
+  margin-left: 0.6em;
+  font-size: 1rem;
   font-weight: 400;
-  color: var(--muted);
-  text-decoration-thickness: 1px;
+  color: var(--shell-muted);
 }
 
 .detail-price .indicative-note {
   display: block;
-  margin-top: var(--s2);
-  font-size: var(--t-xs);
+  margin-top: var(--s1);
 }
 
-/* Purchase block */
-.purchase {
+/* --- Size / Colour controls ------------------------------------------------ */
+.detail-controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s5);
+}
+
+.detail-control {
+  display: flex;
   align-items: center;
-  gap: 1.25rem;
-  margin: var(--s6) 0 0;
+  gap: var(--s3);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--umber-soft);
 }
 
-.purchase-note,
-.request-note {
-  flex-basis: 100%;
-  margin: 0;
-  font-size: var(--t-sm);
-  line-height: 1.6;
-  color: var(--muted);
+.detail-control-label {
+  min-width: 3.25rem;
 }
 
-.purchase-added {
-  flex-basis: 100%;
+/* The metres / quantity box: the mock's 100px strong-hairline input. */
+.metres-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  width: 6.25rem;
+  padding: 12px;
+  border: 1px solid var(--shell-line-strong);
+  background: transparent;
+}
+
+.metres-field:focus-within {
+  border-color: var(--umber);
+}
+
+.metres-field input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--umber);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.metres-field input::-webkit-outer-spin-button,
+.metres-field input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
   margin: 0;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--t-sm);
-  color: var(--sage);
 }
 
 /* Cloth is bought by the metre — decimal, so the finished good's − / + stepper
@@ -298,141 +310,194 @@
   margin: 2.75rem 0 0;
 }
 
-/* --- Colourways ----------------------------------------------------------- */
-.detail-colourways {
-  margin-top: var(--s10);
-  padding-top: var(--s7);
-  border-top: var(--hair);
+.metres-field input[aria-invalid="true"] {
+  color: var(--clay);
 }
 
-.detail-colourways h2 {
-  margin: var(--s3) 0 2.5rem;
-  font-weight: 400;
-  font-size: 2rem;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
+.metres-unit {
+  color: var(--shell-muted);
 }
 
-.swatch-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: var(--s6) 1.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* The colour select: the mock's 200px default-hairline select. */
+.detail-colour-select {
+  display: inline-flex;
 }
 
-/* The swatch may be the interactive element itself, or an <li> wrapping a
-   button — both lay out as the same column. */
-.swatch,
-.swatch > button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s2);
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  color: inherit;
-}
-
-.swatch > button,
-button.swatch {
-  cursor: pointer;
-  font: inherit;
-}
-
-.swatch > button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.swatch > button .detail-selected-sku {
-  margin-top: 0;
-}
-
-.swatch-image,
-.swatch-tones {
-  display: flex;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  overflow: hidden;
-  border: var(--hair);
-  background: var(--surface-deep);
-  transition: box-shadow var(--quick), border-color var(--quick);
-}
-
-.swatch:hover .swatch-image,
-.swatch:hover .swatch-tones,
-.swatch > button:focus-visible .swatch-image,
-.swatch > button:focus-visible .swatch-tones {
-  border-color: var(--brass);
-}
-
-.swatch.is-selected .swatch-image,
-.swatch.is-selected .swatch-tones {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-.swatch-tone {
-  flex: 1;
-  min-width: 0;
-}
-
-.swatch-name {
-  font-family: var(--font-display);
+.detail-colour-select select {
+  min-width: 12.5rem;
+  padding: 12px 36px 12px 12px;
+  border: 1px solid var(--shell-line);
+  border-radius: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%231f1713' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  font-family: var(--font-ui);
   font-size: 1rem;
-  line-height: 1.25;
-  color: var(--ink);
+  line-height: 1.5;
+  color: var(--umber);
+  cursor: pointer;
 }
 
-.swatch-stock {
-  align-self: flex-start;
-  font-size: var(--t-micro);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.detail-colour-select select:hover,
+.detail-colour-select select:focus {
+  border-color: var(--umber);
+  box-shadow: none;
 }
 
-/* --- Trade gate ----------------------------------------------------------- */
-/* The 403 state: a design from a house we hold for the trade (lib/tradeGate.js).
-   It rides on `.not-found`'s geometry — same route-resolved-to-not-a-product
-   shape, same breadcrumb / headline / action row — and adds only the space the
-   brass eyebrow needs above the headline. Deliberately NOT `.error-state`: this
-   is an invitation, and the claret error frame would read as a broken page. */
-.trade-gate .eyebrow-brass {
-  margin-bottom: var(--s3);
+/* --- Spec rows --------------------------------------------------------------
+   12px semibold rows on default hairlines: label muted left, value ink right.
+   The last row closes the list without a rule, as the mock draws it. */
+.detail-specs {
+  width: 100%;
+  margin: 0;
 }
 
-.swatch-out {
-  opacity: 0.72;
+.detail-specs > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--shell-line);
 }
 
+.detail-specs > div:last-child {
+  border-bottom: 0;
+}
+
+.detail-specs dt {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--shell-muted);
+}
+
+.detail-specs dd {
+  margin: 0;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--umber);
+  text-align: right;
+}
+
+/* --- Selected colourway line ------------------------------------------------ */
+.detail-selected {
+  margin: 0;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--umber-soft);
+}
+
+.detail-selected .detail-eyebrow-sep {
+  color: var(--shell-muted);
+}
+
+.detail-selected-sku {
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--shell-muted);
+}
+
+/* --- Actions + notes -------------------------------------------------------- */
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.purchase-note,
+.request-note {
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--umber-soft);
+  max-width: 32rem;
+}
+
+.purchase-added {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--umber);
+}
+
+.purchase-added a {
+  color: var(--umber);
+}
+
+.product-detail .field-error {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--clay);
+}
+
+/* --- Similar strip ----------------------------------------------------------- */
+.detail-similar {
+  padding-block: var(--s10);
+}
+
+.detail-similar-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
+  margin-bottom: var(--s7);
+}
+
+.detail-similar-head h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
+}
+
+.detail-similar-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .detail-grid {
-    gap: var(--s7);
+  .detail-band {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s6);
+    padding: var(--s4);
   }
 
-  .detail-colourways {
-    margin-top: var(--s8);
+  .detail-info {
+    max-width: none;
+  }
+
+  .detail-similar {
+    padding-block: var(--s8);
+  }
+
+  .detail-similar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .detail-grid {
+  .detail-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detail-actions .action-fill,
+  .detail-actions .action-outline {
+    width: 100%;
+  }
+
+  .detail-similar-grid {
     grid-template-columns: 1fr;
-    gap: var(--s6);
-  }
-
-  .detail-price {
-    font-size: 1.5rem;
-  }
-
-  .swatch-grid {
-    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
   }
 }

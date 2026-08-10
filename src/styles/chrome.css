@@ -39,7 +39,7 @@
 .site-header {
   position: relative;
   z-index: 50;
-  background: var(--paper);
+  background: var(--shell);
   border-bottom: 1px solid var(--shell-line-soft);
 }
 
@@ -48,7 +48,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s5);
-  padding-block: var(--s6) 1.125rem; /* the mock's 32 / 18 */
+  padding-block: 2.5rem 1.5rem; /* the redraw's 40 / 24 */
 }
 
 /* The overlay theme: the header floats over the first band of a bleed page (the
@@ -106,13 +106,15 @@
 /* Absolutely centred on the header, not on the space left between the two
    flex groups — the mock centres it on the frame and the two sides are not
    symmetrical. */
+/* The redrawn logo is a stacked mark (~52px tall at its 130px header width),
+   so it centres on the row rather than hanging from a fixed top. */
 .site-wordmark {
   position: absolute;
   left: 50%;
-  top: var(--s6);
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: block;
-  color: var(--ink);
+  color: var(--umber);
   line-height: 0;
 }
 
@@ -167,13 +169,13 @@
 }
 
 /* --- Overlay theme -------------------------------------------------------- */
-/* Everything reverses onto the photograph. `--shell` is the Figma's own
+/* Everything reverses onto the photograph. `--bone` is the Figma's own
    text/secondary on a dark ground, not plain white — the nav must sit under the
    headline, not compete with it. */
 .site-header--overlay .site-nav a,
 .site-header--overlay .site-util-link,
 .site-header--overlay .site-icon {
-  color: var(--shell);
+  color: var(--bone);
 }
 
 .site-header--overlay .site-nav a:hover,
@@ -189,36 +191,73 @@
 }
 
 /* --- Footer --------------------------------------------------------------- */
+/* The August 2026 redraw: a recessed cream band (color/bg/subtle), the wordmark
+   over the social icons on the left, two columns of 14px links and the
+   newsletter block on the right. */
 .site-footer {
   margin-top: 0;
-  background: var(--umber);
-  color: var(--shell);
+  background: var(--shell-subtle);
+  color: var(--umber-soft);
 }
 
-/* The mock's rule is inside the frame (x=72, width=1136), so it is the inner
-   container that carries it, not the band. */
 .site-footer-inner {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--s8);
+  padding-block: var(--s7); /* 48px */
+}
+
+.site-footer-brand-col {
+  display: flex;
+  flex-direction: column;
   justify-content: space-between;
   gap: var(--s6);
-  padding-block: var(--s7); /* 48px */
-  border-top: 1px solid var(--umber-line);
 }
 
 .site-footer-brand {
   display: block;
   flex-shrink: 0;
-  color: var(--bone);
+  color: var(--umber-soft);
   line-height: 0;
+}
+
+.site-footer-socials {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.site-footer-socials a {
+  display: inline-flex;
+  color: var(--umber-soft);
+  transition: color var(--quick);
+}
+
+.site-footer-socials a:hover {
+  color: var(--ochre);
+}
+
+.site-footer-socials svg {
+  display: block;
+  height: 16px;
+  width: auto;
+}
+
+/* The mock's Links block: 753px, the two columns and the newsletter spread
+   across it. */
+.site-footer-links {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s7);
+  flex: 0 1 47rem; /* the mock's 753px */
 }
 
 .site-footer-nav ul {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--s3) var(--s5);
+  flex-direction: column;
+  gap: var(--s5); /* 24px */
   margin: 0;
   padding: 0;
   list-style: none;
@@ -226,18 +265,70 @@
 
 .site-footer-nav a {
   font-family: var(--font-ui);
-  font-size: var(--t-xs); /* 12px */
+  font-size: var(--t-base); /* 14px */
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0;
   text-decoration: none;
   white-space: nowrap;
-  color: var(--shell);
+  color: var(--shell-muted);
   transition: color var(--quick);
 }
 
 .site-footer-nav a:hover {
-  color: var(--gold);
+  color: var(--umber);
+}
+
+/* Newsletter. No service behind it (newsletters are journal posts), so the
+   form lands on /contact — see Footer.astro. */
+.site-footer-newsletter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem; /* 20px */
+  flex: 0 0 17.1875rem; /* the mock's 275px */
+}
+
+.site-footer-newsletter-head {
+  margin: 0;
+  font-size: 1.125rem; /* 18px */
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--umber-soft);
+}
+
+.site-footer-newsletter input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--shell-line);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  font-weight: 500;
+  color: var(--umber-soft);
+}
+
+.site-footer-newsletter input::placeholder {
+  color: var(--shell-muted);
+}
+
+.site-footer-join {
+  padding: 0 0 var(--s2);
+  border: 0;
+  border-bottom: 1.5px solid currentcolor;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--umber-soft);
+  cursor: pointer;
+  transition: color var(--quick);
+}
+
+.site-footer-join:hover {
+  color: var(--ochre);
 }
 
 /* --- Responsive ----------------------------------------------------------- */
@@ -265,12 +356,18 @@
   .site-footer-inner {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--s5);
+    gap: var(--s6);
     padding-block: var(--s6);
   }
 
-  .site-footer-nav ul {
-    justify-content: flex-start;
+  .site-footer-links {
+    flex: 0 1 auto;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .site-footer-newsletter {
+    flex: 0 1 100%;
   }
 }
 
