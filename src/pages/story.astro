@@ -38,9 +38,21 @@ const brands = data?.brands ?? []
 const { data: catalogue } = await safeFetch('/catalogue/products?limit=100')
 const products = catalogue?.products ?? []
 
-// The strip's imagery resolves exactly as /brands resolves it: editorial
-// (EmDash over markdown) first, then the house's own catalogue photography,
-// else the weave. Four tiles, in the API's own order — featured houses lead.
+// Collection photography, keyed by house. This is the rung that actually
+// photographs the row: `/catalogue/collections` is public and ungated and
+// carries an `image_url` per collection, where editorial covers one house and
+// the anonymous product list covers almost none (the trade gate). Keep-first,
+// so a house shows its leading collection. See houseArtwork().
+const { data: collectionsBody } = await safeFetch('/catalogue/collections')
+const collectionImages = (collectionsBody?.collections ?? []).reduce((images, collection) => {
+  const slug = collection.brand?.slug
+  if (!slug || !collection.image_url || images[slug]) return images
+  return { ...images, [slug]: collection.image_url }
+}, {})
+
+// The row's imagery resolves exactly as /brands resolves it: editorial (EmDash
+// over markdown) first, then the house's own collection photography, then its
+// catalogue photography, else the weave.
 const imageEntries = (pairs) => Object.fromEntries(pairs.filter(([, image]) => image))
 const emPages = await listEmdashBrandPages()
 const mdPages = await getCollection('brandPage')
@@ -56,9 +68,17 @@ const productImages = products.reduce((images, product) => {
   return { ...images, [slug]: product.image_url }
 }, {})
 
-const houses = brands.slice(0, 4).map((brand) => ({
+// EVERY house, in the API's own order (`featured_rank ASC NULLS LAST, name
+// ASC`), so the maisons the office features lead the row and the rest follow
+// alphabetically. It used to take the first four; the row scrolls instead, so
+// there is no reason to cut the roster off — and "View all" is still there for
+// the wall.
+const houses = brands.map((brand) => ({
   ...brand,
-  image: houseArtwork({ editorial: editorialImages, catalogue: productImages }, brand),
+  image: houseArtwork(
+    { editorial: editorialImages, collections: collectionImages, catalogue: productImages },
+    brand
+  ),
 }))
 
 const [hero, why, sourced, workspace, showrooms] = await Promise.all([
@@ -114,7 +134,7 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
       <div class="container photo-band-body">
         <div class="photo-band-row">
           <h2 class="photo-band-title">
-            <span class="photo-band-title-sub">Sourced from</span> the World's Design Capitals
+            <span class="photo-band-title-sub">Sourced from the</span> World's Design Capitals
           </h2>
           <div class="photo-band-aside">
             <p>
@@ -138,20 +158,25 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
               <h2>Brands</h2>
               <a class="cta-underline cta-underline-light" href="/brands">View all</a>
             </div>
-            <ul class="story-brands-grid">
-              {houses.map((house) => (
-                <li>
-                  <a class="house-card" href={`/brands/${house.slug}`}>
-                    <span class:list={['house-card-media', { weave: !house.image }]}>
-                      {house.image && <img src={house.image} alt="" loading="lazy" />}
-                      <span class="house-card-logo">{house.name}</span>
-                    </span>
-                    <span class="house-card-name">{house.name}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
           </div>
+          {/* Outside the container on purpose: the row runs PAST the frame's
+              right edge rather than wrapping, which is what makes it read as a
+              gallery instead of a short grid. Its own gutter padding keeps the
+              first tile aligned with the heading above it. Same figure as the
+              home's "Latest collections" row. */}
+          <ul class="story-brands-row">
+            {houses.map((house) => (
+              <li>
+                <a class="house-card" href={`/brands/${house.slug}`}>
+                  <span class:list={['house-card-media', { weave: !house.image }]}>
+                    {house.image && <img src={house.image} alt="" loading="lazy" />}
+                    <span class="house-card-logo">{house.name}</span>
+                  </span>
+                  <span class="house-card-name">{house.name}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </section>
       )
     }

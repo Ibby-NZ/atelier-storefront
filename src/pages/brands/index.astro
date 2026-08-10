@@ -47,6 +47,16 @@ const featured = featuredCollections(collectionsBody?.collections ?? [])
 const feature = featured.find((collection) => collection.image_url) ?? null
 const designCounts = brandDesignCounts(products)
 
+// Collection photography, keyed by house — the rung that actually photographs
+// the wall. The collections are already fetched above for the featured band,
+// and `/catalogue/collections` is public and ungated where the anonymous
+// product list is not. Keep-first, so a house shows its leading collection.
+const collectionImages = (collectionsBody?.collections ?? []).reduce((images, collection) => {
+  const slug = collection.brand?.slug
+  if (!slug || !collection.image_url || images[slug]) return images
+  return { ...images, [slug]: collection.image_url }
+}, {})
+
 // Editorial imagery, resolved exactly as /brands/[slug] resolves it: the EmDash
 // CMS is the editor of record and WINS over the markdown baseline. Spreading
 // the EmDash map last is that precedence — per house, not per field.
@@ -75,7 +85,10 @@ const productImages = products.reduce((images, product) => {
 // broke it.
 const houses = brands.map((brand) => ({
   ...brand,
-  image: houseArtwork({ editorial: editorialImages, catalogue: productImages }, brand),
+  image: houseArtwork(
+    { editorial: editorialImages, collections: collectionImages, catalogue: productImages },
+    brand
+  ),
 }))
 
 const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 2200 })

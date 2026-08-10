@@ -105,8 +105,9 @@ const imageSrc = (value) => (typeof value === 'string' && value.trim() ? value :
  *   1. the editorial photograph published FOR THIS house — its brand page's
  *      first slideshow image, EmDash winning over the markdown baseline (the
  *      caller resolves that precedence, exactly as /brands/[slug] does);
- *   2. else a design of THIS house's own, from the catalogue;
- *   3. else neither, and the caller paints its designed ground (the shared
+ *   2. else a COLLECTION photograph of this house's own;
+ *   3. else a design of THIS house's own, from the catalogue;
+ *   4. else none of them, and the caller paints its designed ground (the shared
  *      `.weave` stand-in, the same answer the house page's collection tiles
  *      give a collection with no photograph).
  *
@@ -115,18 +116,31 @@ const imageSrc = (value) => (typeof value === 'string' && value.trim() ? value :
  * because the caption asserts the photograph belongs to that maison. Every map
  * is read at this house's slug and at no other key.
  *
- * Rung 2 thins out under the trade gate — a represented house's designs are not
- * in an anonymous product list at all — so for most of the directory the honest
- * outcome is rung 3, and it must be a designed ground rather than an omission:
- * dropping an unphotographed house would silently delete the office's choice
- * from the page.
+ * **Rung 2 is what actually photographs the directory.** Rung 1 covers one house
+ * (only pierre-frey ships a markdown slideshow) and rung 3 thins out under the
+ * trade gate — a represented house's designs are not in an anonymous product
+ * list at all — so before it existed 40 of the 42 houses fell straight to the
+ * weave. `/catalogue/collections` is public and ungated and carries an
+ * `image_url` per collection, which lifts that to 14 houses photographed with
+ * their OWN commissioned interiors. It sits above the catalogue rung because a
+ * collection hero is an art-directed room, where a product shot is as often a
+ * finished good on white linen.
  *
- * @param {{ editorial?: Record<string, string>, catalogue?: Record<string, string> }} sources
+ * @param {{
+ *   editorial?: Record<string, string>,
+ *   collections?: Record<string, string>,
+ *   catalogue?: Record<string, string>,
+ * }} sources
  * @param {{ slug?: string }|null|undefined} house
  * @returns {string|null}
  */
 export function houseArtwork(sources, house) {
   const slug = house?.slug
   if (!slug) return null
-  return imageSrc(sources?.editorial?.[slug]) ?? imageSrc(sources?.catalogue?.[slug]) ?? null
+  return (
+    imageSrc(sources?.editorial?.[slug]) ??
+    imageSrc(sources?.collections?.[slug]) ??
+    imageSrc(sources?.catalogue?.[slug]) ??
+    null
+  )
 }
