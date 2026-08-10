@@ -57,42 +57,10 @@
   text-decoration: none;
 }
 
-/* Taller than the shared 3/4 tile and framed, matching the brand page's
-   collection tiles — these sit on paper, not in a hairline grid wall. */
-.house-focus-media {
-  aspect-ratio: 4 / 5;
-  border: var(--hair);
-  transition: border-color var(--slow), box-shadow var(--slow);
-}
-
-.house-focus-card:hover .house-focus-media {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
-}
-
-.house-focus-media .scrim-tile-label {
-  padding: var(--s5);
-  background: linear-gradient(to top, rgba(33, 28, 23, 0.5), transparent 40%);
-}
-
-/* The office features houses, not photographs, so a chosen house with no
-   editorial page and no design of its own in the public catalogue shows the
-   weave ground (see houseArtwork()). Rotate its tones as the product grid does
-   — three identical rectangles read as a failure, three different ones as a
-   set — and keep the label's scrim, which the flat umber band elsewhere can do
-   without but a light weave cannot. */
-.house-focus-grid > *:nth-child(2) .weave {
-  --weave-light: #b8b5a8;
-  --weave-dark: #8e8a7d;
-}
-
-.house-focus-grid > *:nth-child(3) .weave {
-  --weave-light: #8a8b6f;
-  --weave-dark: #565740;
-}
-
-/* Country · est. on one line, designs held on the next. */
-.house-focus-note {
+/* The tile: photograph under a flat scrim with the maison's mark centred on
+   it. The mock's 371 × 497 frame. */
+.house-card-media {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;

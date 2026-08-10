@@ -5,27 +5,22 @@ import { getImage } from 'astro:assets'
 import Layout from '../../layouts/Layout.astro'
 import { safeFetch } from '../../lib/api.js'
 import { listEmdashBrandPages } from '../../lib/emdash.js'
-import {
-  countWord,
-  featuredHouses,
-  FOCUS_SLOTS,
-  houseArtwork,
-  houseMeta,
-} from '../../lib/houses.js'
-import {
-  brandDesignCounts,
-  collectionHref,
-  featuredCollections,
-} from '../../lib/home.js'
+import { houseArtwork } from '../../lib/houses.js'
+import { brandDesignCounts, collectionHref, featuredCollections } from '../../lib/home.js'
 import brandsBanner from '../../assets/img/design-brands-banner-bg.jpg'
 
 // Brands index, 2026 direction (design: Figma "Brands Page", node 9379:3562).
 //
-// Three sections plus a closing band: the page header, the "in focus" strip of
-// the houses the OFFICE has featured, the full directory as hairline rows, and
-// the sourcing enquiry. The page is `bleed` so the espresso band paints edge to
-// edge; each section carries its own `.container` to stay aligned with header
-// and footer.
+// Three sections: a full-bleed photo hero with the header floating inside it
+// (the same commissioned photograph and copy the home's design-houses band
+// carries — the mock reuses the art), the wall of house tiles, and the
+// featured-collection band. The page is `bleed`; each section carries its own
+// `.container` to stay aligned with header and footer.
+//
+// The wall renders every house IN THE API'S OWN ORDER — featured_rank first,
+// then name — so the maisons the office features lead the wall. The old "in
+// focus" strip is gone: the redraw gives the office's choice the head of the
+// grid instead of a separate row.
 //
 // Rendered on demand — staff add brands through the CRM at runtime, so a
 // prerendered grid would be stale until the next deploy. safeFetch never
@@ -48,8 +43,8 @@ const products = catalogue?.products ?? []
 // photograph cannot art-direct a half-page frame, so the band takes the first
 // featured one that carries a picture, and is omitted when none does.
 const { data: collectionsBody } = await safeFetch('/catalogue/collections')
-const featuredCollectionsList = featuredCollections(collectionsBody?.collections ?? [])
-const feature = featuredCollectionsList.find((collection) => collection.image_url) ?? null
+const featured = featuredCollections(collectionsBody?.collections ?? [])
+const feature = featured.find((collection) => collection.image_url) ?? null
 const designCounts = brandDesignCounts(products)
 
 // Editorial imagery, resolved exactly as /brands/[slug] resolves it: the EmDash
@@ -67,46 +62,21 @@ const editorialImages = {
 
 // First photographed design per house — the second rung of the artwork chain,
 // under the house's own editorial page. Keep-first, so the house's leading
-// design wins. Since the gate this can only ever hold the workroom: a
-// represented house's products are not in an anonymous list at all, so
-// editorial imagery is the only picture such a house can have here, and
-// `editorialImages` already wins over this map.
+// design wins.
 const productImages = products.reduce((images, product) => {
   const slug = product.brand?.slug
   if (!slug || !product.image_url || images[slug]) return images
   return { ...images, [slug]: product.image_url }
 }, {})
 
-const designsPerHouse = products.reduce((counts, product) => {
-  const slug = product.brand?.slug
-  return slug ? { ...counts, [slug]: (counts[slug] ?? 0) + 1 } : counts
-}, {})
-
-// Decorated in the order the API gave, because that order is load-bearing: it
-// is the tie-break between two houses the office has put at the same rank.
-// The directory sorts a COPY, so the strip below still sees rank order.
-const decorated = brands.map((brand) => ({
+// Decorated in the order the API gave, and RENDERED in that order too: it is
+// featured_rank first, then name, so the office's featured houses lead the
+// wall and the tie between two houses at one rank breaks the way the API
+// broke it.
+const houses = brands.map((brand) => ({
   ...brand,
-  meta: houseMeta(brand),
-  held: designsPerHouse[brand.slug] ?? 0,
   image: houseArtwork({ editorial: editorialImages, catalogue: productImages }, brand),
 }))
-
-const houses = [...decorated].sort((a, b) => a.name.localeCompare(b.name))
-
-// The strip is the office's own choice — `featured_rank`, set in the CRM and
-// carried by /catalogue/brands — and no longer a guess derived from
-// `is_international` plus a design count. That guess could not be changed by
-// anyone in the office, and the trade gate had already flattened it to
-// alphabetical: every represented house reads 0 designs to an anonymous
-// visitor, so the count tie-break was inert.
-//
-// A featured house with no photograph is KEPT and paints the weave ground
-// (houseArtwork's third rung). Dropping it would silently delete the office's
-// choice from the page, and under the gate an unphotographed featured house is
-// the normal case rather than an edge one. The heading still counts what is
-// actually in the strip, so featuring one or two houses reads as an edit.
-const featured = featuredHouses(decorated, FOCUS_SLOTS)
 
 const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 2200 })
 ---
@@ -153,46 +123,11 @@ const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 220
   }
 
   {
-    featured.length > 0 && (
-      <section class="container house-focus">
-        <p class="eyebrow-brass">In focus</p>
-        <h2>
-          {countWord(featured.length)}{' '}
-          <em>{featured.length === 1 ? 'maison' : 'maisons'}</em>
-        </h2>
-        <div class="house-focus-grid">
-          {featured.map((house) => (
-            <a class="house-focus-card" href={`/brands/${house.slug}`}>
-              <span class="scrim-tile house-focus-media">
-                {
-                  // No <img> is ever emitted without a source: a house with no
-                  // photograph of its own gets the shared weave ground, the
-                  // same stand-in the house page's collection tiles use.
-                  house.image ? (
-                    <img src={house.image} alt="" loading="lazy" />
-                  ) : (
-                    <span class="scrim-tile-media weave"></span>
-                  )
-                }
-                <span class="scrim-tile-label">{house.name}</span>
-              </span>
-              <span class="house-focus-note">
-                {house.meta && <span class="house-focus-meta">{house.meta}</span>}
-                {
-                  // Omitted rather than rendered as "0 designs held", which is
-                  // what the anonymous count now says for every represented
-                  // house — and would read as "we hold nothing from them"
-                  // instead of "these are held for the trade". The house page
-                  // itself carries that sentence (see brands/[slug].astro).
-                  house.held > 0 && (
-                    <span class="house-focus-held">
-                      {house.held} {house.held === 1 ? 'design' : 'designs'} held
-                    </span>
-                  )
-                }
-              </span>
-            </a>
-          ))}
+    houses.length > 0 && (
+      <section class="container house-wall">
+        <div class="house-wall-head">
+          <h2>Brands</h2>
+          <a class="cta-underline" href="/products">Explore all products</a>
         </div>
         <ul class="house-wall-grid">
           {houses.map((house) => (
