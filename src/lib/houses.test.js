@@ -115,3 +115,52 @@ test('houseArtwork survives a missing house, slug or source map', () => {
   assert.equal(houseArtwork({}, house('larsen', 1)), null)
   assert.equal(houseArtwork(undefined, house('larsen', 1)), null)
 })
+
+// --- houseArtwork: the collection rung -------------------------------------
+// `/catalogue/collections` is public and ungated, so it is the rung that
+// actually photographs the directory: editorial covers one house and the
+// anonymous product list covers almost none.
+
+const CHAIN = {
+  editorial: { larsen: '/editorial/larsen.jpg' },
+  collections: { larsen: '/collection/larsen.jpg', dedar: '/collection/dedar.jpg' },
+  catalogue: { larsen: '/catalogue/larsen.jpg', dedar: '/catalogue/dedar.jpg' },
+}
+
+test('houseArtwork still shows the house its own editorial photograph first', () => {
+  assert.equal(houseArtwork(CHAIN, house('larsen')), '/editorial/larsen.jpg')
+})
+
+test('houseArtwork prefers a collection photograph over a product shot', () => {
+  // A collection hero is an art-directed room; a product shot is as often a
+  // finished good on white linen, which disappears under a scrim.
+  assert.equal(houseArtwork(CHAIN, house('dedar')), '/collection/dedar.jpg')
+})
+
+test('houseArtwork falls through the collection rung when the house has none', () => {
+  const sources = { collections: { dedar: '/collection/dedar.jpg' }, catalogue: CHAIN.catalogue }
+  assert.equal(houseArtwork(sources, house('larsen')), '/catalogue/larsen.jpg')
+})
+
+test('houseArtwork never borrows another house collection photograph', () => {
+  // The rung a tile must not have. Every map is read at THIS house's slug: a
+  // tile captioned "de Le Cuona" over Larsen's interior asserts the photograph
+  // belongs to that maison, which is worse than the plain weave.
+  assert.equal(houseArtwork(CHAIN, house('de-le-cuona')), null)
+})
+
+test('houseArtwork ignores a blank collection entry rather than emitting it', () => {
+  const sources = {
+    collections: { larsen: '   ', dedar: 42 },
+    catalogue: { larsen: '/catalogue/larsen.jpg' },
+  }
+  assert.equal(houseArtwork(sources, house('larsen')), '/catalogue/larsen.jpg')
+  assert.equal(houseArtwork(sources, house('dedar')), null)
+})
+
+test('houseArtwork survives a caller that passes no collections map at all', () => {
+  // The pre-existing two-rung call shape; both callers were updated, but the
+  // helper must not start throwing for one that was missed.
+  assert.equal(houseArtwork(SOURCES, house('larsen')), '/editorial/larsen.jpg')
+  assert.equal(houseArtwork(SOURCES, house('dedar')), '/catalogue/dedar.jpg')
+})

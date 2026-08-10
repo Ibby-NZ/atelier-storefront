@@ -631,33 +631,56 @@ a.tag:hover {
     linear-gradient(135deg, var(--weave-light), var(--weave-dark));
 }
 
-/* Rotate the tones so a grid of missing images still reads as a collection. */
-.product-grid > *:nth-child(7n + 2) {
+/* Rotate the tones so a grid of missing images still reads as a collection.
+   The custom properties inherit, so a grid whose `.weave` is a DESCENDANT of the
+   child — the 2026 house tiles, where it is the card's media layer — is covered
+   by the same rule as one where the child IS the weave.
+
+   `.house-wall-grid` / `.story-brands-row` are 2026 figures named in a Maison
+   sheet deliberately: `.weave` itself is already shared by both directions, and
+   the alternative is a second copy of these seven pairs of hexes in
+   direction-2026.css, which states it holds none. It is load-bearing rather
+   than decorative — even with the collection-photography rung, 28 of the 42
+   houses have no picture an anonymous visitor may be shown, so without the
+   rotation the wall and the row are a run of identical brown rectangles. */
+.product-grid > *:nth-child(7n + 2),
+.house-wall-grid > *:nth-child(7n + 2),
+.story-brands-row > *:nth-child(7n + 2) {
   --weave-light: #d8ccb1;
   --weave-dark: #b3a07c;
 }
 
-.product-grid > *:nth-child(7n + 3) {
+.product-grid > *:nth-child(7n + 3),
+.house-wall-grid > *:nth-child(7n + 3),
+.story-brands-row > *:nth-child(7n + 3) {
   --weave-light: #b8b5a8;
   --weave-dark: #8e8a7d;
 }
 
-.product-grid > *:nth-child(7n + 4) {
+.product-grid > *:nth-child(7n + 4),
+.house-wall-grid > *:nth-child(7n + 4),
+.story-brands-row > *:nth-child(7n + 4) {
   --weave-light: #b87356;
   --weave-dark: #7e4631;
 }
 
-.product-grid > *:nth-child(7n + 5) {
+.product-grid > *:nth-child(7n + 5),
+.house-wall-grid > *:nth-child(7n + 5),
+.story-brands-row > *:nth-child(7n + 5) {
   --weave-light: #7b8590;
   --weave-dark: #4a535e;
 }
 
-.product-grid > *:nth-child(7n + 6) {
+.product-grid > *:nth-child(7n + 6),
+.house-wall-grid > *:nth-child(7n + 6),
+.story-brands-row > *:nth-child(7n + 6) {
   --weave-light: #8a8b6f;
   --weave-dark: #565740;
 }
 
-.product-grid > *:nth-child(7n + 7) {
+.product-grid > *:nth-child(7n + 7),
+.house-wall-grid > *:nth-child(7n + 7),
+.story-brands-row > *:nth-child(7n + 7) {
   --weave-light: #3e4760;
   --weave-dark: #1f2336;
 }
