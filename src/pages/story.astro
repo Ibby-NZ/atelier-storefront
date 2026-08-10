@@ -77,7 +77,8 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
   overlay
 >
   <div class="story-page">
-    <section class="photo-band story-hero" style={`background-image: url(${hero.src});`}>
+    <section class="photo-band photo-band--parallax story-hero">
+      <span class="photo-band-art" style={`background-image: url(${hero.src});`}></span>
       <div class="container photo-band-body">
         <div class="photo-band-row">
           <h1 class="photo-band-title">Our Story</h1>
@@ -108,7 +109,8 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
       </div>
     </section>
 
-    <section class="photo-band story-sourced" style={`background-image: url(${sourced.src});`}>
+    <section class="photo-band photo-band--parallax story-sourced">
+      <span class="photo-band-art" style={`background-image: url(${sourced.src});`}></span>
       <div class="container photo-band-body">
         <div class="photo-band-row">
           <h2 class="photo-band-title">
@@ -181,7 +183,8 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
       </div>
     </section>
 
-    <section class="photo-band story-showrooms" style={`background-image: url(${showrooms.src});`}>
+    <section class="photo-band photo-band--parallax story-showrooms">
+      <span class="photo-band-art" style={`background-image: url(${showrooms.src});`}></span>
       <div class="container photo-band-body">
         <div class="photo-band-row">
           <h2 class="photo-band-title">Our Trade Showrooms</h2>
