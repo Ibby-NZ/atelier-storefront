@@ -1,0 +1,114 @@
+---
+// Makes a horizontal overflow row actually drivable with a mouse.
+//
+// `overflow-x: auto` is only half a scroller on a desktop pointer: a vertical
+// wheel does nothing to it (the browser sends deltaY, and a row that only
+// overflows on X ignores it unless the reader knows to hold Shift), a native
+// scroller cannot be dragged, and the design hides the scrollbar — so the row
+// reads as a stuck grid with its last tile clipped. Touch was always fine; this
+// is the pointer half.
+//
+// Opt in with `data-drag-scroll` on the scrolling element. Nothing else on the
+// page is touched, so `.home-collection-row` can adopt it by adding the
+// attribute whenever somebody wants it there too.
+//
+// Progressive: without JavaScript the row is still a native scroller — touch
+// swipe, keyboard focus and Shift+wheel all keep working, and the tiles are
+// links either way.
+---
+
+<script>
+  const rows = document.querySelectorAll('[data-drag-scroll]')
+
+  for (const row of rows) {
+    const canScroll = () => row.scrollWidth - row.clientWidth > 1
+
+    // --- Wheel ---------------------------------------------------------------
+    // A trackpad sends deltaX for a sideways gesture and the row handles that
+    // natively; what needs mapping is the vertical wheel of an ordinary mouse.
+    // preventDefault ONLY when the row actually consumed the delta — at either
+    // end of the track the page must go on scrolling, or the row becomes a trap
+    // the reader cannot get out of.
+    row.addEventListener(
+      'wheel',
+      (event) => {
+        if (!canScroll() || event.ctrlKey) return
+        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+
+        const limit = row.scrollWidth - row.clientWidth
+        const next = Math.min(Math.max(row.scrollLeft + event.deltaY, 0), limit)
+        if (next === row.scrollLeft) return
+
+        row.scrollLeft = next
+        event.preventDefault()
+      },
+      { passive: false }
+    )
+
+    // --- Drag ----------------------------------------------------------------
+    // Mouse only: a touch pointer already pans the row natively, and taking it
+    // over here would fight the platform's own inertia.
+    //
+    // **No `setPointerCapture`.** Capturing on pointerdown retargets the click
+    // that follows to the capturing element, so every plain click landed on the
+    // <ul> and no house ever opened. The pointer is tracked on `window` instead,
+    // which follows it outside the row just as well and leaves click targeting
+    // alone.
+    let startX = 0
+    let startLeft = 0
+    let moved = false
+
+    const onMove = (event) => {
+      const travel = event.clientX - startX
+      // A few pixels of slop, so a click that wobbles still opens the house.
+      // The dragging class goes on only once it is a real drag, or a plain
+      // click would flicker the cursor.
+      if (!moved && Math.abs(travel) > 4) {
+        moved = true
+        row.classList.add('is-dragging')
+      }
+      if (!moved) return
+      row.scrollLeft = startLeft - travel
+      event.preventDefault()
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      row.classList.remove('is-dragging')
+    }
+
+    row.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'mouse' || event.button !== 0 || !canScroll()) return
+      // Cleared here rather than after a suppressed click: a drag that ends on
+      // empty space fires no click at all, and the flag would swallow the next
+      // real one.
+      moved = false
+      startX = event.clientX
+      startLeft = row.scrollLeft
+      window.addEventListener('pointermove', onMove, { passive: false })
+      window.addEventListener('pointerup', onUp)
+      window.addEventListener('pointercancel', onUp)
+    })
+
+    // A drag that ends on a tile must not also navigate to that house. Capture
+    // phase, because the anchor's own default would otherwise already be on its
+    // way.
+    row.addEventListener(
+      'click',
+      (event) => {
+        if (!moved) return
+        event.preventDefault()
+        event.stopPropagation()
+      },
+      true
+    )
+
+    // Dragging a link or an image otherwise starts a native drag-and-drop and
+    // the scroll stops dead a few pixels in.
+    row.addEventListener('dragstart', (event) => {
+      if (moved) event.preventDefault()
+    })
+  }
+</script>
