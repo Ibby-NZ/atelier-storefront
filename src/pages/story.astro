@@ -7,6 +7,7 @@ import { safeFetch } from '../lib/api.js'
 import { listEmdashBrandPages } from '../lib/emdash.js'
 import { houseArtwork } from '../lib/houses.js'
 import { SHOWROOMS, SHOWROOM_HOURS } from '../lib/site.js'
+import DragScroll from '../components/DragScroll.astro'
 import heroBg from '../assets/img/story-hero-bg.jpg'
 import whyAtelier from '../assets/img/story-why-atelier.jpg'
 import sourcedBg from '../assets/img/story-sourced-bg.jpg'
@@ -164,7 +165,7 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
               gallery instead of a short grid. Its own gutter padding keeps the
               first tile aligned with the heading above it. Same figure as the
               home's "Latest collections" row. */}
-          <ul class="story-brands-row">
+          <ul class="story-brands-row" data-drag-scroll>
             {houses.map((house) => (
               <li>
                 <a class="house-card" href={`/brands/${house.slug}`}>
@@ -235,4 +236,5 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
       </div>
     </section>
   </div>
+  <DragScroll />
 </Layout>

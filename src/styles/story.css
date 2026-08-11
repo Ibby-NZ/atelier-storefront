@@ -37,13 +37,18 @@
   align-items: stretch;
 }
 
-/* 42rem, up from 34. The mock's split is a 622 x 692 photograph beside its copy
-   — very nearly square — and at 34rem the half-width media came out at 838 x 544
-   on a wide screen, a letterbox rather than the frame the design draws. Both
-   halves stretch (`align-items: stretch`), so raising the media raises the copy
-   panel with it and the two feedback notes are one number. */
+/* The mock's split is a 622 x 692 photograph beside its copy — TALLER than it
+   is wide. A fixed `min-height` cannot hold that: the media is half the
+   viewport, so at 34rem it came out 838 x 544 on a wide screen and at 42rem
+   838 x 672, both still letterboxes.
+   `55vw` is the mock's own ratio (692 / 622 x 50vw = 55.6vw), so the frame
+   stays the shape the design draws at every width — 922px tall at 1676, 704px
+   at 1280, which is the mock's own 712 to within a pixel. Clamped so a short
+   laptop still gets a floor and an ultrawide does not run away.
+   Both halves stretch (`align-items: stretch`), so this one number raises the
+   copy panel with it. */
 .story-split-media {
-  min-height: 42rem;
+  min-height: clamp(34rem, 55vw, 60rem);
   background-size: cover;
   background-position: center;
 }
@@ -149,6 +154,24 @@
   scroll-snap-type: x proximity;
   scroll-padding-inline-start: var(--gutter);
   scrollbar-width: none;
+  /* The affordance. The scrollbar is hidden by the design and a vertical wheel
+     does nothing to a row that only overflows on X, so without a grab cursor
+     there is nothing at all telling a reader this moves — see
+     components/DragScroll.astro, which supplies the drag and the wheel. */
+  cursor: grab;
+}
+
+.story-brands-row.is-dragging {
+  cursor: grabbing;
+  /* Kill the snap mid-drag: it fights the pointer and the row jumps back to a
+     tile edge on every frame. */
+  scroll-snap-type: none;
+  user-select: none;
+}
+
+/* A dragged row must not leave the tile under the cursor looking clicked. */
+.story-brands-row.is-dragging a {
+  cursor: grabbing;
 }
 
 .story-brands-row::-webkit-scrollbar {
@@ -189,10 +212,12 @@
     order: -1;
   }
 
-  /* Stacked, the two halves are full-width rather than half, so the media does
-     not need the desktop figure to stop being a letterbox. */
+  /* Stacked, the media is FULL width rather than half, so the desktop's 55vw
+     would be a portrait taller than the screen. 62vw is the same idea at the
+     new width: a frame that keeps its shape, floored so a phone still gets a
+     photograph and capped so a tablet does not get a wall. */
   .story-split-media {
-    min-height: 26rem;
+    min-height: clamp(22rem, 62vw, 34rem);
   }
 
   .story-split-body {
