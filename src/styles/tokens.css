@@ -158,6 +158,23 @@
   --weave-light: #c9b79b;
   --weave-dark: #6e4a2e;
 
+  /* --- Dark mode (opt-in via [data-theme="dark"]; see dark-mode.css) ---------
+     The storefront ships LIGHT by default — the warm-paper brand identity — and
+     a header toggle flips the 2026 marketing surfaces to this warm near-black.
+     #19100c is the client's chosen ground (page feedback, Aug 2026): a hair off
+     --umber #18100c, so a flipped section and an existing umber band read as one
+     dark rather than two. --dark-raised lifts a card / input / detail band off
+     that ground. Text on dark reuses the direction's own reversed families
+     (--bone / --bone-soft / --bone-muted), accents reuse --tan, and hairlines
+     reuse --umber-line — dark mode introduces no new text or accent hues, only
+     the two grounds. */
+  --dark-bg: #19100c;
+  --dark-raised: #241813;
+  /* --clay (#b06a4f) drops to ~4.1:1 on --dark-raised — under the AA floor for
+     a 13px error message — so dark grounds use this lightened clay for the
+     `.field-error` / invalid-input state instead. */
+  --clay-bright: #d98e72;
+
   color-scheme: light;
   font-family: var(--font-ui);
 }

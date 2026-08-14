@@ -1430,3 +1430,61 @@ screen filters and slices — it never re-derives a choice.
   `/brands` is not `overlay` and its directory, header and sourcing band render
   without it, so — unlike the home's hero — no empty-band variant is needed. An
   API outage still renders the page's own error line.
+
+## Dark mode
+
+A header toggle flips the 2026 marketing surfaces to a warm near-black. It is a
+**curated set of overrides (`src/styles/dark-mode.css`, imported LAST in
+`global.css`), NOT a global token swap** — and that is forced, not a choice: the
+palette reuses one colour for two jobs (`--umber` is a dark BAND ground AND the
+primary TEXT colour on cream), so remapping the tokens would turn every heading
+invisible. Each surface the Aug-2026 page feedback named gets its ground flipped
+to `--dark-bg` (#19100c; `--dark-raised` #241813 lifts a card/input) and its type
+re-coloured onto the direction's own reversed families (`--bone`/`--bone-soft`/
+`--bone-muted`), accents onto `--tan`, hairlines onto `--umber-line`. Dark mode
+introduces no new text/accent hue — only the two grounds and one lightened error
+(`--clay-bright`, because `--clay` drops under AA on the dark band).
+
+- **The toggle is plain markup, not an island** (`Header.astro`): the sun/moon
+  glyph is chosen purely by CSS off `:root[data-theme]`, so there is no hydration
+  flash and no React. A no-flash `is:inline` script in `Layout.astro` applies the
+  saved theme (and the matching `theme-color`) to `<html>` BEFORE first paint;
+  persisted in `localStorage` under **`atelier_theme`**, and a `storage` listener
+  syncs other tabs the way `CartIndicator`/`RequestIndicator` do. Dark is
+  **explicit opt-in** (never `prefers-color-scheme`) — the warm-paper identity is
+  the default.
+- **`[data-theme="dark"]` is set on `<html>`; participation is gated by
+  `body.has-dark-ground`** (the Layout **`darkGround`** prop). This is the
+  load-bearing distinction:
+  - The **footer darkens on every page** (ungated) — a dark footer reads as
+    intentional under any body, and it means the toggle always does something
+    visible.
+  - The **non-overlay header and the `<main>` ground darken ONLY under
+    `has-dark-ground`**, so the un-redesigned Maison pages (cart, checkout,
+    account, contact, journal, order flows, admin, …) keep their light bodies and
+    are never left with a dark header/ground over light content. Overlay headers
+    (home/products/brands-banner/story/login float bone type on a photograph) are
+    never touched.
+  - `darkGround` is set on `products.astro`, `brands/index.astro`,
+    `brands/[slug].astro` and `products/[slug].astro` (the last two
+    `={!notFound}`, so a 404/gate body renders on the light ground). NOT on the
+    home (its bands are full-bleed, so `<main>` never shows) or story.
+- **THE cross-page gotcha: a section-class override is only safe ungated if that
+  class exists on NO un-themed page.** Several product-detail figures are
+  explicitly SHARED with un-themed islands — `.purchase-note` (CheckoutSuccess),
+  `.request-note`/`.metres-unit` (RequestList), `.detail-selected`/
+  `.detail-selected-sku` (Cart + RequestList), and `.indicative-note` (every
+  money page). Their dark rules are gated on `has-dark-ground` or they turn
+  near-white on the light cart/checkout/order-request ground. `.field-error` and
+  the invalid-input state are gated for the same reason. Before adding an ungated
+  `[data-theme="dark"] .foo` rule, grep `.foo` across `src/components` — if a
+  non-`darkGround` page uses it, gate it.
+- **`color-scheme: dark` is itself gated** on `has-dark-ground` — set on `:root`
+  alone it flipped native select popups / spinners / autofill dark on the light
+  un-themed pages too.
+- **Story is the inversion.** It is the direction's one dark-by-default page, so
+  in dark mode its `.story-split-body` and `.story-brands` flip the OTHER way —
+  to the cream `--shell` ground with umber type (the feedback's "light mode
+  here"). Its photo bands (hero, sourced, showrooms) stay as drawn.
+- Guarded by the three CI gates (lint/test/build); the visual layer has no unit
+  coverage (same as every island) and belongs in an end-to-end pass.

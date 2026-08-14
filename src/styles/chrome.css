@@ -150,6 +150,29 @@
   height: 24px;
 }
 
+/* --- Theme toggle --------------------------------------------------------- */
+/* A <button> wearing `.site-icon`, so it needs the control reset the anchors
+   don't. Which of its two glyphs shows is decided by CSS off the root theme
+   attribute — no JS paints the icon, so there is no flash on load. */
+.theme-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.theme-toggle .theme-icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .theme-icon-moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .theme-icon-sun {
+  display: block;
+}
+
 /* The cart count. Ochre rather than claret: on this header claret belongs to
    the Maison direction and would be the only warm-red pixel on the page. */
 .site-icon-count {

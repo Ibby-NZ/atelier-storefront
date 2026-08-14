@@ -17,6 +17,7 @@
  *   editorial.css   journal cards, long-form prose, house pages
  *   houses.css      brands index: photo hero, house tile wall, featured band
  *   story.css       Our Story: the direction's one dark page
+ *   dark-mode.css   [data-theme="dark"] overrides for the 2026 marketing pages
  *
  * TWO DIRECTIONS live here, deliberately — but since the August 2026 redraw
  * the Figma direction dresses almost everything: the chrome, the home, the
@@ -27,8 +28,10 @@
  * account, contact and the trade application. `primitives.css` and
  * `direction-2026.css` are the two vocabulary sheets; do not promote a figure
  * from one into the other, or a page nobody redesigned changes shape.
- * Light-only — neither handoff defines a dark palette (the story page's dark
- * bands are the direction's own umber, not a dark mode).
+ * Light BY DEFAULT — neither handoff defines a dark palette, and the story
+ * page's dark bands are the direction's own umber, not a theme. The optional
+ * dark mode (dark-mode.css, header toggle) is a curated set of overrides on top
+ * of the 2026 marketing pages, not a second palette: see that file's header.
  */
 
 @import "./tokens.css";
@@ -44,3 +47,4 @@
 @import "./houses.css";
 @import "./bespoke.css";
 @import "./story.css";
+@import "./dark-mode.css";

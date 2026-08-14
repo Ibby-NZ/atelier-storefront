@@ -131,7 +131,7 @@ if (notFound) {
 }
 ---
 
-<Layout title={`${name} — Atelier Textiles`} bleed overlay={Boolean(heroImage) && !notFound}>
+<Layout title={`${name} — Atelier Textiles`} bleed overlay={Boolean(heroImage) && !notFound} darkGround={!notFound}>
   {
     notFound ? (
       <div class="container house-missing">
