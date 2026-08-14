@@ -58,6 +58,52 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
       <a class="site-util-link" href="/contact" aria-current={isActive('/contact') ? 'page' : undefined}>
         Contact
       </a>
+      {/* Dark / light theme toggle. Plain markup, not an island: the correct
+          icon is chosen purely by CSS off `:root[data-theme]` (set by the
+          no-flash script in Layout before paint), so there is no hydration flash
+          and no React needed. The button reads as one of the header's 24px
+          icons; `site-icon` gives it the same size and the overlay/paper theme
+          inheritance the others get. The click handler lives in the script
+          below. */}
+      <button
+        id="theme-toggle"
+        type="button"
+        class="site-icon theme-toggle"
+        aria-pressed="false"
+        aria-label="Dark mode"
+      >
+        {/* Moon — shown in light mode (tap to go dark). */}
+        <svg
+          class="theme-icon-moon"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        {/* Sun — shown in dark mode (tap to go light). */}
+        <svg
+          class="theme-icon-sun"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+        </svg>
+      </button>
       {/* Search is the library itself: it opens with the search field the
           shopper is reaching for, and there is no separate search route to
           send them to. */}
@@ -83,3 +129,53 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
     </div>
   </div>
 </header>
+
+<script>
+  // Theme toggle. The no-flash script in Layout has already set
+  // document.documentElement.dataset.theme (and theme-color) from localStorage
+  // before this runs, so here we only reflect that state onto the button and
+  // flip it on click. Persisted under `atelier_theme`, alongside the cart /
+  // request-list keys.
+  const btn = document.getElementById('theme-toggle')
+  if (btn) {
+    const root = document.documentElement
+    const meta = document.querySelector('meta[name="theme-color"]')
+    const isDark = () => root.dataset.theme === 'dark'
+
+    // The label stays "Dark mode" (a name, not an action) and aria-pressed
+    // carries the on/off state — one convention, not two. theme-color mirrors
+    // the HEADER, which is dark only on a darkGround page, so an un-themed light
+    // page keeps its light browser-chrome tint even with dark mode on.
+    const sync = () => {
+      const dark = isDark()
+      btn.setAttribute('aria-pressed', String(dark))
+      if (meta) {
+        const darkChrome = dark && document.body.classList.contains('has-dark-ground')
+        meta.setAttribute('content', darkChrome ? '#19100C' : '#F7F2E9')
+      }
+    }
+
+    sync()
+
+    btn.addEventListener('click', () => {
+      root.dataset.theme = isDark() ? 'light' : 'dark'
+      try {
+        localStorage.setItem('atelier_theme', root.dataset.theme)
+      } catch (e) {
+        // Private-mode / storage-disabled: the toggle still works for the
+        // session, it just will not be remembered on the next visit.
+      }
+      sync()
+    })
+
+    // Cross-tab sync — the same native `storage` event the cart and request-list
+    // indicators listen to. A theme change in another tab lands here so this
+    // tab's ground, footer, icon and aria stay consistent without a reload.
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'atelier_theme' && (event.newValue === 'dark' || event.newValue === 'light')) {
+        root.dataset.theme = event.newValue
+        sync()
+      }
+    })
+  }
+</script>
