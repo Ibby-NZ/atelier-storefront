@@ -54,6 +54,8 @@
   --shell-surface: #f6eee5; /* raised cream — product cards, badges on photos */
   --shell-subtle: #f0e3d3; /* recessed cream — the footer band */
   --ochre: #8b6746; /* badges and small labels */
+  --umber-raised: #2c241b; /* a panel lifted off the umber ground — the story
+                              page's copy half (Userback, 25 Aug 2026) */
   --tan: #dcc8b1; /* color/neutral-300 — the filled button of the redraw */
   --gold: #b5985b; /* the earlier wordmark's gold — link hovers on umber */
 
@@ -185,9 +187,78 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* --- Dark pages -------------------------------------------------------------
+   Layout's `dark` prop (`/contact`). NOT a dark mode: the site is light by
+   design, there is no toggle and no `prefers-color-scheme` rule anywhere — this
+   is one page put on the dark half of the same palette, the treatment /story
+   already has by painting `.story-page` itself. A page that does not paint its
+   own edge-to-edge bands needs the ground here instead, so the header, the
+   container's own padding and the page all sit on one colour.
+
+   Every value below is a REMAP of an existing token, never a new hue: the page
+   is built out of `--paper` / `--ink` / `--surface` / `--accent` like every
+   other contained page, so the whole of it — including the enquiry form's
+   inputs, its filled button and its focus ring — follows without one
+   page-specific rule.
+
+   `--hair` is remapped too, and has to be: a custom property's `var()` is
+   substituted at computed-value time on the element that DECLARES it, so
+   `--hair: 1px solid var(--line)` was resolved to the light greige back at
+   `:root` and inherits down as that literal — redefining `--line` here cannot
+   reach it. It came through as a cream hairline round every input on the dark
+   page. The rule generalises: any token derived from another must be remapped
+   beside its input, never assumed to follow it.
+
+   Scoped to `#main`, not to <body>: the footer is the same cream band on every
+   page, /story included, and must inherit none of this. The header is handled
+   in chrome.css, which reverses its type through the overlay theme's own
+   rules. */
+body.theme-dark {
+  background: var(--umber);
+}
+
+body.theme-dark #main {
+  --paper: var(--umber);
+  --surface: var(--umber-raised);
+  --surface-deep: #382e23; /* one step up again — recessed rows and chips */
+  --ink: var(--bone);
+  --ink-soft: var(--bone-soft);
+  --muted: var(--bone-muted);
+  --muted-soft: rgba(255, 255, 255, 0.45);
+  --line: var(--umber-line);
+  --hair: 1px solid var(--umber-line);
+  /* Claret is the light page's accent and goes muddy on umber — the direction
+     reverses to the tan it uses for a filled button on a dark band, with the
+     wordmark's gold as the hover. `.btn-primary` reads `color: var(--paper)`,
+     which is umber here, so the filled button comes out tan-on-umber: the
+     direction's own `.action-fill`, reached without touching the button. */
+  --accent: var(--tan);
+  --accent-soft: var(--gold);
+  --accent-wash: var(--umber-raised);
+  --scrim: rgba(0, 0, 0, 0.6);
+  /* The 2026 family's own names, for anything on the page drawn in it. */
+  --umber-soft: var(--bone-soft);
+  --shell: var(--umber);
+  --shell-surface: var(--umber-raised);
+  --shell-subtle: var(--umber-raised);
+  --shell-line-soft: rgba(255, 255, 255, 0.12);
+  --shell-line: rgba(255, 255, 255, 0.3);
+  --shell-line-strong: rgba(255, 255, 255, 0.45);
+  --shell-muted: var(--bone-muted);
+  color: var(--ink);
+}
+
+/* The canvas is `--shell`, the redraw's own color/bg/canvas, NOT the earlier
+   palette's `--paper`. The two are one intent from two generations and differ
+   by three units, which is invisible over a whole page and glaring at an edge:
+   `.site-header` paints `--shell`, so every page whose header does not float
+   (`overlay`) drew the top bar as a lighter strip across the top of a `--paper`
+   ground — the "top bar colour" the client reported (Userback, 25 Aug 2026).
+   `--paper` stays for the components that use it as a FILL (inputs, chips,
+   buttons); each of those carries a border, so none of them moved. */
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--shell);
   color: var(--ink);
   font-family: var(--font-ui);
   font-size: var(--t-body);

@@ -174,7 +174,10 @@
    headline, not compete with it. */
 .site-header--overlay .site-nav a,
 .site-header--overlay .site-util-link,
-.site-header--overlay .site-icon {
+.site-header--overlay .site-icon,
+.theme-dark .site-header .site-nav a,
+.theme-dark .site-header .site-util-link,
+.theme-dark .site-header .site-icon {
   color: var(--bone);
 }
 
@@ -182,12 +185,29 @@
 .site-header--overlay .site-util-link:hover,
 .site-header--overlay .site-icon:hover,
 .site-header--overlay .site-nav a[aria-current="page"],
-.site-header--overlay .site-util-link[aria-current="page"] {
+.site-header--overlay .site-util-link[aria-current="page"],
+.theme-dark .site-header .site-nav a:hover,
+.theme-dark .site-header .site-util-link:hover,
+.theme-dark .site-header .site-icon:hover,
+.theme-dark .site-header .site-nav a[aria-current="page"],
+.theme-dark .site-header .site-util-link[aria-current="page"] {
   color: #fff;
 }
 
-.site-header--overlay .site-wordmark {
+.site-header--overlay .site-wordmark,
+.theme-dark .site-header .site-wordmark {
   color: var(--bone);
+}
+
+/* --- Dark theme ------------------------------------------------------------
+   A dark page's header takes the page's ground and reverses its type through
+   the SAME rules the overlay theme uses, above — a cream bar over an umber page
+   is the light strip the client reported on the product page, at full
+   strength. `--overlay` still wins where both apply: it comes later in the
+   cascade and its `transparent` is what a floating header needs. */
+.theme-dark .site-header {
+  background: var(--umber);
+  border-bottom-color: var(--umber-line);
 }
 
 /* --- Footer --------------------------------------------------------------- */

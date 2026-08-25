@@ -21,6 +21,13 @@ const {
   // header, and the page is responsible for leaving the band tall enough to
   // hold the header plus its own copy.
   overlay = false,
+  // `dark` puts the page on the direction's umber ground instead of the cream
+  // canvas — the treatment /story has, for a page that does not paint its own
+  // bands. It is NOT a dark mode: the site is light by design, has no toggle
+  // and no `prefers-color-scheme` rule; this is one page choosing the dark half
+  // of the same palette. The header takes the ground with it (see chrome.css)
+  // and the footer stays the cream band it is on every page, /story included.
+  dark = false,
 } = Astro.props
 
 // Staging is noindex by default; baked in at build time for prerendered pages.
@@ -48,7 +55,10 @@ const FONTS =
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#F7F2E9" />
+    {/* The browser chrome above the page — the phone's own top bar. It has to
+        follow the page's ground or it reads as the seam a mismatched header
+        does. */}
+    <meta name="theme-color" content={dark ? '#18100C' : '#F9F4ED'} />
     {!allowIndexing && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
     <link rel="canonical" href={canonical} />
@@ -71,7 +81,7 @@ const FONTS =
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href={FONTS} />
   </head>
-  <body>
+  <body class:list={{ 'theme-dark': dark }}>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header overlay={overlay} />
     <main id="main" class={bleed ? 'main-bleed' : undefined}>

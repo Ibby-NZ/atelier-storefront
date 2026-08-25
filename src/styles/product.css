@@ -29,7 +29,13 @@
   gap: var(--s9);
   align-items: center;
   padding: var(--s5) var(--s9) var(--s3) var(--s3);
-  background: var(--shell-surface);
+  /* The canvas, not the raised `--shell-surface` the frame draws. The band is
+     full-bleed and fills the viewport, so nothing of the page ground shows
+     beside it — the only place its "raised" cream was ever visible was as a
+     seam under the header and another above "Similar", which is what the
+     client reported (Userback, 25 Aug 2026). One line back to `--shell-surface`
+     the day the band stops running edge to edge. */
+  background: var(--shell);
 }
 
 .detail-media {
