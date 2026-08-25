@@ -1,0 +1,48 @@
+---
+// Office-created pages (EmDash Pages collection). A published `pages` entry
+// whose slug matches no real route renders here at /<slug> — which is how the
+// office ADDS a page without a deploy. Astro gives every static route priority
+// over this catch-all, so /products, /cart, /contact and the rest can never be
+// shadowed by a CMS entry; the fixed company pages (/contact, /privacy,
+// /terms) also each resolve their own entry first in their own file.
+//
+// On demand by necessity (the entry set is not knowable at build time) and by
+// design (an edit shows without a rebuild). An unknown slug is a genuine 404:
+// same status + body pattern as /resources/[slug].
+export const prerender = false
+import Layout from '../layouts/Layout.astro'
+import { PortableText } from 'emdash/ui'
+import { getEmdashPage } from '../lib/emdash.js'
+
+const { slug } = Astro.params
+const page = await getEmdashPage(slug)
+
+if (!page) {
+  Astro.response.status = 404
+}
+
+const title = page?.title || 'Page not found'
+---
+
+<Layout title={`${title} — Atelier Textiles`}>
+  <article class="content-page">
+    {
+      page ? (
+        <>
+          <h1>{title}</h1>
+          {page.content && (
+            <div class="prose">
+              <PortableText value={page.content} />
+            </div>
+          )}
+        </>
+      ) : (
+        <div class="not-found">
+          <h1>Page not found</h1>
+          <p>That page could not be found. It may have been moved or is no longer published.</p>
+          <a class="btn" href="/">Back to the start</a>
+        </div>
+      )
+    }
+  </article>
+</Layout>

@@ -1044,12 +1044,21 @@ All static (content is build-time; no islands):
   photographs ship as `src/assets/img/story-*.jpg` (exported from the frame's
   own placed images) through `getImage`.
 - **`/contact`, `/privacy`, `/terms`** (`contact.astro`,
-  `privacy.astro`, `terms.astro`) — each renders one `page`-collection entry
-  looked up by id with `getEntry('page', <id>)` then `render(entry)`. Falls back
-  to an empty-state if the entry is missing. Seeded markdown:
+  `privacy.astro`, `terms.astro`) — on demand since the CMS pages wiring: each
+  resolves the EmDash `pages` entry of its own slug FIRST (title + Portable
+  Text via `getEmdashPage` / `<PortableText>`), then the markdown
+  `page`-collection entry (`getEntry('page', <id>)` + `render`), then the
+  empty state. Page-level precedence like the brand pages — a CMS entry stops
+  the markdown loading entirely, never a hybrid. Seeded markdown:
   `src/content/pages/story.md`, `contact.md`. **`privacy.md` and `terms.md` are
   NOT seeded** — the footer only links them once they exist (see Site chrome),
-  and inventing legal copy would be worse than shipping none.
+  and inventing legal copy would be worse than shipping none; the office can
+  now also supply either from the CMS instead.
+- **`/[slug]` (catch-all, `[slug].astro`)** — any OTHER published EmDash
+  `pages` entry renders at `/<its slug>`, which is how the office ADDS a page
+  without a deploy. Astro gives every real route priority over the catch-all,
+  so a CMS entry can never shadow /products, /cart or the rest; an unknown
+  slug 404s with the /resources/[slug] status + body pattern.
 
 Newsletters become posts (meeting decision) — no separate newsletter type; add a
 `post` entry. Content styles (`.post-card`, `.post`, `.prose`, `.tag`,
@@ -1067,7 +1076,8 @@ markdown collections (above) remain the shipped baseline.
   being static — new pages need it too. The ONLY pages that render on demand are
   `/` (home — CMS-editable sections),
   `/brands`, `/brands/[slug]`, `/products/[slug]`, `/resources`,
-  `/resources/[slug]` (plus EmDash's own routes). Anything else appearing in the
+  `/resources/[slug]`, `/contact`, `/privacy`, `/terms` and the `[slug]`
+  catch-all for office-created pages (plus EmDash's own routes). Anything else appearing in the
   on-demand set is a silent-SSR regression: `npm run build` prints the
   prerendered routes, and `find dist/client -name '*.html'` is the check.
 - **Config:** `emdash({ database: sqlite({ url: 'file:./data/emdash.db' }),
@@ -1149,6 +1159,18 @@ markdown collections (above) remain the shipped baseline.
     skipped on re-seed (`onConflict: skip`), never overwritten. Note the
     seed's content block only applies via the CLI — the startup auto-seed
     creates collections, not entries.
+  - **`npm run import:cms-art`** (`scripts/import-cms-art.mjs`) uploads the
+    SHIPPED art into the CMS media library and attaches it: the three hero
+    banners + featured portrait become `collection_banners` entries, and the
+    four band backgrounds land on their `site_sections` entries. Idempotent —
+    media dedupes by filename, an editor's own image is never replaced. Needs
+    `EMDASH_TOKEN` (admin → API tokens; dev-bypass locally) and takes the
+    site's base URL as its one argument for a remote run. Run `seed:cms`
+    first (the section entries must exist).
+- **The `pages` collection is a live surface**: `/contact`, `/privacy` and
+  `/terms` resolve their own entry first, and the `[slug]` catch-all serves
+  every other published entry at `/<slug>` — see Resources + company pages
+  (US-025) above.
 - **`brand_pages` entry slug MUST equal the atelier-api brand slug** — that is
   the only key joining CMS editorial to the live catalogue brand. A
   `collection_cards` row's **`collection` sub-field joins the same way at the

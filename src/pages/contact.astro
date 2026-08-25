@@ -1,17 +1,23 @@
 ---
-export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+// On demand since the CMS took the intro copy: an edit to the EmDash `pages`
+// entry "contact" must show without a rebuild. The markdown page stays the
+// offline baseline, same precedence rule as the brand pages (CMS wins).
+export const prerender = false
 import Layout from '../layouts/Layout.astro'
 import { getEntry, render } from 'astro:content'
+import { PortableText } from 'emdash/ui'
 import ContactForm from '../components/ContactForm.jsx'
+import { getEmdashPage } from '../lib/emdash.js'
 import { CONTACT, SHOWROOMS, SHOWROOM_HOURS, SOCIAL } from '../lib/site.js'
 
-// Contact page. The welcoming intro stays in the `page` content collection (id
-// "contact") so it can be edited without a code change; the contact details,
-// showrooms and the enquiry form come from src/lib/site.js + the ContactForm
-// island (posts to POST /contact, which stores + emails the enquiry).
-const entry = await getEntry('page', 'contact')
+// Contact page. The welcoming intro is editable content — the EmDash `pages`
+// entry "contact" first, the markdown `page` collection as the baseline; the
+// contact details, showrooms and the enquiry form come from src/lib/site.js +
+// the ContactForm island (posts to POST /contact, which stores + emails).
+const emPage = await getEmdashPage('contact')
+const entry = emPage ? null : await getEntry('page', 'contact')
 const Content = entry ? (await render(entry)).Content : null
-const title = entry?.data.title ?? 'Contact'
+const title = emPage?.title || (entry?.data.title ?? 'Contact')
 ---
 
 <Layout
@@ -22,7 +28,14 @@ const title = entry?.data.title ?? 'Contact'
   <article class="content-page contact-page">
     <h1>{title}</h1>
     {
-      Content && (
+      emPage?.content && (
+        <div class="prose">
+          <PortableText value={emPage.content} />
+        </div>
+      )
+    }
+    {
+      !emPage?.content && Content && (
         <div class="prose">
           <Content />
         </div>

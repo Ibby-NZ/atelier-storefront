@@ -1,24 +1,32 @@
 ---
-export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+// On demand since the CMS took this page: an edit to the EmDash `pages` entry
+// "privacy" must show without a rebuild. The markdown `page` collection stays
+// the offline baseline (CMS wins, page-level precedence — never a hybrid).
+export const prerender = false
 import Layout from '../layouts/Layout.astro'
 import { getEntry, render } from 'astro:content'
+import { PortableText } from 'emdash/ui'
+import { getEmdashPage } from '../lib/emdash.js'
 
-// Privacy Policy — one of the design's last two footer links (Figma 7307:930).
-// Rendered from the `page` content collection (id "privacy") exactly the way
-// /story and /contact are, so the client can write it without a code change.
-// Until the markdown exists, Footer.astro leaves the link out (it checks the
-// collection) and this page renders its empty state — no placeholder legal
-// copy is invented here.
-const entry = await getEntry('page', 'privacy')
+// One of the design's last two footer links (Figma 7307:930). Editable in the
+// EmDash admin (Pages → "privacy") or via src/content/pages/privacy.md; until
+// either exists this renders its empty state — no placeholder legal copy is
+// invented here.
+const emPage = await getEmdashPage('privacy')
+const entry = emPage ? null : await getEntry('page', 'privacy')
 const Content = entry ? (await render(entry)).Content : null
-const title = entry?.data.title ?? 'Privacy Policy'
+const title = emPage?.title || (entry?.data.title ?? 'Privacy Policy')
 ---
 
 <Layout title={`${title} — Atelier Textiles`}>
   <article class="content-page">
     <h1>{title}</h1>
     {
-      Content ? (
+      emPage?.content ? (
+        <div class="prose">
+          <PortableText value={emPage.content} />
+        </div>
+      ) : Content ? (
         <div class="prose">
           <Content />
         </div>
