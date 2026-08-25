@@ -85,6 +85,20 @@ const SOURCES = {
   catalogue: { larsen: '/catalogue/larsen.jpg', dedar: '/catalogue/dedar.jpg' },
 }
 
+test("houseArtwork shows the office's own upload before anything derived", () => {
+  // The only rung anybody can correct: an editorial slideshow lives in the CMS
+  // and the other two are whatever the catalogue happened to photograph, so a
+  // house the office has given a picture must show that picture.
+  const larsen = { ...house('larsen', 1), image_url: '/crm/larsen.jpg' }
+  assert.equal(houseArtwork(SOURCES, larsen), '/crm/larsen.jpg')
+  assert.equal(houseArtwork({}, larsen), '/crm/larsen.jpg')
+})
+
+test('houseArtwork ignores a blank upload rather than emitting it', () => {
+  const larsen = { ...house('larsen', 1), image_url: '   ' }
+  assert.equal(houseArtwork(SOURCES, larsen), '/editorial/larsen.jpg')
+})
+
 test('houseArtwork shows the house its own editorial photograph first', () => {
   assert.equal(houseArtwork(SOURCES, house('larsen', 1)), '/editorial/larsen.jpg')
 })
