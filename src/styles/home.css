@@ -163,13 +163,17 @@
   outline-offset: 6px;
 }
 
-/* --- Latest collections --------------------------------------------------- */
-.home-collections {
+/* --- Brands ---------------------------------------------------------------
+   The wall of maisons: the shared `.house-card` tile (houses.css) in a
+   horizontal scroller. No caption under a tile here — the photograph with the
+   maison's mark over it IS the tile (Userback, 25 Aug 2026), so nothing in
+   this block styles a name. */
+.home-brands {
   padding-block: var(--s10);
   background: var(--shell);
 }
 
-.home-collections-head {
+.home-brands-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -177,7 +181,7 @@
   margin-bottom: var(--s7);
 }
 
-.home-collections-head h2 {
+.home-brands-head h2 {
   margin: 0;
   font-family: var(--font-grotesk);
   font-weight: 400;
@@ -187,71 +191,58 @@
   color: var(--umber);
 }
 
-/* The row bleeds off the right edge rather than wrapping: four tiles are a
-   composition in the mock, and a 2×2 grid is a different picture. Scroll
-   padding keeps the first tile on the container gutter after a snap. */
-.home-collection-row {
+/* The row bleeds off the right edge rather than wrapping: forty maisons in a
+   grid is a directory, and the directory is /brands.
+
+   It sits OUTSIDE `.container` for that bleed, so it has to reproduce the
+   container's own left edge itself — `--gutter` alone left the first tile out
+   past the heading on any viewport wider than the 96rem frame. `max()` keeps
+   the plain gutter on anything narrower, where the container is not capped and
+   the second term goes negative. */
+.home-brands-row {
+  --row-inset: max(var(--gutter), calc((100% - var(--container)) / 2 + var(--gutter)));
   display: flex;
   gap: var(--s3);
   margin: 0;
-  padding: 0 var(--gutter);
+  padding-inline: var(--row-inset);
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x proximity;
-  scroll-padding-inline-start: var(--gutter);
+  scroll-padding-inline-start: var(--row-inset);
   scrollbar-width: none;
+  /* The affordance: the scrollbar is hidden by the design and a vertical wheel
+     does nothing to a row that only overflows on X — see DragScroll.astro,
+     which supplies the drag and the wheel (`data-drag-scroll`). */
+  cursor: grab;
 }
 
-.home-collection-row::-webkit-scrollbar {
+.home-brands-row.is-dragging {
+  cursor: grabbing;
+  /* Kill the snap mid-drag: it fights the pointer and the row jumps back to a
+     tile edge on every frame. */
+  scroll-snap-type: none;
+  user-select: none;
+}
+
+/* A dragged row must not leave the tile under the cursor looking clicked. */
+.home-brands-row.is-dragging a {
+  cursor: grabbing;
+}
+
+.home-brands-row::-webkit-scrollbar {
   display: none;
 }
 
-.home-collection-row > li {
+.home-brands-row > li {
   flex: 0 0 clamp(15rem, 24vw, 23.1875rem); /* → 371px, the mock's tile */
   scroll-snap-align: start;
 }
 
-.home-collection-row a {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-
-.home-collection-row img,
-.home-collection-media {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
-  background: var(--surface);
-  transition: opacity var(--slow);
-}
-
-.home-collection-row a:hover img,
-.home-collection-row a:hover .home-collection-media {
-  opacity: 0.88;
-}
-
-.home-collection-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s3);
-  margin-top: 20px;
-}
-
-.home-collection-name {
-  font-family: var(--font-ui);
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-  color: var(--umber);
-  transition: color var(--quick);
-}
-
-.home-collection-row a:hover .home-collection-name {
-  color: var(--ochre);
+/* The uncaptioned tile is the mock's 371 × 463 frame, not the directory's
+   371 × 497 — that one leaves room under the photograph for a name this row
+   does not print. */
+.home-brands-row .house-card-media {
+  aspect-ratio: 371 / 463;
 }
 
 /* --- Manifesto band ------------------------------------------------------- */
@@ -341,20 +332,27 @@
   color: var(--umber-soft);
 }
 
-/* --- Design houses band --------------------------------------------------- */
+/* --- Design houses band ---------------------------------------------------
+   Taller than the manifesto band above it at the client's request (Userback,
+   25 Aug 2026): it is the page's closing statement and the frame it had was
+   the same 44rem as a mid-page band. The responsive steps keep their own
+   ratio to it rather than being pinned to the manifesto's. */
 .home-houses {
-  min-height: 44rem;
+  min-height: 56rem;
 }
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .home-collections {
+  .home-brands {
     padding-block: var(--s9);
   }
 
-  .home-manifesto,
-  .home-houses {
+  .home-manifesto {
     min-height: 34rem;
+  }
+
+  .home-houses {
+    min-height: 42rem;
   }
 
   .home-featured {
@@ -373,22 +371,25 @@
     min-height: 32rem;
   }
 
-  .home-collections {
+  .home-brands {
     padding-block: var(--s8);
   }
 
-  .home-collections-head {
+  .home-brands-head {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--s3);
   }
 
-  .home-collection-row > li {
+  .home-brands-row > li {
     flex-basis: 78vw;
   }
 
-  .home-manifesto,
-  .home-houses {
+  .home-manifesto {
     min-height: 28rem;
+  }
+
+  .home-houses {
+    min-height: 34rem;
   }
 }
