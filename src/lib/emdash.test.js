@@ -16,6 +16,25 @@ test('mediaUrl resolves src / url / previewUrl and rejects the rest', () => {
   assert.equal(mediaUrl(null), null)
 })
 
+test('mediaUrl derives the URL from the storage key an admin save leaves behind', () => {
+  // The exact shape a value has after being saved in the admin and read back
+  // through the live loader: provider local, no src/url/previewUrl, storage
+  // key under meta.storageKey. This is the regression that made image edits
+  // silently keep the shipped art while text edits worked.
+  assert.equal(
+    mediaUrl({
+      id: '01M0XKSN1GGKKTA02SEXYKZZ7Q',
+      provider: 'local',
+      filename: 'banner.jpg',
+      meta: { storageKey: '01M0XKSMZW4XT2H0E19H83TG5A.jpg' },
+    }),
+    '/_emdash/api/media/file/01M0XKSMZW4XT2H0E19H83TG5A.jpg'
+  )
+  // Tolerate a top-level storageKey too, and still reject a keyless object.
+  assert.equal(mediaUrl({ provider: 'local', storageKey: 'k.jpg' }), '/_emdash/api/media/file/k.jpg')
+  assert.equal(mediaUrl({ provider: 'local', meta: {} }), null)
+})
+
 test('normaliseSection flattens an entry and resolves its image', () => {
   const section = normaliseSection({
     slug: 'home-manifesto',
