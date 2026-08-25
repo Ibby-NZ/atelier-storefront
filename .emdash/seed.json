@@ -2,9 +2,81 @@
   "version": "1",
   "meta": {
     "name": "Atelier Textiles",
-    "description": "Brand pages keyed to API brand slugs, plus the built-in posts and pages collections."
+    "description": "Brand pages keyed to API brand slugs, homepage sections and banner art, plus the built-in posts and pages collections."
   },
   "collections": [
+    {
+      "slug": "site_sections",
+      "label": "Site Sections",
+      "labelSingular": "Site Section",
+      "description": "Copy and imagery for the storefront's art-directed bands. The entry slug is the join key and is FIXED per section — create/edit these slugs only: shop-by-type and shop-by-application (the two shop tiles), latest-collections (heading + View all link), home-manifesto (the espresso Atelier band; Subtitle is the pronunciation), home-houses (the design-houses band). A blank field falls back to the copy shipped in the site, so a section can override just its image or just its title.",
+      "supports": ["drafts", "revisions"],
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "subtitle",
+          "label": "Subtitle",
+          "type": "string"
+        },
+        {
+          "slug": "body",
+          "label": "Body",
+          "type": "text"
+        },
+        {
+          "slug": "cta_label",
+          "label": "Button label",
+          "type": "string"
+        },
+        {
+          "slug": "cta_href",
+          "label": "Button link",
+          "type": "string",
+          "description": "Relative site path (e.g. /products) or a full URL."
+        },
+        {
+          "slug": "image",
+          "label": "Image",
+          "type": "image"
+        }
+      ]
+    },
+    {
+      "slug": "collection_banners",
+      "label": "Collection Banners",
+      "labelSingular": "Collection Banner",
+      "description": "Commissioned photography for a featured collection on the homepage. House and Collection are the join keys: House is the brand's web address (slug) in atelier-api, Collection is the collection's web address within that house (shown in the CRM's Houses & collections screen). Banner is the full-bleed hero frame (landscape, ~2560px); Portrait is the featured-collection band's upright frame. A banner here overrides the art shipped in the site for that collection; which collections appear at all is still the CRM's featured ranking.",
+      "supports": ["drafts", "revisions"],
+      "fields": [
+        {
+          "slug": "house",
+          "label": "House (catalogue web address)",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "collection",
+          "label": "Collection (catalogue web address)",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "banner",
+          "label": "Hero banner",
+          "type": "image"
+        },
+        {
+          "slug": "portrait",
+          "label": "Featured portrait",
+          "type": "image"
+        }
+      ]
+    },
     {
       "slug": "brand_pages",
       "label": "Brand Pages",
@@ -139,6 +211,63 @@
       ]
     }
   ],
+  "content": {
+    "site_sections": [
+      {
+        "id": "site_sections:shop-by-type",
+        "slug": "shop-by-type",
+        "status": "published",
+        "data": {
+          "title": "Shop by type",
+          "cta_label": "Shop now",
+          "cta_href": "/products"
+        }
+      },
+      {
+        "id": "site_sections:shop-by-application",
+        "slug": "shop-by-application",
+        "status": "published",
+        "data": {
+          "title": "Shop by application",
+          "cta_label": "Shop now",
+          "cta_href": "/products"
+        }
+      },
+      {
+        "id": "site_sections:latest-collections",
+        "slug": "latest-collections",
+        "status": "published",
+        "data": {
+          "title": "Latest collections",
+          "cta_label": "View all",
+          "cta_href": "/products"
+        }
+      },
+      {
+        "id": "site_sections:home-manifesto",
+        "slug": "home-manifesto",
+        "status": "published",
+        "data": {
+          "title": "Atelier",
+          "subtitle": "[ at-l-yey ]",
+          "body": "True to the French word for workshop, Atelier is a space built for creation. We've curated thousands of luxury fabrics, wall coverings, and furnishings from the world's leading design capitals. Step into our workspace and discover the inspiration to bring your bespoke interiors to life.",
+          "cta_label": "Our Story",
+          "cta_href": "/story"
+        }
+      },
+      {
+        "id": "site_sections:home-houses",
+        "slug": "home-houses",
+        "status": "published",
+        "data": {
+          "title": "The World's Finest Design Houses",
+          "body": "From the legendary textile mills of Europe to innovative global creators, we are a boutique importer and distributor of the world’s most luxurious furnishing brands.",
+          "cta_label": "View brands",
+          "cta_href": "/brands"
+        }
+      }
+    ]
+  },
   "taxonomies": [
     {
       "name": "category",

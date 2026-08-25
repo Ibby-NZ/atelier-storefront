@@ -247,9 +247,9 @@ const banners = [
   applySection({ ...BANNERS[0], image: typeArt.src }, sections['shop-by-type']),
   applySection({ ...BANNERS[1], image: applicationArt.src }, sections['shop-by-application']),
 ]
-const brandsHead = applySection(
-  { title: 'Brands', cta: 'View all', href: '/brands', image: null },
-  sections['home-brands']
+const latestHead = applySection(
+  { title: 'Latest collections', cta: 'View all', href: '/products', image: null },
+  sections['latest-collections']
 )
 const manifesto = applySection({ ...MANIFESTO, image: manifestoImage.src }, sections['home-manifesto'])
 const housesBand = applySection({ ...HOUSES, image: housesArt.src }, sections['home-houses'])
@@ -285,12 +285,12 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
   </section>
 
   {
-    houses.length > 0 && (
-      <section class="home-brands">
-        <div class="container home-brands-head">
-          <h2>{brandsHead.title}</h2>
-          <a class="cta-underline cta-underline-lg" href={brandsHead.href}>
-            {brandsHead.cta}
+    latest.length > 0 && (
+      <section class="home-collections">
+        <div class="container home-collections-head">
+          <h2>{latestHead.title}</h2>
+          <a class="cta-underline cta-underline-lg" href={latestHead.href}>
+            {latestHead.cta}
           </a>
         </div>
         {/* Outside the container on purpose: the row runs PAST the frame's
