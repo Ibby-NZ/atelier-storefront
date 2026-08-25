@@ -18,13 +18,16 @@ import Wordmark from './Wordmark.astro'
 // sign-in); without it the header sits on the page ground in umber over a
 // hairline. `Layout.astro` passes it through from the page.
 //
-// The nav labels are the design's own: Story for /story, Journal for
-// /resources. There is no Home item — the wordmark is the way home.
+// The nav labels are the client's own (Userback, 25 Aug 2026): Shop for
+// /products and Our Brands for /brands, Story for /story, Journal for
+// /resources. There is no Home item — the wordmark is the way home. The LABEL
+// is all that moved; every href, every `isActive` test and every link into
+// these routes elsewhere on the site is unchanged.
 const { overlay = false } = Astro.props
 
 const links = [
-  { href: '/products', label: 'Products' },
-  { href: '/brands', label: 'Brands' },
+  { href: '/products', label: 'Shop' },
+  { href: '/brands', label: 'Our Brands' },
   { href: '/bespoke', label: 'Bespoke' },
   { href: '/story', label: 'Story' },
   { href: '/resources', label: 'Journal' },

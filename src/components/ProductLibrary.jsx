@@ -497,7 +497,7 @@ export default function ProductLibrary() {
             </button>
           </p>
         ) : (
-          <ul className="product-grid">
+          <ul className="product-grid product-grid-round">
             {pageItems.map((product) => {
               const price = priceInfo(product, viewer)
               const weave = weaveBackground(product.colourways?.[0]?.hex_tones)

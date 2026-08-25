@@ -9,6 +9,7 @@ export const prerender = false
 import { Image, getImage } from 'astro:assets'
 import Layout from '../layouts/Layout.astro'
 import CollectionHero from '../components/CollectionHero.astro'
+import DragScroll from '../components/DragScroll.astro'
 import { safeFetch } from '../lib/api.js'
 import {
   applySection,
@@ -23,10 +24,9 @@ import {
   featuredCollections,
   houseLabel,
   HERO_SLOTS,
-  LATEST_SLOTS,
-  pickCollections,
   pickFeature,
 } from '../lib/home.js'
+import { houseArtwork } from '../lib/houses.js'
 
 // Commissioned banner art, shipped with the site rather than fetched.
 //
@@ -129,8 +129,8 @@ const featureArt = overlayArtwork(FEATURE_ART, cmsBanners, 'portrait')
 // show another. /products can never be empty, which is the standing rule for
 // every link out of this page.
 const BANNERS = [
-  { title: 'Shop by type', cta: 'Shop now', href: '/products' },
-  { title: 'Shop by application', cta: 'Shop now', href: '/products' },
+  { title: 'Shop by type', cta: 'View all types', href: '/products' },
+  { title: 'Shop by application', cta: 'View all applications', href: '/products' },
 ]
 
 const MANIFESTO = {
@@ -187,28 +187,41 @@ const featured = featuredLive && {
   ...collectionArtwork(featureArt, featuredLive),
 }
 
-// The fact list beside the featured collection. Every row is live data, and a
-// row with nothing behind it is dropped rather than shown empty — so the band
-// still reads as finished when the API is down. `product_count` is deliberately
-// NOT one of them: collection membership is staff-assigned in the CRM and the
-// seed assigns none, so it is 0 for every collection and would read as "nothing
-// in it". Designs held from the HOUSE is the honest figure, and it is also
-// where the "Explore collection" link lands (collectionHref's second rung).
-const featuredHouse = brands.find((brand) => brand.slug === featuredLive?.brand?.slug) ?? null
-const featuredDesigns = houseDesigns(featuredLive)
-const featuredFacts = [
-  { label: 'House', value: featuredLive?.brand?.name ?? null },
-  { label: 'Origin', value: featuredHouse?.country ?? null },
-  { label: 'Designs held', value: featuredDesigns > 0 ? String(featuredDesigns) : null },
-].filter((fact) => fact.value)
+// The band carries the collection's own copy and the way into it, and nothing
+// else: the House / Origin / Designs-held fact list was dropped at the client's
+// request (Userback, 25 Aug 2026) — a blurb and a link, the same figure the
+// house page settled on when the August redraw took its facts rows out.
 
-// The office's choice first — the featured collections the hero did not take —
-// then the rest of the catalogue to fill the row out. Nothing already on the
-// page appears twice.
-const latest = pickCollections([...featuredList.slice(HERO_SLOTS), ...collections], {
-  count: LATEST_SLOTS,
-  exclude: [...heroCollections, featuredLive].filter(Boolean),
-})
+// --- Brands ----------------------------------------------------------------
+// The row of maisons, in the API'S OWN ORDER — `featured_rank` first, then
+// name — so the houses the office features lead it, and the tie between two
+// houses at one rank breaks the way the API broke it. Same figure and same
+// tile as /brands and /story: one `.house-card`, one artwork chain.
+//
+// The tile is a photograph with the maison's mark over it and NO caption, so
+// the picture carries the whole tile — which is why `brands.image_url`, the
+// image the office uploads against the house in the CRM, is the first rung of
+// houseArtwork(). The rungs under it are the ones this page already has in
+// hand: a collection hero of the house's own, then a design of its own. The
+// editorial rung is not fetched here (it costs the EmDash list and the content
+// collection) and the chain simply skips it. A house with none of them paints
+// the weave rather than borrowing a neighbour's room.
+const collectionImages = collections.reduce((images, collection) => {
+  const slug = collection.brand?.slug
+  if (!slug || !collection.image_url || images[slug]) return images
+  return { ...images, [slug]: collection.image_url }
+}, {})
+
+const productImages = products.reduce((images, product) => {
+  const slug = product.brand?.slug
+  if (!slug || !product.image_url || images[slug]) return images
+  return { ...images, [slug]: product.image_url }
+}, {})
+
+const houses = brands.map((brand) => ({
+  ...brand,
+  image: houseArtwork({ collections: collectionImages, catalogue: productImages }, brand),
+}))
 
 // --- Photography -----------------------------------------------------------
 // The bands that carry no collection of their own are art-directed outright
@@ -280,22 +293,22 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
             {latestHead.cta}
           </a>
         </div>
-        {/* Horizontal scroller: the design runs the row past the right edge of
-            the frame, so it bleeds rather than wrapping to a second line. */}
-        <ul class="home-collection-row">
-          {latest.map((collection) => (
+        {/* Outside the container on purpose: the row runs PAST the frame's
+            right edge rather than wrapping, which is what makes it read as a
+            gallery instead of a short grid. Its own inline padding puts the
+            first tile on the container's own left edge, so it lines up with
+            the heading above and with every band below. */}
+        <ul class="home-brands-row" data-drag-scroll>
+          {houses.map((house) => (
             <li>
-              <a href={hrefFor(collection)}>
-                {collection.image_url ? (
-                  <img src={collection.image_url} alt={collection.name} loading="lazy" />
-                ) : (
-                  <span class="home-collection-media weave" aria-hidden="true" />
-                )}
-                <span class="home-collection-meta">
-                  <span class="home-collection-name">{collection.name}</span>
-                  {collection.brand?.name && (
-                    <span class="badge-ochre">{collection.brand.name}</span>
-                  )}
+              {/* The tile is the photograph with the maison's mark centred on
+                  it and NOTHING under it (Userback, 25 Aug 2026) — /brands and
+                  /story still caption theirs, which is a directory; this is a
+                  wall. `.house-card` is the shared tile, minus its name. */}
+              <a class="house-card" href={`/brands/${house.slug}`}>
+                <span class:list={['house-card-media', { weave: !house.image }]}>
+                  {house.image && <img src={house.image} alt="" loading="lazy" />}
+                  <span class="house-card-logo">{house.name}</span>
                 </span>
               </a>
             </li>
@@ -343,18 +356,6 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
             <p class="badge-ochre">Featured collection</p>
             <h2>{featured.name}</h2>
             {featured.description && <p class="home-featured-copy">{featured.description}</p>}
-            {featuredFacts.length > 0 && (
-              /* The house page's own fact list (editorial.css `.house-facts`),
-                 reused verbatim — same figure, same rows, nothing new to style. */
-              <dl class="house-facts home-featured-facts">
-                {featuredFacts.map((fact) => (
-                  <div class="house-fact">
-                    <dt>{fact.label}</dt>
-                    <dd>{fact.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
             <a class="cta-underline" href={featured.href}>
               Explore collection
             </a>
@@ -375,4 +376,6 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
       </div>
     </div>
   </section>
+
+  <DragScroll />
 </Layout>

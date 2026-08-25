@@ -1,6 +1,5 @@
 ---
 import Wordmark from './Wordmark.astro'
-import { getCollection } from 'astro:content'
 import { SOCIAL } from '../lib/site.js'
 
 // Site footer, 2026 direction — the August 2026 redraw (Footer instance on the
@@ -15,15 +14,17 @@ import { SOCIAL } from '../lib/site.js'
 // journal posts), so the form lands on /contact rather than pretending to
 // subscribe — a dead "Join us" that swallowed the address would be worse.
 //
-// Privacy Policy and Terms & Conditions render when (and only when) someone
-// adds src/content/pages/privacy.md or terms.md — the page collection already
-// drives /story and /contact the same way. Shipping the links against missing
-// pages would put two 404s in the footer of every page on the site.
+// The second column is Trade Account / Contact / Privacy Policy / Terms &
+// Conditions, always all four — the client's own list (Userback, 25 Aug 2026).
 //
-// getCollection, not getEntry: a missing getEntry logs "Entry page → privacy
-// was not found" on every page of every build, and here a miss is the expected
-// state, not a fault.
-const pageIds = new Set((await getCollection('page')).map((entry) => entry.id))
+// The last two used to render only when src/content/pages/privacy.md or
+// terms.md existed, so that neither could ever be a link to nothing. They are
+// unconditional now, which means **both pages are live and BLANK until the
+// client's copy lands in those two markdown files** — /privacy and /terms
+// already render from the `page` collection (the way /story and /contact do)
+// and show their empty state until then. No placeholder legal copy is invented
+// here; a policy nobody wrote is worse than a page that admits it is not
+// written yet.
 
 const shopLinks = [
   { href: '/products', label: 'Products' },
@@ -36,9 +37,9 @@ const shopLinks = [
 const companyLinks = [
   { href: '/trade-application', label: 'Trade Account' },
   { href: '/contact', label: 'Contact' },
-  pageIds.has('privacy') ? { href: '/privacy', label: 'Privacy Policy' } : null,
-  pageIds.has('terms') ? { href: '/terms', label: 'Terms & Conditions' } : null,
-].filter(Boolean)
+  { href: '/privacy', label: 'Privacy Policy' },
+  { href: '/terms', label: 'Terms & Conditions' },
+]
 
 const socialHref = (label) => SOCIAL.find((s) => s.label === label)?.href
 ---

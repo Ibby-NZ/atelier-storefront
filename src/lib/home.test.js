@@ -8,7 +8,6 @@ import {
   collectionKey,
   featuredCollections,
   houseLabel,
-  pickCollections,
   pickFeature,
 } from './home.js'
 
@@ -25,14 +24,6 @@ const featuredRow = (slug, brandSlug, rank, image_url = null) => ({
   featured_rank: rank,
   image_url,
 })
-
-const LIVE = [
-  collection('nature-s-opera', 'de-le-cuona'),
-  collection('manuel-canovas-giverny', 'manuel-canovas'),
-  collection('larsen-2024', 'larsen'),
-  collection('pierre-frey-cappuccino', 'pierre-frey'),
-  collection('no-9-thompson-feuillage', 'no-9-thompson'),
-]
 
 test('brandDesignCounts counts by brand slug and ignores brandless rows', () => {
   const counts = brandDesignCounts([
@@ -143,48 +134,6 @@ test('featuredCollections caps the list and leaves its input alone', () => {
   )
   assert.deepEqual(featuredCollections(rows, 0), [])
   assert.deepEqual(featuredCollections(), [])
-})
-
-test('pickCollections keeps the order it is handed', () => {
-  const picked = pickCollections(LIVE, { count: 2 })
-  assert.deepEqual(
-    picked.map((entry) => entry.slug),
-    ['nature-s-opera', 'manuel-canovas-giverny']
-  )
-})
-
-test('pickCollections tops the row up and never repeats a collection', () => {
-  const picked = pickCollections([LIVE[2], ...LIVE], { count: 4 })
-  assert.equal(picked.length, 4)
-  assert.equal(picked[0].slug, 'larsen-2024')
-  assert.equal(new Set(picked.map((entry) => entry.slug)).size, 4)
-})
-
-test('pickCollections never repeats a collection shown elsewhere on the page', () => {
-  const picked = pickCollections(LIVE, {
-    count: 4,
-    exclude: [LIVE[0], LIVE[2]],
-  })
-  const slugs = picked.map((entry) => entry.slug)
-  assert.ok(!slugs.includes('nature-s-opera'))
-  assert.ok(!slugs.includes('larsen-2024'))
-  assert.equal(slugs[0], 'manuel-canovas-giverny')
-})
-
-test('pickCollections excludes on the pair, so two houses "2024" are two tiles', () => {
-  const mine = collection('2024', 'larsen')
-  const theirs = collection('2024', 'dedar')
-  const picked = pickCollections([mine, theirs], { count: 4, exclude: [mine] })
-  assert.deepEqual(
-    picked.map((entry) => entry.brand.slug),
-    ['dedar']
-  )
-})
-
-test('pickCollections returns what it can when the catalogue is short or empty', () => {
-  assert.equal(pickCollections(LIVE.slice(0, 2), { count: 4 }).length, 2)
-  assert.deepEqual(pickCollections([], { count: 4 }), [])
-  assert.deepEqual(pickCollections(), [])
 })
 
 const imaged = (...urls) => urls.map((image_url) => ({ image_url }))

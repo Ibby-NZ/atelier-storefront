@@ -102,12 +102,15 @@ const imageSrc = (value) => (typeof value === 'string' && value.trim() ? value :
 /**
  * The photograph a house shows in the strip, as a chain:
  *
- *   1. the editorial photograph published FOR THIS house — its brand page's
- *      first slideshow image, EmDash winning over the markdown baseline (the
- *      caller resolves that precedence, exactly as /brands/[slug] does);
- *   2. else a COLLECTION photograph of this house's own;
- *   3. else a design of THIS house's own, from the catalogue;
- *   4. else none of them, and the caller paints its designed ground (the shared
+ *   1. the house's OWN image, uploaded against the brand in the CRM
+ *      (`brands.image_url`) — the office chose it FOR this maison, so it beats
+ *      every derived rung below and is the only one anybody can correct;
+ *   2. else the editorial photograph published FOR THIS house — its brand
+ *      page's first slideshow image, EmDash winning over the markdown baseline
+ *      (the caller resolves that precedence, exactly as /brands/[slug] does);
+ *   3. else a COLLECTION photograph of this house's own;
+ *   4. else a design of THIS house's own, from the catalogue;
+ *   5. else none of them, and the caller paints its designed ground (the shared
  *      `.weave` stand-in, the same answer the house page's collection tiles
  *      give a collection with no photograph).
  *
@@ -116,7 +119,7 @@ const imageSrc = (value) => (typeof value === 'string' && value.trim() ? value :
  * because the caption asserts the photograph belongs to that maison. Every map
  * is read at this house's slug and at no other key.
  *
- * **Rung 2 is what actually photographs the directory.** Rung 1 covers one house
+ * **Rung 3 is what actually photographs the directory.** Rung 2 covers one house
  * (only pierre-frey ships a markdown slideshow) and rung 3 thins out under the
  * trade gate — a represented house's designs are not in an anonymous product
  * list at all — so before it existed 40 of the 42 houses fell straight to the
@@ -138,6 +141,7 @@ export function houseArtwork(sources, house) {
   const slug = house?.slug
   if (!slug) return null
   return (
+    imageSrc(house?.image_url) ??
     imageSrc(sources?.editorial?.[slug]) ??
     imageSrc(sources?.collections?.[slug]) ??
     imageSrc(sources?.catalogue?.[slug]) ??

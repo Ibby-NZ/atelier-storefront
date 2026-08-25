@@ -9,6 +9,22 @@
 .story-page {
   background: var(--umber);
   color: var(--bone-soft);
+  /* The bands are SEPARATED, not butted (Userback, 25 Aug 2026): every block
+     ran straight into the next, so a photo band and the section under it read
+     as one continuous scroll. The page's own umber shows through each gap,
+     which is what makes the split's raised panel (`--umber-raised`) read as a
+     panel. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+/* Room under the copy on this page's bands. The shared figure hugs the bottom
+   edge at `--s6` (direction-2026.css) and that is right where a band runs into
+   the next one; here they are separated, so the copy is given the same air
+   underneath that the gap gives the band. */
+.story-page .photo-band-body {
+  padding-bottom: var(--s8);
 }
 
 /* --- Photo bands ------------------------------------------------------------ */
@@ -60,11 +76,12 @@
   justify-content: center;
   gap: var(--s5);
   padding: var(--s10) clamp(var(--s6), 6vw, var(--s10));
-  /* Stated rather than inherited from `.story-page`. It already resolved to
-     this exact value, so nothing moves — but the copy panel is half of a
-     two-colour figure, and the half that is not a photograph should name its
-     own ground rather than depend on an ancestor a later band could change. */
-  background: var(--umber);
+  /* Lifted off the page's umber rather than matching it (Userback, 25 Aug
+     2026): the copy panel is half of a two-colour figure, and on the page
+     ground it read as a hole beside the photograph instead of as the panel it
+     is. It names its own ground for the same reason it always did — never
+     inherited from `.story-page`, which a later band could change. */
+  background: var(--umber-raised);
 }
 
 .story-split-body h2 {
@@ -92,15 +109,27 @@
   color: var(--bone-muted);
 }
 
-/* The section label — the mock sets it in the tan the buttons use, which
-   reads where ochre would go muddy on umber. */
-.story-badge {
+/* The section label, in the brand ochre the client asked for (Userback, 25 Aug
+   2026, stated as #8a6747 — `--ochre` is the Figma's own color/brand/primary
+   #8b6746, the same colour to within one unit per channel, so it is the token
+   rather than a second literal).
+   
+   It replaces `--tan`, which the mock used because ochre goes muddy on the
+   page's umber — on the raised `--umber-raised` panel it is the client's call,
+   and it is worth knowing the pair is ~2.9:1, under WCAG AA for 12px text.
+
+   `.story-split-body p` beat this rule on specificity (0,2,1 against 0,1,0) and
+   the badge — which IS a <p> — was rendering bone-soft, so neither the tan the
+   mock asked for nor anything else here had ever reached the screen. Qualified
+   so the label's own colour wins wherever it is used. */
+.story-badge,
+.story-split-body p.story-badge {
   margin: 0;
   font-family: var(--font-ui);
   font-size: var(--t-xs);
   font-weight: 600;
   line-height: 1.4;
-  color: var(--tan);
+  color: var(--ochre);
 }
 
 /* Bulleted lists, both in the workspace split and the showrooms band. */

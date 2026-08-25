@@ -469,6 +469,50 @@
   padding-inline: var(--s3);
 }
 
+/* --- Round tiles ------------------------------------------------------------
+   The library's own grid only (Userback, 25 Aug 2026): the photograph is a
+   circle and the caption is centred under it. `.product-grid-round` is the
+   modifier the library's <ul> carries, so the SAME card markup keeps its
+   rectangular panel wherever else it is used — the "similar designs" row on a
+   product page (`.detail-similar-grid`) is the one other place, and nobody
+   asked for that to change.
+
+   The panel goes with it: a circle cut out of a raised cream rectangle draws
+   the rectangle, not the circle. */
+.product-grid-round .product-card {
+  background: transparent;
+}
+
+.product-grid-round .product-card > a {
+  align-items: center;
+  padding-bottom: 0;
+  text-align: center;
+}
+
+.product-grid-round .product-media {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+/* Centred on the disc and lifted clear of the curve: at the very bottom the
+   chip's own corners fall outside the circle and `overflow: hidden` bites them
+   off. 6% up, the chord is still nearly half the diameter — far wider than the
+   chip — so it reads as a full rectangle. */
+.product-grid-round .product-media .product-stock {
+  left: 50%;
+  bottom: 6%;
+  transform: translateX(-50%);
+}
+
+.product-grid-round .product-card-body {
+  align-items: center;
+}
+
+.product-grid-round .product-swatches {
+  justify-content: center;
+}
+
 .product-card .product-brand {
   display: block;
   margin: 0;

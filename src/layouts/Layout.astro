@@ -21,15 +21,13 @@ const {
   // header, and the page is responsible for leaving the band tall enough to
   // hold the header plus its own copy.
   overlay = false,
-  // `darkGround` marks a page as a participant in the dark-mode toggle: it adds
-  // `has-dark-ground` to <body>, which is what the [data-theme="dark"] rules in
-  // dark-mode.css hang the shared chrome on. Without it, a page's <main> and its
-  // (non-overlay) header stay light even in dark mode — so the un-redesigned
-  // Maison pages (cart, checkout, account, …) keep their light bodies and are
-  // never left with a dark header over a light page. The footer darkens on every
-  // page regardless, so the toggle always has a visible effect. Set it on the
-  // 2026 marketing pages the feedback named (see dark-mode.css header).
-  darkGround = false,
+  // `dark` puts the page on the direction's umber ground instead of the cream
+  // canvas — the treatment /story has, for a page that does not paint its own
+  // bands. It is NOT a dark mode: the site is light by design, has no toggle
+  // and no `prefers-color-scheme` rule; this is one page choosing the dark half
+  // of the same palette. The header takes the ground with it (see chrome.css)
+  // and the footer stays the cream band it is on every page, /story included.
+  dark = false,
 } = Astro.props
 
 // Staging is noindex by default; baked in at build time for prerendered pages.
@@ -56,35 +54,11 @@ const FONTS =
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {/* theme-color mirrors the top-of-page chrome (the header), so it is the
-        dark ground ONLY where the page actually paints a dark header — dark mode
-        AND a darkGround page. An un-themed light page (cart, checkout, …) must
-        never tint the mobile browser bar dark. Declared before the script below
-        so that script can update it. */}
-    <meta name="theme-color" content="#F7F2E9" />
-    {/* Dark-mode no-flash: apply the saved theme (and the matching theme-color)
-        to <html> BEFORE the body paints, so a returning dark-mode visitor never
-        sees a flash of the light ground. `define:vars` makes this an inline
-        script (runs in document order, before the stylesheet) and hands it the
-        page's own darkGround flag. The site is light unless a choice is stored —
-        dark is explicit opt-in, not derived from prefers-color-scheme, matching
-        the warm-paper brand. */}
-    <script define:vars={{ darkGround }}>
-      (function () {
-        try {
-          var stored = localStorage.getItem('atelier_theme')
-          var theme = stored === 'dark' ? 'dark' : 'light'
-          document.documentElement.dataset.theme = theme
-          var meta = document.querySelector('meta[name="theme-color"]')
-          if (meta) {
-            meta.setAttribute('content', theme === 'dark' && darkGround ? '#19100C' : '#F7F2E9')
-          }
-        } catch (e) {
-          document.documentElement.dataset.theme = 'light'
-        }
-      })()
-    </script>
     <meta name="description" content={description} />
+    {/* The browser chrome above the page — the phone's own top bar. It has to
+        follow the page's ground or it reads as the seam a mismatched header
+        does. */}
+    <meta name="theme-color" content={dark ? '#18100C' : '#F9F4ED'} />
     {!allowIndexing && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
     <link rel="canonical" href={canonical} />
@@ -107,7 +81,7 @@ const FONTS =
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href={FONTS} />
   </head>
-  <body class={darkGround ? 'has-dark-ground' : undefined}>
+  <body class:list={{ 'theme-dark': dark }}>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header overlay={overlay} />
     <main id="main" class={bleed ? 'main-bleed' : undefined}>

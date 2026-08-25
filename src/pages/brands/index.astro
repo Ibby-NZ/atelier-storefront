@@ -139,9 +139,11 @@ const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 220
   {
     houses.length > 0 && (
       <section class="container house-wall">
+        {/* Heading only: the "Explore all products" action was dropped at the
+            client's request (Userback, 25 Aug 2026). The tiles are how a
+            reader leaves this wall, and the header nav carries the library. */}
         <div class="house-wall-head">
           <h2>Brands</h2>
-          <a class="cta-underline" href="/products">Explore all products</a>
         </div>
         <ul class="house-wall-grid">
           {houses.map((house) => (

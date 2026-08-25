@@ -10,16 +10,15 @@
 // fewer than it holds.
 //
 // **The database owns the ORDER; this page owns the COMPOSITION.** The API hands
-// over one ranked list; that the first three are the hero and the next four the
-// latest row is decided here and is deliberately not encoded in the schema.
+// over one ranked list; that the first three are the hero is decided here and is
+// deliberately not encoded in the schema.
 //
 // Pure functions, no fetching, no DOM — mirrors lib/catalogue.js.
 
 import { featuredByRank } from './featured.js'
 
-/** Hero slides, and tiles in the "Latest collections" row — the design's own. */
+/** Hero slides — the design's own count. */
 export const HERO_SLOTS = 3
-export const LATEST_SLOTS = 4
 
 /**
  * Products held per house, keyed by brand slug.
@@ -241,35 +240,3 @@ export function bandPhotographs({
   )
 }
 
-/**
- * The "Latest collections" row: the given collections in the order given, taken
- * until the row is full and never repeating one that is already spoken for
- * elsewhere on the page.
- *
- * The caller hands over the featured collections the hero did not take, followed
- * by the whole catalogue — so the row is the office's choice first and a top-up
- * after. Topping up is what keeps the row full when the office has featured only
- * three: the design's four tiles are a composition, and three of them reads as a
- * bug rather than as an edit.
- *
- * De-duplication is on the `(house, collection)` PAIR, not the slug: the input
- * deliberately repeats itself, and two houses' "2024" are two different tiles.
- *
- * @param {Array<{ slug: string, brand?: { slug?: string } }>} collections
- * @param {{ count?: number, exclude?: Array<object> }} [options] `exclude`
- *   carries the hero's and the featured band's collections
- */
-export function pickCollections(collections = [], options = {}) {
-  const { count = LATEST_SLOTS, exclude = [] } = options
-  const spokenFor = new Set(exclude.map(collectionKey).filter(Boolean))
-  const chosen = []
-
-  collections.forEach((collection) => {
-    const key = collectionKey(collection)
-    if (chosen.length >= count || !key || spokenFor.has(key)) return
-    spokenFor.add(key)
-    chosen.push(collection)
-  })
-
-  return Object.freeze(chosen.slice(0, count))
-}
