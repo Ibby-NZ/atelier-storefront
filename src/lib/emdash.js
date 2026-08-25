@@ -28,6 +28,16 @@ export const mediaUrl = (value) => {
   for (const key of ['url', 'src', 'previewUrl']) {
     if (typeof value[key] === 'string' && value[key]) return value[key]
   }
+  // A value SAVED through the admin has none of those: the server-side
+  // normalizeMediaValue() deletes `src` for provider "local" and the live
+  // loader does not put it back, so the only address left is the storage key
+  // (under `meta.storageKey`), which the media file route serves directly.
+  // Without this rung every admin-saved image silently fell back to the
+  // shipped art — text edits showed, image edits did not.
+  const storageKey = value.meta?.storageKey ?? value.storageKey
+  if (typeof storageKey === 'string' && storageKey) {
+    return `/_emdash/api/media/file/${storageKey}`
+  }
   return null
 }
 
