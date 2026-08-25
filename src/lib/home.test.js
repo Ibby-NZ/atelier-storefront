@@ -280,6 +280,17 @@ test('collectionArtwork reports no photograph rather than an empty src', () => {
   assert.deepEqual(collectionArtwork(undefined, undefined), { image: null, src: null })
 })
 
+test('collectionArtwork renders a CMS URL string as src, over the catalogue photograph', () => {
+  // overlayArtwork (lib/emdash.js) puts plain URL strings into the registry —
+  // a CMS banner upload. It must win over the collection's own image_url and
+  // come out as `src`, not be mistaken for ImageMetadata.
+  const art = { 'larsen/larsen-2024': '/_emdash/api/media/file/banner.jpg' }
+  assert.deepEqual(collectionArtwork(art, featuredRow('larsen-2024', 'larsen', 1, '/room.jpg')), {
+    image: null,
+    src: '/_emdash/api/media/file/banner.jpg',
+  })
+})
+
 test('collectionArtwork keys on the pair, so a same-slug collection is not handed the art', () => {
   // The regression the pair key exists to prevent: collection slugs are unique
   // per house, so another maison may well hold a "larsen-2024" of its own.

@@ -473,10 +473,14 @@ Where it surfaces:
     fades in over the top. Reading the ref in render is deliberate; writing it
     there would break under StrictMode's double render.
 
-- **`/` (home)** — merchandising, built at build time from the live catalogue
-  via `safeFetch` (never throws → the API being down yields empty sections and a
-  successful build, which is the rule for every storefront page). The build-time
-  fetch is anonymous, so **no trade pricing is ever baked into the homepage** —
+- **`/` (home)** — merchandising, rendered ON DEMAND (`prerender = false`) from
+  the live catalogue via `safeFetch` (never throws → the API being down yields
+  empty sections, which is the rule for every storefront page). On demand since
+  the EmDash revamp: the section texts and banner images are CMS-editable (the
+  `site_sections` / `collection_banners` collections — see the EmDash section)
+  and an edit must show without a rebuild. Every CMS read degrades to the copy
+  shipped in the page, so an empty or absent CMS renders the file as written.
+  The fetch is anonymous, so **no trade pricing is ever on the homepage** —
   trade figures only appear on the live islands.
   - **Section order** (design: Figma "Atelier Home page", node 7307:617),
     `<Layout bleed overlay>`: full-bleed 88vh collection hero **with the header
@@ -516,6 +520,12 @@ Where it surfaces:
     there is an `<img>` to place (hero slides, featured portrait — these get a
     srcset), `getImage({ format: 'webp' })` where the picture is a CSS
     background (the tiles, the manifesto band, the houses band, `/login`).
+    The shipped art is the FALLBACK rung since the EmDash revamp: an image
+    uploaded against the matching `site_sections` entry replaces a band's
+    background, and a `collection_banners` entry overlays the hero/portrait
+    registries (`overlayArtwork` in `lib/emdash.js`) — a CMS value is a plain
+    URL string, which `collectionArtwork()` renders like a catalogue
+    photograph (no build-time srcset; the trade-off for no-deploy edits).
   - The bands are built from the SHARED 2026 figures, not from home-only
     classes: `.photo-band` for the hero / manifesto / houses bands and
     `.tile-wall` + `.tile` for the two shop banners (`direction-2026.css`).
@@ -1044,6 +1054,7 @@ markdown collections (above) remain the shipped baseline.
   `output: 'server'` + `@astrojs/node`. **Every storefront page therefore MUST
   keep `export const prerender = true`** (first line of frontmatter) or it stops
   being static — new pages need it too. The ONLY pages that render on demand are
+  `/` (home — CMS-editable sections),
   `/brands`, `/brands/[slug]`, `/products/[slug]`, `/resources`,
   `/resources/[slug]` (plus EmDash's own routes). Anything else appearing in the
   on-demand set is a silent-SSR regression: `npm run build` prints the
@@ -1104,6 +1115,29 @@ markdown collections (above) remain the shipped baseline.
   slug); **`/resources/[slug]`** resolves markdown-first then EmDash, else 404.
   Both are `prerender = false`. **Brand pages invert that precedence** (EmDash
   wins) — rationale in the US-024 section above.
+- **Homepage sections and banner art live in TWO further collections** (the
+  EmDash revamp, Aug 2026), both read by `/`:
+  - **`site_sections`** — one entry per art-directed band, the entry slug FIXED
+    per section: `shop-by-type`, `shop-by-application`, `latest-collections`,
+    `home-manifesto`, `home-houses`. Fields `title` / `subtitle` / `body` /
+    `cta_label` / `cta_href` / `image`. Merge rule (`applySection` in
+    `lib/emdash.js`): a field the editor filled wins, a BLANK field falls back
+    to the copy shipped in `index.astro` — so an entry can override just an
+    image or just a title, and an empty CMS renders the page byte-identical.
+    `cta_href` is a plain string, not a `url` field, so relative paths work.
+  - **`collection_banners`** — commissioned photography per featured
+    collection: `house` + `collection` (the API slugs, the same pair key as
+    `collectionKey()` in lib/home.js) plus `banner` (full-bleed hero frame)
+    and `portrait` (featured-band frame). `overlayArtwork` lays these over the
+    shipped `HERO_ART` / `FEATURE_ART` registries, CMS winning — which is how
+    the office hands a newly featured collection its hero art without a
+    deploy. A half-keyed row is ignored, never guessed at.
+  - **`npm run seed:cms` also seeds the five `site_sections` ENTRIES** (the
+    seed's `content` block, published, carrying the page's shipped copy) so
+    editors edit rather than create-with-a-magic-slug. Existing entries are
+    skipped on re-seed (`onConflict: skip`), never overwritten. Note the
+    seed's content block only applies via the CLI — the startup auto-seed
+    creates collections, not entries.
 - **`brand_pages` entry slug MUST equal the atelier-api brand slug** — that is
   the only key joining CMS editorial to the live catalogue brand. A
   `collection_cards` row's **`collection` sub-field joins the same way at the

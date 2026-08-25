@@ -122,3 +122,88 @@ export async function getEmdashBrandPage(slug) {
     return null
   }
 }
+
+// --- Site sections (homepage bands) ----------------------------------------
+// A `site_sections` entry, slug-keyed to a fixed section of the storefront
+// (shop-by-type, home-manifesto, ...). Fields are all optional overrides; the
+// page's shipped copy is the baseline they merge over (applySection).
+export const normaliseSection = (entry) => {
+  const data = entry?.data ?? {}
+  return Object.freeze({
+    slug: entry?.slug ?? entry?.id ?? '',
+    title: data.title ?? '',
+    subtitle: data.subtitle ?? '',
+    body: data.body ?? '',
+    ctaLabel: data.cta_label ?? '',
+    ctaHref: data.cta_href ?? '',
+    image: mediaUrl(data.image),
+  })
+}
+
+// Published site sections as a { slug: section } map. Empty object on any
+// failure — a page merges over its shipped copy and renders identically.
+export async function getSiteSections() {
+  try {
+    const { entries } = await getEmDashCollection('site_sections')
+    return Object.fromEntries(entries.map((entry) => [entry.slug, normaliseSection(entry)]))
+  } catch {
+    return {}
+  }
+}
+
+// Merge a CMS section over the copy shipped in the page. A field wins only
+// when the editor actually filled it in — a blank string is "no override", so
+// a section can replace just its image or just its title. Returns the fallback
+// itself when the CMS has nothing, keeping the empty-CMS render byte-identical.
+export const applySection = (fallback, section) => {
+  if (!section) return fallback
+  const pick = (value, base) =>
+    typeof value === 'string' && value.trim() ? value : base
+  return Object.freeze({
+    title: pick(section.title, fallback.title),
+    subtitle: pick(section.subtitle, fallback.subtitle ?? null),
+    body: pick(section.body, fallback.body ?? null),
+    cta: pick(section.ctaLabel, fallback.cta),
+    href: pick(section.ctaHref, fallback.href),
+    image: section.image || fallback.image || null,
+  })
+}
+
+// --- Collection banners (homepage hero / featured art) ----------------------
+// A `collection_banners` entry: commissioned photography for one collection,
+// joined on the same `(house, collection)` pair key the page's shipped art
+// registries use (collectionKey in lib/home.js). `key` is null when either
+// half is missing, and the row is then ignored rather than guessed at.
+export const normaliseBanner = (entry) => {
+  const data = entry?.data ?? {}
+  const house = typeof data.house === 'string' ? data.house.trim() : ''
+  const collection = typeof data.collection === 'string' ? data.collection.trim() : ''
+  return Object.freeze({
+    key: house && collection ? `${house}/${collection}` : null,
+    banner: mediaUrl(data.banner),
+    portrait: mediaUrl(data.portrait),
+  })
+}
+
+// Published collection banners. [] on any failure.
+export async function listCollectionBanners() {
+  try {
+    const { entries } = await getEmDashCollection('collection_banners')
+    return entries.map(normaliseBanner)
+  } catch {
+    return []
+  }
+}
+
+// Overlay CMS banner art onto a shipped art registry: `{ pairKey: image }`
+// where a CMS row's URL string wins over the committed ImageMetadata for the
+// same collection (collectionArtwork in lib/home.js renders either). Rows
+// without a key or without the requested frame (`banner` | `portrait`) are
+// skipped, so a half-filled entry never blanks the shipped art.
+export const overlayArtwork = (base, banners, field) => {
+  const overlay = {}
+  for (const row of banners ?? []) {
+    if (row?.key && row[field]) overlay[row.key] = row[field]
+  }
+  return Object.freeze({ ...base, ...overlay })
+}

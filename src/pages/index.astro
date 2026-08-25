@@ -1,9 +1,21 @@
 ---
-export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+// On demand since the EmDash revamp: the banner images and section texts below
+// are editable in the CMS (site_sections / collection_banners in
+// .emdash/seed.json), and an edit must show without a rebuild — the same rule
+// that keeps /brands on demand. Everything fetched here degrades safely
+// (safeFetch and the lib/emdash.js readers never throw), so an API or CMS
+// outage renders the shipped page, never a 500.
+export const prerender = false
 import { Image, getImage } from 'astro:assets'
 import Layout from '../layouts/Layout.astro'
 import CollectionHero from '../components/CollectionHero.astro'
 import { safeFetch } from '../lib/api.js'
+import {
+  applySection,
+  getSiteSections,
+  listCollectionBanners,
+  overlayArtwork,
+} from '../lib/emdash.js'
 import {
   brandDesignCounts,
   collectionArtwork,
@@ -46,10 +58,10 @@ import manifestoArt from '../assets/img/aterlier-about-bg.jpg'
 // `featured_rank`, set by the office in the CRM, replaces the slug arrays this
 // frontmatter used to carry.
 //
-// Built at build time. Everything degrades to an empty section when the API is
-// down (safeFetch never throws), so the build always succeeds — the storefront
-// is a static build and must never depend on the API being up to compile. The
-// fetch is anonymous, so no trade pricing is ever baked into this page.
+// Rendered per request (see `prerender` above). Everything degrades to an
+// empty section when the API is down (safeFetch never throws), and every CMS
+// read degrades to the copy in this file — a request never depends on either
+// being up. The fetch is anonymous, so no trade pricing is ever on this page.
 //
 // The page is `bleed`: every band paints edge to edge and carries its own
 // `.container`, which keeps its copy aligned with the site header and footer.
@@ -67,6 +79,14 @@ const collections = collectionList?.collections ?? []
 // carries the house's slug and name but not where it works from.
 const { data: brandList } = await safeFetch('/catalogue/brands')
 const brands = brandList?.brands ?? []
+
+// --- Editorial (EmDash CMS) -------------------------------------------------
+// The office's overrides for this page's copy and imagery. `sections` is a
+// { slug: section } map (site_sections); `cmsBanners` carries commissioned
+// photography per featured collection (collection_banners). Both come back
+// empty when the CMS is empty or down, and every use below falls back to the
+// copy shipped in this file — the CMS decorates the page, it never gates it.
+const [sections, cmsBanners] = await Promise.all([getSiteSections(), listCollectionBanners()])
 
 // --- Commissioned art, keyed to the collection it was shot for --------------
 // WHAT the page features is no longer decided here: `featured_rank` is, set by
@@ -95,6 +115,14 @@ const FEATURE_ART = {
   'larsen/larsen-2024': featuredCollectionArt,
 }
 
+// A banner uploaded in the CMS wins over the art shipped above for the same
+// collection, and adds collections the repo ships nothing for — which is how
+// the office gives a newly featured collection its hero frame without a
+// deploy. The registries stay pair-keyed; a CMS value is a URL string, which
+// collectionArtwork() renders like a catalogue photograph.
+const heroArt = overlayArtwork(HERO_ART, cmsBanners, 'banner')
+const featureArt = overlayArtwork(FEATURE_ART, cmsBanners, 'portrait')
+
 // The two doors into the catalogue. Both land on the library itself rather than
 // on a pre-filtered grid: "by type" and "by application" name the library's own
 // two facet dimensions, and picking a value here would promise one thing and
@@ -107,7 +135,7 @@ const BANNERS = [
 
 const MANIFESTO = {
   title: 'Atelier',
-  pronunciation: '[ at-l-yey ]',
+  subtitle: '[ at-l-yey ]',
   body: "True to the French word for workshop, Atelier is a space built for creation. We've curated thousands of luxury fabrics, wall coverings, and furnishings from the world's leading design capitals. Step into our workspace and discover the inspiration to bring your bespoke interiors to life.",
   cta: 'Our Story',
   href: '/story',
@@ -145,18 +173,18 @@ const heroSlides = heroCollections.map((collection) => ({
   house: houseLabel(collection.name, collection.brand?.name),
   description: collection.description ?? null,
   href: hrefFor(collection),
-  ...collectionArtwork(HERO_ART, collection),
+  ...collectionArtwork(heroArt, collection),
 }))
 
 // The band shows the collection its commissioned portrait was shot for, which
 // is why reordering the hero in the CRM does not move it. Null — nothing
 // featured has a picture at all — omits the band rather than framing nothing.
-const featuredLive = pickFeature(featuredList, FEATURE_ART)
+const featuredLive = pickFeature(featuredList, featureArt)
 const featured = featuredLive && {
   name: featuredLive.name,
   description: featuredLive.description ?? null,
   href: hrefFor(featuredLive),
-  ...collectionArtwork(FEATURE_ART, featuredLive),
+  ...collectionArtwork(featureArt, featuredLive),
 }
 
 // The fact list beside the featured collection. Every row is live data, and a
@@ -198,10 +226,20 @@ const [typeArt, applicationArt, housesArt, manifestoImage] = await Promise.all(
   )
 )
 
+// Each band's shipped copy + art, with the CMS section (matched by the fixed
+// slug in .emdash/seed.json) merged over it: a field the editor filled wins, a
+// blank one keeps the copy above, and an uploaded image replaces the shipped
+// derivative. With an empty CMS every merge is the identity.
 const banners = [
-  { ...BANNERS[0], image: typeArt.src },
-  { ...BANNERS[1], image: applicationArt.src },
+  applySection({ ...BANNERS[0], image: typeArt.src }, sections['shop-by-type']),
+  applySection({ ...BANNERS[1], image: applicationArt.src }, sections['shop-by-application']),
 ]
+const latestHead = applySection(
+  { title: 'Latest collections', cta: 'View all', href: '/products', image: null },
+  sections['latest-collections']
+)
+const manifesto = applySection({ ...MANIFESTO, image: manifestoImage.src }, sections['home-manifesto'])
+const housesBand = applySection({ ...HOUSES, image: housesArt.src }, sections['home-houses'])
 
 const bandStyle = (image) => (image ? `background-image: url(${image})` : undefined)
 ---
@@ -237,9 +275,9 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     latest.length > 0 && (
       <section class="home-collections">
         <div class="container home-collections-head">
-          <h2>Latest collections</h2>
-          <a class="cta-underline cta-underline-lg" href="/products">
-            View all
+          <h2>{latestHead.title}</h2>
+          <a class="cta-underline cta-underline-lg" href={latestHead.href}>
+            {latestHead.cta}
           </a>
         </div>
         {/* Horizontal scroller: the design runs the row past the right edge of
@@ -267,14 +305,15 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     )
   }
 
-  <section class="photo-band home-manifesto" style={bandStyle(manifestoImage.src)}>
+  <section class="photo-band home-manifesto" style={bandStyle(manifesto.image)}>
     <div class="container">
       <div class="home-manifesto-body">
         <h2 class="photo-band-title">
-          {MANIFESTO.title} <span class="photo-band-title-sub">{MANIFESTO.pronunciation}</span>
+          {manifesto.title}{' '}
+          {manifesto.subtitle && <span class="photo-band-title-sub">{manifesto.subtitle}</span>}
         </h2>
-        <p>{MANIFESTO.body}</p>
-        <a class="cta-underline cta-underline-light" href={MANIFESTO.href}>{MANIFESTO.cta}</a>
+        <p>{manifesto.body}</p>
+        <a class="cta-underline cta-underline-light" href={manifesto.href}>{manifesto.cta}</a>
       </div>
     </div>
   </section>
@@ -325,13 +364,13 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     )
   }
 
-  <section class="photo-band home-houses" style={bandStyle(housesArt.src)}>
+  <section class="photo-band home-houses" style={bandStyle(housesBand.image)}>
     <div class="photo-band-body">
       <div class="container photo-band-row">
-        <h2 class="photo-band-title">{HOUSES.title}</h2>
+        <h2 class="photo-band-title">{housesBand.title}</h2>
         <div class="photo-band-aside">
-          <p>{HOUSES.body}</p>
-          <a class="cta-underline cta-underline-light" href={HOUSES.href}>{HOUSES.cta}</a>
+          <p>{housesBand.body}</p>
+          <a class="cta-underline cta-underline-light" href={housesBand.href}>{housesBand.cta}</a>
         </div>
       </div>
     </div>

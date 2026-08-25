@@ -116,13 +116,19 @@ export function featuredCollections(collections = [], count = Infinity) {
  * Opera" over Larsen's interior is worse than a plain band, and the pair key is
  * what stops a same-slug collision doing it by accident.
  *
- * @param {Record<string, object>} artwork  pair key → committed image
+ * A registry value is either an `ImageMetadata` (art shipped in `src/assets`,
+ * sized by the build) or a plain URL string (art uploaded to the CMS — see
+ * overlayArtwork in lib/emdash.js). A string flows out as `src` like a
+ * catalogue photograph; metadata flows out as `image` for <Image/>.
+ *
+ * @param {Record<string, object|string>} artwork  pair key → committed image
  * @param {{ image_url?: string|null }} collection
  * @returns {{ image: object|null, src: string|null }} at most one is set
  */
 export function collectionArtwork(artwork, collection) {
   const key = collectionKey(collection)
   const committed = (key && artwork?.[key]) || null
+  if (typeof committed === 'string') return Object.freeze({ image: null, src: committed })
   if (committed) return Object.freeze({ image: committed, src: null })
 
   const url = collection?.image_url
