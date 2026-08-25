@@ -81,6 +81,30 @@ export function clearCart() {
   return []
 }
 
+/**
+ * Whether a FAILED `GET /checkout/session/:id` on the success page should still
+ * empty the cart.
+ *
+ * Stripe redirects to /checkout/success only once it has taken the money, so on
+ * that page a failed verify is not evidence of a failed payment — it is usually
+ * evidence that WE did not answer. Keeping a paid basket there is what turns an
+ * API blip into a second charge for the same goods.
+ *
+ * The single exception is 404: that is the API having reached Stripe and Stripe
+ * disowning the session, i.e. a hand-made or stale `?session_id=`. The cart is
+ * deliberately kept for that unvouched case so a crafted link cannot empty a
+ * shopper's basket.
+ *
+ * Anything without a status (a bug thrown after the fetch resolved) clears too —
+ * the fetch having succeeded is itself evidence the payment is real.
+ *
+ * @param {{ status?: number }} error rejection from apiFetch (an ApiError)
+ * @returns {boolean}
+ */
+export function shouldClearCartAfterFailedVerify(error) {
+  return error?.status !== 404
+}
+
 // Total item count across all lines.
 export function cartCount(items = readCart()) {
   return items.reduce((sum, line) => sum + (Number(line.qty) || 0), 0)

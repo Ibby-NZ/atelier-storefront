@@ -609,8 +609,19 @@ Where it surfaces:
   `/checkout/success`
   (`CheckoutSuccess.jsx`) reads `?session_id=` from the URL, verifies it via
   `GET /checkout/session/:id`, shows the deterministic order number
-  (`WEB-<id>`), and only THEN clears the cart. Money is formatted with the
-  shared `src/lib/money.js` `formatMoney(cents, currency)`.
+  (`WEB-<id>`), and then clears the cart. **A failed verify also clears it,
+  unless the API answered 404.** Stripe redirects to this page only after taking
+  the money, so a verify that fails because our own API did not answer (network
+  error, 5xx, 503 with cards off) says nothing about the payment — and a full
+  cart left there is one the shopper can be walked back into buying a second
+  time. 404 is the single answer that means Stripe DISOWNED the session (a
+  hand-made or stale `?session_id=`), and the cart is kept for exactly that
+  unvouched case so a crafted link cannot empty a real basket. The rule is
+  `shouldClearCartAfterFailedVerify` in `src/lib/cart.js`, tested in
+  `src/lib/cart.test.js`; the error screen changes with it, offering "continue
+  shopping" and a do-not-pay-again note where the cart was cleared, and "back to
+  cart" only where it survived. Money is formatted with the shared
+  `src/lib/money.js` `formatMoney(cents, currency)`.
 
 - **`/order-request` (US-020) is a CART, not a form** — `order-request.astro`
   renders `RequestList.jsx` as a single `client:load` island. It used to be one
