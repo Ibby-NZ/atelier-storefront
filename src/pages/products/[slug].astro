@@ -125,7 +125,7 @@ const productLdJson = productLd
   : null
 ---
 
-<Layout title={title} description={description} image={socialImage} type="product" bleed>
+<Layout title={title} description={description} image={socialImage} type="product" bleed darkGround={!notFound}>
   {
     notFound ? (
       <div class="container detail-static">

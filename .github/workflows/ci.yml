@@ -15,7 +15,14 @@ name: CI
 
 on:
   pull_request:
-    branches: [august-6th-updates]
+    # main is where feature branches PR now; august-6th-updates stays listed for
+    # any remaining early-August integration PRs. Without main here a PR into
+    # main runs NO gates at all — and that is not hypothetical: every pull
+    # request this repo has ever had (#5 through #9) targeted main, so this
+    # workflow had never once executed. `gh run list` returned zero runs.
+    # atelier-api corrected the same omission in its PR #29 and atelier-crm in
+    # its own; this repo was the one left behind.
+    branches: [main, august-6th-updates]
 
 # Read-only. This workflow can clone the repository and nothing else — it cannot
 # push, tag, or write to main.
