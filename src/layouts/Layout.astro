@@ -49,6 +49,27 @@ const {
 // header (server.mjs).
 const allowIndexing = import.meta.env.ALLOW_INDEXING === 'true'
 
+// Agentation annotation toolbar. Always on under `astro dev`; on a built
+// deployment it renders only when PUBLIC_AGENTATION=true, which is how the
+// Basic-Auth staging site collects visual feedback on the real build. Vite
+// statically replaces both operands at build time, so with the flag unset the
+// branch is dead code and a public launch ships no toolbar — leave it unset in
+// the launch checklist next to ALLOW_INDEXING. BUILD-TIME, like
+// SITE_URL/ALLOW_INDEXING: every storefront page is prerendered, so flipping the
+// flag needs a rebuild, not a restart.
+// Hoisted out of the template because the Userback launcher below has to know
+// whether there is an Agentation bubble to sit above.
+const showAgentation =
+  import.meta.env.DEV || import.meta.env.PUBLIC_AGENTATION === 'true'
+
+// Userback feedback widget. SELF-GATING: no token, no widget — so switching it
+// off at public launch is "unset PUBLIC_USERBACK_TOKEN", not a second flag to
+// remember. Build-time for the same reason Agentation is: the token is baked
+// into every prerendered page, so a change needs a rebuild, not a pm2 restart.
+// The value is a *widget access token*, not an API key — it is designed to ship
+// publicly in page source, which is why it carries the PUBLIC_ prefix.
+const userbackToken = import.meta.env.PUBLIC_USERBACK_TOKEN
+
 // Canonical / social URLs. `site` is not set in astro.config.mjs, so fall back
 // to the request URL's own origin — both branches yield an absolute URL.
 const base = Astro.site ?? Astro.url
@@ -136,18 +157,61 @@ const FONTS =
       }
     </main>
     <Footer />
-    {/* Agentation annotation toolbar. Always on under `astro dev`; on a built
-        deployment it renders only when PUBLIC_AGENTATION=true, which is how the
-        Basic-Auth staging site collects visual feedback on the real build.
-        Vite statically replaces both operands at build time, so with the flag
-        unset the branch is dead code and a public launch ships no toolbar —
-        leave it unset in the launch checklist next to ALLOW_INDEXING.
-        BUILD-TIME, like SITE_URL/ALLOW_INDEXING: every storefront page is
-        `prerender = true`, so flipping the flag needs a rebuild, not a restart.
-        client:only because the toolbar is a React portal into document.body
-        with no server-renderable output. */}
-    {(import.meta.env.DEV || import.meta.env.PUBLIC_AGENTATION === 'true') && (
-      <Agentation client:only="react" />
-    )}
+    {/* client:only because the toolbar is a React portal into document.body
+        with no server-renderable output. The flag is resolved in the
+        frontmatter — see `showAgentation`. */}
+    {showAgentation && <Agentation client:only="react" />}
+
+    {/* Userback feedback widget — Userback's own async loader snippet, verbatim
+        apart from the token and the placement line: put the config on
+        `window.Userback`, then append the CDN script, which self-initialises
+        from `access_token` when it lands. There is no `Userback.init()` call to
+        order against, which is why the settings must be assigned BEFORE the
+        append. Async, so it never blocks paint; no npm package, so nothing
+        enters the bundle; and with no token configured the whole block is
+        absent and Userback is never contacted. */}
+    {
+      userbackToken && (
+        <Fragment>
+          {showAgentation && (
+            /* Userback and Agentation both park at bottom 1.25rem / right
+               1.25rem, so without this the launchers land exactly on top of
+               each other — and Userback wins, because its z-index is
+               2147483644 against Agentation's 100000. Agentation's collapsed
+               bubble is 44px, i.e. a top edge at 64px; 76px clears it with a
+               12px gap.
+               Target `.userback-button`, NOT the `.userback-button-container`
+               Userback's own "overwriting CSS" page points at: that wrapper is
+               a zero-height full-width div, and the launcher inside it carries
+               its own bottom/right. `-se` scopes the rule to the south-east
+               placement set below, so moving the widget in the dashboard
+               cannot leave a stray offset behind.
+               `is:inline` matters — Astro extracts a plain <style> into the
+               page's CSS bundle regardless of the condition around it, so a
+               bundled rule would also lift the launcher on a build with no
+               Agentation to sit above. */
+            <style is:inline>
+              .userback-button.userback-button-se { bottom: 76px !important; }
+            </style>
+          )}
+          <script define:vars={{ userbackToken }}>
+            window.Userback = window.Userback || {}
+            Userback.access_token = userbackToken
+            // `se` (south-east) rather than Userback's own default `e`
+            // (middle-right): "above Agentation" only means anything if both
+            // launchers are in the same corner. Drop this line if the Userback
+            // dashboard should own the placement instead. Set before the script
+            // is appended — the widget reads this object as it boots.
+            Userback.widget_settings = { position: 'se' }
+            ;(function (d) {
+              var s = d.createElement('script')
+              s.async = true
+              s.src = 'https://static.userback.io/widget/v1.js'
+              ;(d.head || d.body).appendChild(s)
+            })(document)
+          </script>
+        </Fragment>
+      )
+    }
   </body>
 </html>
