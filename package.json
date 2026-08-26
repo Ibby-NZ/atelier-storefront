@@ -13,7 +13,8 @@
     "astro": "astro",
     "lint": "eslint .",
     "test": "node --test \"src/**/*.test.js\"",
-    "seed:cms": "emdash seed --database ./data/emdash.db --uploads-dir ./data/uploads"
+    "seed:cms": "emdash seed --database ./data/emdash.db --uploads-dir ./data/uploads",
+    "import:cms-art": "node scripts/import-cms-art.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.0.2",

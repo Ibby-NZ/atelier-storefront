@@ -217,3 +217,30 @@ export const overlayArtwork = (base, banners, field) => {
   }
   return Object.freeze({ ...base, ...overlay })
 }
+
+// --- Pages (company / free-form pages) --------------------------------------
+// A `pages` entry: title + Portable Text body. Slug is the public path — the
+// fixed company pages (/contact, /privacy, /terms) look their own slug up and
+// fall back to the markdown `page` collection, and [slug].astro serves any
+// OTHER published entry at /<slug>, which is how the office adds a page
+// without a deploy.
+export const normalisePage = (entry) => {
+  const data = entry?.data ?? {}
+  return Object.freeze({
+    slug: entry?.slug ?? entry?.id ?? '',
+    title: data.title ?? '',
+    content: Array.isArray(data.content) && data.content.length > 0 ? data.content : null,
+    source: 'emdash',
+  })
+}
+
+// A single published page by slug, or null. Same soft-failure rule as every
+// reader here: an absent CMS yields the markdown/static baseline.
+export async function getEmdashPage(slug) {
+  try {
+    const result = await getEmDashEntry('pages', slug)
+    return result?.entry ? normalisePage(result.entry) : null
+  } catch {
+    return null
+  }
+}

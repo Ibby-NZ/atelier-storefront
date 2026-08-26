@@ -4,6 +4,7 @@ import {
   applySection,
   mediaUrl,
   normaliseBanner,
+  normalisePage,
   normaliseSection,
   overlayArtwork,
 } from './emdash.js'
@@ -140,4 +141,17 @@ test('overlayArtwork lets a CMS banner win over the shipped art for the same pai
 test('overlayArtwork tolerates an absent banner list', () => {
   const shipped = { k: 'v' }
   assert.deepEqual(overlayArtwork(shipped, undefined, 'banner'), { k: 'v' })
+})
+
+test('normalisePage flattens a pages entry and nulls an empty body', () => {
+  assert.deepEqual(
+    normalisePage({ slug: 'our-showrooms', data: { title: 'Our Showrooms', content: [{ _type: 'block' }] } }),
+    { slug: 'our-showrooms', title: 'Our Showrooms', content: [{ _type: 'block' }], source: 'emdash' }
+  )
+  assert.deepEqual(normalisePage({ slug: 'bare', data: { title: 'Bare', content: [] } }), {
+    slug: 'bare',
+    title: 'Bare',
+    content: null,
+    source: 'emdash',
+  })
 })
