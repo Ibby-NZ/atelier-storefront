@@ -13,6 +13,7 @@ import DragScroll from '../components/DragScroll.astro'
 import { safeFetch } from '../lib/api.js'
 import {
   applySection,
+  bandClasses,
   getSiteSections,
   listCollectionBanners,
   overlayArtwork,
@@ -243,10 +244,12 @@ const [typeArt, applicationArt, housesArt, manifestoImage] = await Promise.all(
 // slug in .emdash/seed.json) merged over it: a field the editor filled wins, a
 // blank one keeps the copy above, and an uploaded image replaces the shipped
 // derivative. With an empty CMS every merge is the identity.
+// A hidden section (the `hidden` knob) drops out of the page entirely — the
+// entry keeps its content in the admin for when it comes back.
 const banners = [
   applySection({ ...BANNERS[0], image: typeArt.src }, sections['shop-by-type']),
   applySection({ ...BANNERS[1], image: applicationArt.src }, sections['shop-by-application']),
-]
+].filter((banner) => !banner.hidden)
 const latestHead = applySection(
   { title: 'Latest collections', cta: 'View all', href: '/products', image: null },
   sections['latest-collections']
@@ -269,24 +272,28 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     title="Atelier Textiles — curators of global design excellence"
   />
 
-  <section class="tile-wall">
-    {
-      banners.map((banner) => (
-        <a class="tile" style={bandStyle(banner.image)} href={banner.href}>
-          <span class="tile-body">
-            <span class="tile-title">{banner.title}</span>
-            <span class="cta-underline cta-underline-light cta-underline-lg">
-              {banner.cta}
+  {
+    banners.length > 0 && (
+      <section class="tile-wall">
+        {banners.map((banner) => (
+          <a
+            class:list={['tile', ...bandClasses(banner)]}
+            style={bandStyle(banner.image)}
+            href={banner.href}
+          >
+            <span class="tile-body">
+              <span class="tile-title">{banner.title}</span>
+              <span class="cta-underline cta-underline-light cta-underline-lg">{banner.cta}</span>
             </span>
-          </span>
-        </a>
-      ))
-    }
-  </section>
+          </a>
+        ))}
+      </section>
+    )
+  }
 
   {
-    houses.length > 0 && (
-      <section class="home-collections">
+    !latestHead.hidden && houses.length > 0 && (
+      <section class:list={['home-collections', ...bandClasses(latestHead)]}>
         <div class="container home-collections-head">
           <h2>{latestHead.title}</h2>
           <a class="cta-underline cta-underline-lg" href={latestHead.href}>
@@ -318,18 +325,27 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     )
   }
 
-  <section class="photo-band home-manifesto" style={bandStyle(manifesto.image)}>
-    <div class="container">
-      <div class="home-manifesto-body">
-        <h2 class="photo-band-title">
-          {manifesto.title}{' '}
-          {manifesto.subtitle && <span class="photo-band-title-sub">{manifesto.subtitle}</span>}
-        </h2>
-        <p>{manifesto.body}</p>
-        <a class="cta-underline cta-underline-light" href={manifesto.href}>{manifesto.cta}</a>
-      </div>
-    </div>
-  </section>
+  {
+    !manifesto.hidden && (
+      <section
+        class:list={['photo-band', 'home-manifesto', ...bandClasses(manifesto)]}
+        style={bandStyle(manifesto.image)}
+      >
+        <div class="container">
+          <div class="home-manifesto-body">
+            <h2 class="photo-band-title">
+              {manifesto.title}{' '}
+              {manifesto.subtitle && <span class="photo-band-title-sub">{manifesto.subtitle}</span>}
+            </h2>
+            <p>{manifesto.body}</p>
+            <a class="cta-underline cta-underline-light" href={manifesto.href}>
+              {manifesto.cta}
+            </a>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   {
     featured && (
@@ -365,17 +381,26 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     )
   }
 
-  <section class="photo-band home-houses" style={bandStyle(housesBand.image)}>
-    <div class="photo-band-body">
-      <div class="container photo-band-row">
-        <h2 class="photo-band-title">{housesBand.title}</h2>
-        <div class="photo-band-aside">
-          <p>{housesBand.body}</p>
-          <a class="cta-underline cta-underline-light" href={housesBand.href}>{housesBand.cta}</a>
+  {
+    !housesBand.hidden && (
+      <section
+        class:list={['photo-band', 'home-houses', ...bandClasses(housesBand)]}
+        style={bandStyle(housesBand.image)}
+      >
+        <div class="photo-band-body">
+          <div class="container photo-band-row">
+            <h2 class="photo-band-title">{housesBand.title}</h2>
+            <div class="photo-band-aside">
+              <p>{housesBand.body}</p>
+              <a class="cta-underline cta-underline-light" href={housesBand.href}>
+                {housesBand.cta}
+              </a>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </section>
+      </section>
+    )
+  }
 
   <DragScroll />
 </Layout>

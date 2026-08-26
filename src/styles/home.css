@@ -256,7 +256,7 @@
 /* A flat wash rather than the bottom gradient the other two bands use: the copy
    sits mid-band here, so there is nothing for a gradient to anchor to. */
 .home-manifesto.photo-band::after {
-  background: rgba(0, 0, 0, 0.58);
+  background: rgba(0, 0, 0, var(--scrim-flat, 0.58));
 }
 
 /* The `.container` is the flex item, so it keeps its own full width and gutter
