@@ -71,6 +71,109 @@
       ]
     },
     {
+      "slug": "page_sections",
+      "label": "Page Sections",
+      "labelSingular": "Page Section",
+      "description": "Extra sections the office adds to a page — pick a designed section type, a placement slot, and fill the copy. Photo band is the full-bleed photograph band (no image = a solid dark band); Split feature is a photograph beside the copy. Position orders sections sharing a slot (lower first). Sections appear on the site as soon as they are published; Hide keeps one out of the page without losing it.",
+      "supports": ["drafts", "revisions"],
+      "fields": [
+        {
+          "slug": "page",
+          "label": "Page",
+          "type": "select",
+          "required": true,
+          "validation": {
+            "options": ["home"]
+          }
+        },
+        {
+          "slug": "placement",
+          "label": "Placement",
+          "type": "select",
+          "required": true,
+          "description": "Which slot of the page the section renders in.",
+          "validation": {
+            "options": [
+              "after-hero",
+              "after-shop-tiles",
+              "after-brands-row",
+              "after-manifesto",
+              "after-featured",
+              "end-of-page"
+            ]
+          }
+        },
+        {
+          "slug": "position",
+          "label": "Position",
+          "type": "number",
+          "description": "Orders sections sharing a placement slot — lower renders first."
+        },
+        {
+          "slug": "section_type",
+          "label": "Section type",
+          "type": "select",
+          "required": true,
+          "validation": {
+            "options": ["photo-band", "split-feature"]
+          }
+        },
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "subtitle",
+          "label": "Subtitle",
+          "type": "string"
+        },
+        {
+          "slug": "body",
+          "label": "Body",
+          "type": "text"
+        },
+        {
+          "slug": "cta_label",
+          "label": "Button label",
+          "type": "string"
+        },
+        {
+          "slug": "cta_href",
+          "label": "Button link",
+          "type": "string",
+          "description": "Relative site path (e.g. /products) or a full URL."
+        },
+        {
+          "slug": "image",
+          "label": "Image",
+          "type": "image"
+        },
+        {
+          "slug": "align",
+          "label": "Copy alignment",
+          "type": "select",
+          "validation": {
+            "options": ["left", "centre", "right"]
+          }
+        },
+        {
+          "slug": "scrim",
+          "label": "Photo wash",
+          "type": "select",
+          "validation": {
+            "options": ["standard", "soft", "deep", "none"]
+          }
+        },
+        {
+          "slug": "hidden",
+          "label": "Hide this section",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
       "slug": "collection_banners",
       "label": "Collection Banners",
       "labelSingular": "Collection Banner",

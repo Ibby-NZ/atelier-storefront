@@ -1,0 +1,82 @@
+---
+// Office-added sections (the `page_sections` CMS collection), rendered from
+// the small library of designed section types. The page hands this component
+// one placement slot's worth of sections (see groupPageSections in
+// lib/emdash.js); an empty or absent list renders nothing at all, so every
+// anchor in the page costs nothing until the office fills it.
+//
+// Two types, both built from figures the site already owns:
+//   - photo-band     — the manifesto figure: full-bleed photograph, flat
+//                      scrim, copy column. With no image it renders as a
+//                      solid umber band (`.cms-band-plain`) instead of bone
+//                      copy on cream.
+//   - split-feature  — the featured-collection figure: photograph beside the
+//                      copy. With no image the copy takes the full width.
+// The site_sections layout knobs (align / scrim) apply here too, via the same
+// bandClasses().
+import { bandClasses } from '../lib/emdash.js'
+
+const { sections = [] } = Astro.props
+const bandStyle = (image) => (image ? `background-image: url(${image})` : undefined)
+---
+
+{
+  sections.map((section) =>
+    section.type === 'split-feature' ? (
+      <section
+        class:list={[
+          'home-featured',
+          'cms-band',
+          { 'cms-split-plain': !section.image },
+          ...bandClasses(section),
+        ]}
+      >
+        <div class="container home-featured-inner">
+          {section.image && (
+            <div class="home-featured-media">
+              <img src={section.image} alt={section.title} loading="lazy" />
+            </div>
+          )}
+          <div class="home-featured-body">
+            {section.subtitle && <p class="badge-ochre">{section.subtitle}</p>}
+            <h2>{section.title}</h2>
+            {section.body && <p class="home-featured-copy">{section.body}</p>}
+            {section.cta && section.href && (
+              <a class="cta-underline" href={section.href}>
+                {section.cta}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+    ) : (
+      <section
+        class:list={[
+          'photo-band',
+          'home-manifesto',
+          'cms-band',
+          { 'cms-band-plain': !section.image },
+          ...bandClasses(section),
+        ]}
+        style={bandStyle(section.image)}
+      >
+        <div class="container">
+          <div class="home-manifesto-body">
+            <h2 class="photo-band-title">
+              {section.title}{' '}
+              {section.subtitle && (
+                <span class="photo-band-title-sub">{section.subtitle}</span>
+              )}
+            </h2>
+            {section.body && <p>{section.body}</p>}
+            {section.cta && section.href && (
+              <a class="cta-underline cta-underline-light" href={section.href}>
+                {section.cta}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  )
+}

@@ -487,3 +487,33 @@ a.cta-underline-light:hover,
   justify-content: flex-end;
   gap: var(--s6);
 }
+
+/* --- CMS-authored sections (page_sections → CmsSections.astro) -------------
+   Office-added bands reuse the manifesto and featured figures wholesale; the
+   only new drawing is the imageless state of each. */
+
+/* A photo band with no photograph: solid umber ground instead of bone copy on
+   cream, and nothing for a scrim to do. Same file as .photo-band, later in
+   source, so the background wins without a specificity fight. */
+.photo-band.cms-band-plain {
+  --scrim-deep: 0;
+  --scrim-faint: 0;
+  --scrim-flat: 0;
+  background-color: var(--umber);
+}
+
+/* A split feature with no photograph: the copy takes the whole measure. */
+.cms-split-plain .home-featured-inner {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* The alignment knob on a split feature's copy column. */
+.band-align-centre .home-featured-body {
+  align-items: center;
+  text-align: center;
+}
+
+.band-align-right .home-featured-body {
+  align-items: flex-end;
+  text-align: right;
+}
