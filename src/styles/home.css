@@ -1,9 +1,10 @@
 /*
- * Homepage, 2026 direction (design: Figma "Atelier Home page", node 7307:617).
+ * Homepage, 2026 direction (design: Figma "Atelier Home page", node 9379:2565 —
+ * the August 2026 redraw of the frame this file was first built from, 7307:617).
  *
  * Six bands in a fixed order: a full-bleed collection hero, the two shop
- * banners, the latest-collections scroller, the umber "Atelier" manifesto, the
- * featured collection, and the design-houses band.
+ * banners, the maisons scroller, the umber "Atelier" manifesto, the featured
+ * collection, and the design-houses band.
  *
  * The figures this page is BUILT from — the underlined action, the badge, the
  * full-bleed photograph band and the tile wall — live in direction-2026.css,
@@ -168,12 +169,12 @@
    horizontal scroller. No caption under a tile here — the photograph with the
    maison's mark over it IS the tile (Userback, 25 Aug 2026), so nothing in
    this block styles a name. */
-.home-brands {
+.home-collections {
   padding-block: var(--s10);
   background: var(--shell);
 }
 
-.home-brands-head {
+.home-collections-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -181,7 +182,7 @@
   margin-bottom: var(--s7);
 }
 
-.home-brands-head h2 {
+.home-collections-head h2 {
   margin: 0;
   font-family: var(--font-grotesk);
   font-weight: 400;
@@ -233,8 +234,14 @@
   display: none;
 }
 
+/* 29vw, not 24vw: the tile is 371px inside the mock's own 1280px frame, and
+   24vw only reaches that at 1546px — so on the laptop the page is actually read
+   on, every tile came out 307px wide and 383px tall against the drawn 371 × 463,
+   and the row showed a maison and a half more than the frame does. 29vw hits
+   371px at 1280 and is capped there, so the tile is the mock's at the width it
+   was drawn at and never grows past it. */
 .home-brands-row > li {
-  flex: 0 0 clamp(15rem, 24vw, 23.1875rem); /* → 371px, the mock's tile */
+  flex: 0 0 clamp(15rem, 29vw, 23.1875rem); /* → 371px, the mock's tile */
   scroll-snap-align: start;
 }
 
@@ -271,7 +278,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s6);
-  max-width: 34rem;
+  max-width: 28rem; /* the mock's 437px text wrapper */
 }
 
 .home-manifesto-body p {
@@ -281,23 +288,40 @@
   color: var(--bone);
 }
 
-/* --- Featured collection -------------------------------------------------- */
+/* --- Featured collection --------------------------------------------------
+   The band is drawn ASYMMETRIC (9379:2624): the photograph sits 12px off the
+   page edge, the copy lands on the container's own right gutter, and the band
+   carries only 12px of ground above and below — it reads as one picture set
+   into the page rather than as a centred two-column section.
+
+   The `.container` keeps the RIGHT edge, which is what holds the copy in line
+   with the header wordmark and the footer; only its start padding is
+   overridden, so the picture bleeds the way it is drawn on every viewport up to
+   the 96rem frame. Below 1024px the band stacks and the start padding goes back
+   to the gutter with it (see Responsive) — a 12px inset under a stacked
+   headline is not a bleed, it is a misaligned column. */
 .home-featured {
-  padding-block: var(--s4);
+  padding-block: var(--s3);
   background: var(--shell);
 }
 
 .home-featured-inner {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  /* The mock's own 622 / 466 split, written as the ratio so it survives the
+     container being wider than the 1280px frame it was drawn in. */
+  grid-template-columns: minmax(0, 622fr) minmax(0, 466fr);
   gap: var(--s10);
   align-items: center;
+  padding-inline-start: var(--s3);
 }
 
+/* No frame around the photograph: the mock sets it straight on the ground
+   (9379:2625 carries no stroke), and the hairline was reading as an empty box
+   for as long as the image took to arrive. The surface colour stays as the
+   ground under it while it loads. */
 .home-featured-media {
-  aspect-ratio: 9 / 10;
+  aspect-ratio: 9 / 10; /* the mock's 622 × 692 */
   overflow: hidden;
-  border: 1px solid var(--shell-line-soft);
   background: var(--surface);
 }
 
@@ -343,7 +367,7 @@
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .home-brands {
+  .home-collections {
     padding-block: var(--s9);
   }
 
@@ -362,6 +386,7 @@
   .home-featured-inner {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s7);
+    padding-inline-start: var(--gutter);
   }
 }
 
@@ -371,11 +396,11 @@
     min-height: 32rem;
   }
 
-  .home-brands {
+  .home-collections {
     padding-block: var(--s8);
   }
 
-  .home-brands-head {
+  .home-collections-head {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--s3);

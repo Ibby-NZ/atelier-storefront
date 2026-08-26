@@ -307,15 +307,17 @@ a.cta-underline-light:hover,
 }
 
 /* --- Tile wall ------------------------------------------------------------
-   Two photographs per row, 8px off the page edge with a 12px gutter — the
-   mock's own 626×700 banners at x=8 and x=646. It is the home's two shop
-   banners and the house page's collection grid, the same figure at the same
-   size in both frames. */
+   Two photographs per row, 12px off the page edge with a 12px gutter between
+   them — the August 2026 frames draw the banners at x=12 and x=646, 622×700
+   inside a 1280 frame, so the inset and the gutter are the same 12px and the
+   two tiles plus three gaps fill the width exactly. It is the home's two shop
+   banners (9379:2576) and the house page's collection grid (9379:2669), the
+   same figure at the same size in both frames. */
 .tile-wall {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s3);
-  padding: var(--s2);
+  padding: var(--s3);
   background: var(--shell);
 }
 
@@ -323,7 +325,7 @@ a.cta-underline-light:hover,
   position: relative;
   display: flex;
   align-items: flex-end;
-  aspect-ratio: 313 / 350; /* the mock's 626 × 700 */
+  aspect-ratio: 311 / 350; /* the mock's 622 × 700 */
   min-height: 24rem;
   padding: var(--s7);
   overflow: hidden;
