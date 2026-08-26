@@ -8,7 +8,7 @@ import {
   METRES_STEP,
   MAX_METRES,
 } from '../lib/requestList.js'
-import { priceInfo, productTypeLabel, weaveBackground, isFabric } from '../lib/catalogue.js'
+import { priceInfo, productClassLabel, weaveBackground, isFabric } from '../lib/catalogue.js'
 import {
   isTradeGateError,
   signInHref,
@@ -378,7 +378,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
 
         <div className="detail-info">
           <p className="detail-eyebrow">
-            {productTypeLabel(product.product_type)}
+            {productClassLabel(product)}
             {product.brand?.name && (
               <>
                 <span className="detail-eyebrow-sep" aria-hidden="true">
@@ -603,7 +603,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                       <span className="product-brand">{row.brand?.name}</span>
                       <h3>{row.name}</h3>
                       <span className="product-specs">
-                        {[productTypeLabel(row.product_type), row.composition, row.width]
+                        {[productClassLabel(row), row.composition, row.width]
                           .filter(Boolean)
                           .join(' · ')}
                       </span>

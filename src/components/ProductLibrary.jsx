@@ -3,8 +3,9 @@ import { apiFetch, ApiError } from '../lib/api.js'
 import { fetchCurrentUser } from '../lib/auth.js'
 import {
   priceInfo,
-  productTypeLabel,
+  productClassLabel,
   weaveBackground,
+  CATEGORY_LABELS,
   PRODUCT_TYPE_LABELS,
 } from '../lib/catalogue.js'
 import {
@@ -64,7 +65,16 @@ const FILTERS = [
   // (membership is staff-assigned in the CRM), and facetLists drops an empty
   // facet, so this list simply doesn't render until collections are in use.
   { key: 'collection', label: 'Collections', type: 'collection', control: 'list' },
-  { key: 'product_type', label: 'Type', type: 'enum', control: 'list' },
+  // `labels` belongs to the FILTER, not to the enum kind. Before there was a
+  // second enum facet, `optionsFor` reached straight for PRODUCT_TYPE_LABELS —
+  // which would have labelled every category as its own raw value while looking
+  // like it was labelling nothing.
+  { key: 'product_type', label: 'Type', type: 'enum', control: 'list', labels: PRODUCT_TYPE_LABELS },
+  // The merchandising axis, and a different question from Type: a cushion and a
+  // throw are both finished goods. Most of the catalogue is uncategorised and
+  // facetLists DROPS AN EMPTY FACET, so this list simply does not render until
+  // the office has filled some in — the same way Collections behaves.
+  { key: 'category', label: 'Category', type: 'enum', control: 'list', labels: CATEGORY_LABELS },
   { key: 'application', label: 'Application', type: 'text', control: 'select' },
   { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
   { key: 'width', label: 'Width', type: 'text', control: 'select' },
@@ -148,7 +158,10 @@ function optionsFor(products, filter) {
     let label = value
     if (filter.type === 'brand') label = product.brand?.name || value
     else if (filter.type === 'collection') label = product.collection?.name || value
-    else if (filter.type === 'enum') label = PRODUCT_TYPE_LABELS[value] || value
+    // The filter's own label map, falling back to the stored value — never
+    // blank. A facet row with no text is unclickable and its count reads as
+    // belonging to the row above it.
+    else if (filter.type === 'enum') label = filter.labels?.[value] || value
     seen.set(value, label)
   }
   return [...seen.entries()]
@@ -553,7 +566,7 @@ export default function ProductLibrary() {
                       </span>
 
                       <span className="product-specs">
-                        {[productTypeLabel(product.product_type), product.composition, product.width]
+                        {[productClassLabel(product), product.composition, product.width]
                           .filter(Boolean)
                           .join(' · ')}
                       </span>

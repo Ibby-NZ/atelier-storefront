@@ -14,6 +14,48 @@ export const PRODUCT_TYPE_LABELS = Object.freeze({
 
 export const productTypeLabel = (type) => PRODUCT_TYPE_LABELS[type] || type || ''
 
+// The merchandising category — what a shopper browses by, and a different axis
+// from `product_type`. `product_type` is `fabric | finished_good` and exists to
+// decide whether stock is counted in metres or in units; a cushion and a throw
+// are both finished goods, which is a true statement and a useless one to put on
+// a card. The API's vocabulary is nine values wide (`CATEGORIES` in its
+// scripts/lib/price-template.js, three columns' worth of CHECK); most of the
+// catalogue is uncategorised, and that is a real state rather than a gap.
+export const CATEGORY_LABELS = Object.freeze({
+  fabric: 'Fabric',
+  wallpaper: 'Wallpaper',
+  trimming: 'Trimming',
+  accessory: 'Accessory',
+  'bed-linen': 'Bed linen',
+  towel: 'Towel',
+  cushion: 'Cushion',
+  throw: 'Throw',
+  misc: 'Miscellaneous',
+})
+
+/**
+ * A category's label, falling back to the RAW VALUE rather than to blank.
+ *
+ * The storefront and the API deploy separately, so this build can be behind the
+ * vocabulary. A card rendering nothing would read as "uncategorised" when the
+ * truth is "a category this build has not been taught" — and the facet counts
+ * beside it would agree with themselves while quietly hiding a whole category.
+ */
+export const categoryLabel = (value) =>
+  value == null || value === '' ? '' : (CATEGORY_LABELS[value] || value)
+
+/**
+ * The one line that says what a product IS, for a card's spec line and the
+ * detail eyebrow.
+ *
+ * The category when there is one, the product type otherwise. Never both: for
+ * every fabric they are the same word, so printing the pair gives
+ * "Fabric · Fabric"; and where they differ the category is the more specific of
+ * the two and the type is the one the shopper has no use for.
+ */
+export const productClassLabel = (product) =>
+  categoryLabel(product?.category) || productTypeLabel(product?.product_type)
+
 // `products.currency` is the SUPPLIER's currency (EUR for Pierre Frey, USD for
 // Trend…) and belongs to `retail_price_cents`. `trade_price_cents` is different:
 // the API precomputes it through the pricing waterfall and stores it in **NZD
