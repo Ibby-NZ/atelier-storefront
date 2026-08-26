@@ -36,6 +36,10 @@
    ground the way everything else here does. */
 :root[data-theme="dark"] body.has-dark-ground {
   color-scheme: dark;
+  /* <main> carries the ground, but a page shorter than the viewport (a 404, a
+     gated grid, an island that failed to load) leaves the body's own cream
+     showing under the footer. Same colour, so nothing else changes. */
+  background: var(--dark-bg);
 }
 
 /* --- Footer (every page) — page feedback / home #1 ------------------------ */
@@ -129,6 +133,21 @@
 :root[data-theme="dark"] body.has-dark-ground .error-state,
 :root[data-theme="dark"] body.has-dark-ground .empty-state {
   color: var(--bone-soft);
+}
+
+/* `.error-state` / `.form-error` are not bare copy like the three above — they
+   are a BOXED notice on `--surface` with clay rules, so re-colouring the text
+   alone put bone-soft on a light cream box and made the message harder to read
+   than it was before dark mode reached this page. Give the box the raised dark
+   ground and lift the clay rule to the AA-safe `--clay-bright`. Gated with the
+   rest: both classes are shared with the un-themed light pages (checkout, the
+   trade application, order lookup), which must keep the light notice. */
+:root[data-theme="dark"] body.has-dark-ground .error-state,
+:root[data-theme="dark"] body.has-dark-ground .form-error {
+  background: var(--dark-raised);
+  border-color: var(--umber-line);
+  border-left-color: var(--clay-bright);
+  color: var(--clay-bright);
 }
 
 /* ==========================================================================
