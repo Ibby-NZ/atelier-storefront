@@ -139,6 +139,7 @@ export async function getEmdashBrandPage(slug) {
 // page's shipped copy is the baseline they merge over (applySection).
 export const normaliseSection = (entry) => {
   const data = entry?.data ?? {}
+  const choice = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
   return Object.freeze({
     slug: entry?.slug ?? entry?.id ?? '',
     title: data.title ?? '',
@@ -147,6 +148,13 @@ export const normaliseSection = (entry) => {
     ctaLabel: data.cta_label ?? '',
     ctaHref: data.cta_href ?? '',
     image: mediaUrl(data.image),
+    // Layout knobs. Free of fallback semantics — an empty choice IS the
+    // designed default, so applySection passes them straight through.
+    align: choice(data.align),
+    scrim: choice(data.scrim),
+    // The boolean field arrives as true/1 depending on the read path; anything
+    // else (unset, '', 'false', 0) leaves the section visible.
+    hidden: data.hidden === true || data.hidden === 1 || data.hidden === 'true',
   })
 }
 
@@ -176,7 +184,23 @@ export const applySection = (fallback, section) => {
     cta: pick(section.ctaLabel, fallback.cta),
     href: pick(section.ctaHref, fallback.href),
     image: section.image || fallback.image || null,
+    align: section.align || null,
+    scrim: section.scrim || null,
+    hidden: section.hidden === true,
   })
+}
+
+// The modifier classes a merged section earns from its layout knobs, for a
+// band root's class:list. Only a real choice emits a class — the designed
+// default (left / standard scrim) adds nothing, so an unknobbed page keeps its
+// exact markup. The classes themselves live in direction-2026.css, which is
+// where each band's CSS decides what "centre" or "soft" means for its figure.
+export const bandClasses = (section) => {
+  const classes = []
+  const align = section?.align === 'center' ? 'centre' : section?.align
+  if (align === 'centre' || align === 'right') classes.push(`band-align-${align}`)
+  if (['soft', 'deep', 'none'].includes(section?.scrim)) classes.push(`band-scrim-${section.scrim}`)
+  return classes
 }
 
 // --- Collection banners (homepage hero / featured art) ----------------------

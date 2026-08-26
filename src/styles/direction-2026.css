@@ -161,10 +161,13 @@ a.cta-underline-light:hover,
   content: "";
   position: absolute;
   inset: 0;
+  /* The stops are custom properties so the CMS scrim knob (site_sections
+     `scrim` → .band-scrim-* below) can retune a band without a specificity
+     fight; the fallbacks ARE the designed values. */
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.62),
-    rgba(0, 0, 0, 0.12) 58%
+    rgba(0, 0, 0, var(--scrim-deep, 0.62)),
+    rgba(0, 0, 0, var(--scrim-faint, 0.12)) 58%
   );
 }
 
@@ -337,7 +340,11 @@ a.cta-underline-light:hover,
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0) 52%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, var(--scrim-deep, 0.62)),
+    rgba(0, 0, 0, var(--scrim-faint, 0)) 52%
+  );
 }
 
 .tile-body {
@@ -407,4 +414,76 @@ a.cta-underline-light:hover,
   .tile-body {
     gap: var(--s5);
   }
+}
+
+/* --- CMS layout knobs (site_sections align / scrim) ------------------------
+   Emitted by bandClasses() in lib/emdash.js onto a band's root element. Only a
+   non-default choice earns a class, so an unknobbed page keeps its exact
+   markup. Each band's own rules decide what "centre" means for its figure —
+   these are designed variants, not free positioning. */
+.band-scrim-none {
+  --scrim-deep: 0;
+  --scrim-faint: 0;
+  --scrim-flat: 0;
+}
+
+.band-scrim-soft {
+  --scrim-deep: 0.38;
+  --scrim-faint: 0.04;
+  --scrim-flat: 0.34;
+}
+
+.band-scrim-deep {
+  --scrim-deep: 0.8;
+  --scrim-faint: 0.3;
+  --scrim-flat: 0.75;
+}
+
+/* Manifesto: the copy column re-seats inside its container. */
+.band-align-centre .home-manifesto-body {
+  margin-inline: auto;
+  align-items: center;
+  text-align: center;
+}
+
+.band-align-right .home-manifesto-body {
+  margin-left: auto;
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* Shop tiles: the class sits on the tile itself. */
+.tile.band-align-centre .tile-body {
+  align-items: center;
+  text-align: center;
+}
+
+.tile.band-align-right .tile-body {
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* Houses band: centre/right trade the two-column row for a stacked column —
+   the designed alternative, not a squeezed version of the split. */
+.band-align-centre .photo-band-row {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.band-align-right .photo-band-row {
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* Row headings (the brands/collections strip). */
+.band-align-centre .home-collections-head {
+  justify-content: center;
+  gap: var(--s6);
+}
+
+.band-align-right .home-collections-head {
+  justify-content: flex-end;
+  gap: var(--s6);
 }

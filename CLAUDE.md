@@ -1146,6 +1146,16 @@ markdown collections (above) remain the shipped baseline.
     to the copy shipped in `index.astro` — so an entry can override just an
     image or just a title, and an empty CMS renders the page byte-identical.
     `cta_href` is a plain string, not a `url` field, so relative paths work.
+    - **Layout knobs** (`align` select left/centre/right, `scrim` select
+      standard/soft/deep/none, `hidden` boolean): designed VARIANTS, not free
+      positioning. `bandClasses()` in lib/emdash.js turns a non-default choice
+      into a `band-align-*` / `band-scrim-*` class on the band root; what each
+      class means per band lives at the foot of `direction-2026.css` (the
+      scrim stops are CSS custom properties with the designed values as
+      fallbacks). `hidden` removes the section from the page while the entry
+      keeps its content. The default choices emit NOTHING, so an unknobbed
+      page keeps its exact markup. A soft/none scrim can put bone copy on a
+      pale photograph — the field description warns, the office decides.
   - **`collection_banners`** — commissioned photography per featured
     collection: `house` + `collection` (the API slugs, the same pair key as
     `collectionKey()` in lib/home.js) plus `banner` (full-bleed hero frame)
@@ -1159,6 +1169,15 @@ markdown collections (above) remain the shipped baseline.
     skipped on re-seed (`onConflict: skip`), never overwritten. Note the
     seed's content block only applies via the CLI — the startup auto-seed
     creates collections, not entries.
+  - **A field ADDED to the seed never reaches an existing database** — the
+    seed CLI skips every field of a collection that already exists, and its
+    `--on-conflict update` escape hatch also rewrites CONTENT from the seed
+    (`--no-content` does not stop it — verified on 0.29.0, editor edits get
+    clobbered). **Never run `--on-conflict update` against a database with
+    editor content.** The upgrade path is `npm run seed:cms:fields`
+    (`scripts/migrate-cms-fields.mjs`): creates the fields missing from the
+    live schema via the schema API, touches nothing else, idempotent. Same
+    `EMDASH_TOKEN` + base-URL convention as the art import.
   - **`npm run import:cms-art`** (`scripts/import-cms-art.mjs`) uploads the
     SHIPPED art into the CMS media library and attaches it: the three hero
     banners + featured portrait become `collection_banners` entries, and the

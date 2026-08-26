@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   applySection,
   mediaUrl,
+  bandClasses,
   normaliseBanner,
   normalisePage,
   normaliseSection,
@@ -56,6 +57,9 @@ test('normaliseSection flattens an entry and resolves its image', () => {
     ctaLabel: 'Our Story',
     ctaHref: '/story',
     image: '/_emdash/api/media/file/m.jpg',
+    align: '',
+    scrim: '',
+    hidden: false,
   })
 })
 
@@ -68,6 +72,9 @@ test('normaliseSection tolerates an empty entry', () => {
     ctaLabel: '',
     ctaHref: '',
     image: null,
+    align: '',
+    scrim: '',
+    hidden: false,
   })
 })
 
@@ -154,4 +161,48 @@ test('normalisePage flattens a pages entry and nulls an empty body', () => {
     content: null,
     source: 'emdash',
   })
+})
+
+test('normaliseSection carries the layout knobs, normalised and safe', () => {
+  const section = normaliseSection({
+    slug: 's',
+    data: { title: 'T', align: ' Centre ', scrim: 'NONE', hidden: true },
+  })
+  assert.equal(section.align, 'centre')
+  assert.equal(section.scrim, 'none')
+  assert.equal(section.hidden, true)
+  const bare = normaliseSection({ slug: 's', data: { title: 'T' } })
+  assert.equal(bare.align, '')
+  assert.equal(bare.scrim, '')
+  assert.equal(bare.hidden, false)
+})
+
+test('applySection passes the knobs through and never invents them', () => {
+  const fallback = { title: 'T', cta: 'Go', href: '/x', image: null }
+  const merged = applySection(
+    fallback,
+    normaliseSection({ slug: 's', data: { align: 'right', scrim: 'soft', hidden: 1 } })
+  )
+  assert.equal(merged.align, 'right')
+  assert.equal(merged.scrim, 'soft')
+  assert.equal(merged.hidden, true)
+  // No section at all → the untouched fallback, and falsy knobs downstream.
+  assert.equal(applySection(fallback, null), fallback)
+})
+
+test('bandClasses emits classes only for a real, known choice', () => {
+  assert.deepEqual(bandClasses({ align: 'centre', scrim: 'none' }), [
+    'band-align-centre',
+    'band-scrim-none',
+  ])
+  assert.deepEqual(bandClasses({ align: 'center' }), ['band-align-centre'])
+  assert.deepEqual(bandClasses({ align: 'right', scrim: 'deep' }), [
+    'band-align-right',
+    'band-scrim-deep',
+  ])
+  // Defaults, unknown values, and a plain fallback object emit nothing.
+  assert.deepEqual(bandClasses({ align: 'left', scrim: 'standard' }), [])
+  assert.deepEqual(bandClasses({ align: 'diagonal', scrim: 'plaid' }), [])
+  assert.deepEqual(bandClasses({}), [])
+  assert.deepEqual(bandClasses(undefined), [])
 })
