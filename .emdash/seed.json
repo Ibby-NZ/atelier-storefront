@@ -43,6 +43,30 @@
           "slug": "image",
           "label": "Image",
           "type": "image"
+        },
+        {
+          "slug": "align",
+          "label": "Copy alignment",
+          "type": "select",
+          "description": "Where the band's copy sits. Leave empty (or left) for the designed default.",
+          "validation": {
+            "options": ["left", "centre", "right"]
+          }
+        },
+        {
+          "slug": "scrim",
+          "label": "Photo wash",
+          "type": "select",
+          "description": "Darkness of the wash over the photograph. Softer washes let more of the image through — check the copy stays readable over it. Leave empty for the designed default.",
+          "validation": {
+            "options": ["standard", "soft", "deep", "none"]
+          }
+        },
+        {
+          "slug": "hidden",
+          "label": "Hide this section",
+          "type": "boolean",
+          "description": "Removes the section from the page entirely; the entry keeps its content for when it comes back."
         }
       ]
     },

@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "test": "node --test \"src/**/*.test.js\"",
     "seed:cms": "emdash seed --database ./data/emdash.db --uploads-dir ./data/uploads",
+    "seed:cms:fields": "node scripts/migrate-cms-fields.mjs",
     "import:cms-art": "node scripts/import-cms-art.mjs",
     "import:brand-pages": "node scripts/import-brand-pages.mjs"
   },
