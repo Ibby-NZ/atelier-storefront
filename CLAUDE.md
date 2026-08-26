@@ -87,6 +87,40 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     with nothing to server-render. It is a **runtime `dependency`**, not a
     devDependency — it now ships in the production render path, so a deploy that
     ever runs `npm ci --omit=dev` would otherwise fail the build.
+  - **Userback** (client feedback widget, added Aug 2026) sits beside it, gated
+    on `PUBLIC_USERBACK_TOKEN` alone — no second flag: unset the token and the
+    branch renders nothing and fetches nothing from Userback's CDN. It is the
+    widget ACCESS token, designed to ship in public page source, hence the
+    `PUBLIC_` prefix; the API key is a different value and does not belong here.
+    It is Userback's own async loader snippet, not `@userback/widget`: the
+    config goes on `window.Userback` (`access_token` + `widget_settings`) and
+    the CDN script is appended after it and **self-initialises from that object
+    as it boots** — there is no `Userback.init()` call to order against, which
+    is why the settings must be assigned BEFORE the append. Nothing enters the
+    bundle, nothing blocks paint, and a launch with no token contacts Userback
+    not at all. **BUILD TIME** like `PUBLIC_AGENTATION`, so it joins the same
+    launch checklist — and the token is committed in `.env.example`, so every
+    environment that copies the template gets it (a staging box still needs its
+    own `.env` updated and a rebuild).
+    - **The launcher is lifted 76px** so it sits ABOVE the Agentation bubble
+      instead of on top of it, and `widget_settings.position` is forced to `se`
+      because "above Agentation" only means anything with both launchers in one
+      corner. Measured in a browser: both park at `bottom: 1.25rem; right:
+      1.25rem`, Agentation's collapsed bubble is 44px (top edge 64px) and
+      Userback's is 48px, so they land exactly on each other — and Userback wins
+      outright, z-index **2147483644** against Agentation's 100000, which is
+      why the Agentation toolbar simply vanished. 76px clears it by 12px.
+      - **The handle is `.userback-button` (add `.userback-button-se`), NOT the
+        `.userback-button-container` Userback's own "overwriting CSS" page
+        points at.** That wrapper is a zero-height full-width div that does not
+        move the launcher at all; the button inside carries its own
+        bottom/right. Scoping to `-se` means changing the placement in the
+        Userback dashboard cannot leave a stray offset behind.
+      - The lift is emitted ONLY when Agentation is also rendering — and it must
+        be `<style is:inline>`: Astro extracts a plain `<style>` into the page's
+        CSS bundle **regardless of the condition around it**, so a bundled rule
+        would also lift the launcher on a build that has no Agentation under it.
+        `!important` because Userback's own sheet sets the `bottom`.
   - **Do not verify the toolbar's absence by filename.** The old note claimed
     `ls dist/client/_astro | grep -i agent` came back empty; it does, but only
     because Astro names the chunk after the package entry (`index.mjs` →
@@ -1424,7 +1458,9 @@ A 401 stays a 401 — a wrong password is not an outage.
 ## Env
 
 Copy `.env.example` to `.env` (gitignored): `PUBLIC_API_BASE_URL`, `SITE_URL`,
-plus the staging-gate vars above and the optional break-glass pair.
+plus the staging-gate vars above, the optional break-glass pair, and the two
+feedback-widget switches (`PUBLIC_AGENTATION`, `PUBLIC_USERBACK_TOKEN`) — both
+build-time, both on the launch checklist.
 
 `SITE_URL` is the public origin of the deployment. `astro.config.mjs` reads it
 with Vite's `loadEnv` (`import.meta.env` is NOT available in a config file) and
