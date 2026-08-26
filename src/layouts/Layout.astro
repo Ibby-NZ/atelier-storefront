@@ -28,6 +28,19 @@ const {
   // of the same palette. The header takes the ground with it (see chrome.css)
   // and the footer stays the cream band it is on every page, /story included.
   dark = false,
+  // `darkGround` opts the page into DARK MODE's page ground — the header
+  // toggle's theme, which is a different thing from `dark` above: `dark` is one
+  // page choosing the umber half of the light palette, this one says "when the
+  // reader has asked for dark mode, this body may go dark too".
+  //
+  // It is a per-page opt-in because dark mode is a curated set of overrides
+  // (src/styles/dark-mode.css), not a token swap: only the 2026 marketing
+  // surfaces have been drawn dark. Without the gate, an un-redesigned Maison
+  // page (cart, checkout, account, the journal, the order flows, admin) would
+  // get a dark <main> under light content. Set on /products, /brands,
+  // /brands/[slug] and /products/[slug]; NOT on the home or /story, whose bands
+  // are full-bleed so <main> never shows.
+  darkGround = false,
 } = Astro.props
 
 // Staging is noindex by default; baked in at build time for prerendered pages.
@@ -80,8 +93,35 @@ const FONTS =
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href={FONTS} />
+
+    {/*
+      Dark mode, applied BEFORE first paint. The header's toggle only WRITES
+      `atelier_theme` and flips `data-theme` on click — it explicitly relies on
+      this script having restored the stored choice by the time it runs (see the
+      comment at the top of Header.astro's script), so without it dark mode was
+      forgotten on every navigation and the header button came up "off" on a page
+      the reader had already darkened.
+
+      `is:inline` is load-bearing: a plain <script> is bundled and deferred, which
+      would apply the theme after the cream ground had already painted — a white
+      flash on every page load, which is the whole thing this script exists to
+      avoid. It only sets `data-theme`; `theme-color` needs `document.body` to
+      know whether this page has a dark ground at all, so Header's own sync()
+      owns that once the body exists.
+    */}
+    <script is:inline>
+      try {
+        const stored = localStorage.getItem('atelier_theme')
+        if (stored === 'dark' || stored === 'light') {
+          document.documentElement.dataset.theme = stored
+        }
+      } catch (e) {
+        // Private mode / storage disabled: the site stays light, which is the
+        // default anyway.
+      }
+    </script>
   </head>
-  <body class:list={{ 'theme-dark': dark }}>
+  <body class:list={{ 'theme-dark': dark, 'has-dark-ground': darkGround }}>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header overlay={overlay} />
     <main id="main" class={bleed ? 'main-bleed' : undefined}>
