@@ -1171,6 +1171,19 @@ markdown collections (above) remain the shipped baseline.
   `/terms` resolve their own entry first, and the `[slug]` catch-all serves
   every other published entry at `/<slug>` — see Resources + company pages
   (US-025) above.
+- **`npm run import:brand-pages`** (`scripts/import-brand-pages.mjs`) moves the
+  36 markdown brand pages into the CMS as `brand_pages` entries — blurb,
+  slideshow, cards, and the body converted to Portable Text
+  (`src/lib/markdownToPortableText.js`, pure + tested: paragraphs only, and it
+  REFUSES a body using richer syntax rather than flattening it, so a page is
+  never imported degraded). Remote atelier.co.nz photographs are downloaded
+  into the media library; a failed download keeps the URL string, which
+  renders the same. A brand already in the CMS is always skipped — an
+  editor's page is never replaced (delete the entry in the admin to
+  re-import). **Repeater image sub-values are stored VERBATIM by the save
+  path** (no server-side enrichment, unlike top-level image fields), so the
+  script stores the full MediaValue with `meta.storageKey` — a bare
+  `{provider, id}` in a repeater row renders nothing.
 - **`brand_pages` entry slug MUST equal the atelier-api brand slug** — that is
   the only key joining CMS editorial to the live catalogue brand. A
   `collection_cards` row's **`collection` sub-field joins the same way at the
