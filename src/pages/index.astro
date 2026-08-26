@@ -11,11 +11,14 @@ import Layout from '../layouts/Layout.astro'
 import CollectionHero from '../components/CollectionHero.astro'
 import DragScroll from '../components/DragScroll.astro'
 import { safeFetch } from '../lib/api.js'
+import CmsSections from '../components/CmsSections.astro'
 import {
   applySection,
   bandClasses,
   getSiteSections,
+  groupPageSections,
   listCollectionBanners,
+  listPageSections,
   overlayArtwork,
 } from '../lib/emdash.js'
 import {
@@ -87,7 +90,15 @@ const brands = brandList?.brands ?? []
 // photography per featured collection (collection_banners). Both come back
 // empty when the CMS is empty or down, and every use below falls back to the
 // copy shipped in this file — the CMS decorates the page, it never gates it.
-const [sections, cmsBanners] = await Promise.all([getSiteSections(), listCollectionBanners()])
+const [sections, cmsBanners, pageSectionList] = await Promise.all([
+  getSiteSections(),
+  listCollectionBanners(),
+  listPageSections('home'),
+])
+// Office-ADDED sections (page_sections), grouped by their placement slot; the
+// page renders each slot's list at its anchor below via <CmsSections/>. No
+// entries → every anchor renders nothing and the page is exactly as shipped.
+const extraSections = groupPageSections(pageSectionList)
 
 // --- Commissioned art, keyed to the collection it was shot for --------------
 // WHAT the page features is no longer decided here: `featured_rank` is, set by
@@ -272,6 +283,8 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     title="Atelier Textiles — curators of global design excellence"
   />
 
+  <CmsSections sections={extraSections['after-hero']} />
+
   {
     banners.length > 0 && (
       <section class="tile-wall">
@@ -290,6 +303,8 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
       </section>
     )
   }
+
+  <CmsSections sections={extraSections['after-shop-tiles']} />
 
   {
     !latestHead.hidden && houses.length > 0 && (
@@ -325,6 +340,8 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     )
   }
 
+  <CmsSections sections={extraSections['after-brands-row']} />
+
   {
     !manifesto.hidden && (
       <section
@@ -346,6 +363,8 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
       </section>
     )
   }
+
+  <CmsSections sections={extraSections['after-manifesto']} />
 
   {
     featured && (
@@ -381,6 +400,8 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     )
   }
 
+  <CmsSections sections={extraSections['after-featured']} />
+
   {
     !housesBand.hidden && (
       <section
@@ -401,6 +422,8 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
       </section>
     )
   }
+
+  <CmsSections sections={extraSections['end-of-page']} />
 
   <DragScroll />
 </Layout>

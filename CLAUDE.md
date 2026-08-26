@@ -1190,6 +1190,20 @@ markdown collections (above) remain the shipped baseline.
   `/terms` resolve their own entry first, and the `[slug]` catch-all serves
   every other published entry at `/<slug>` — see Resources + company pages
   (US-025) above.
+- **`page_sections` — the office ADDS sections to the homepage.** One entry =
+  one extra band, rendered by `components/CmsSections.astro` from two designed
+  types that reuse figures the site already owns: `photo-band` (the manifesto
+  figure; no image → a solid umber band, `.cms-band-plain`) and
+  `split-feature` (the featured-collection figure; no image → full-measure
+  copy, `.cms-split-plain`). `placement` names one of the page's six fixed
+  anchor slots (`after-hero`, `after-shop-tiles`, `after-brands-row`,
+  `after-manifesto`, `after-featured`, `end-of-page` — unknown values land at
+  the end rather than vanishing); `position` orders sections sharing a slot.
+  The same `align`/`scrim`/`hidden` knobs apply. Reads go through
+  `listPageSections(page)` + `groupPageSections` (lib/emdash.js, tested); the
+  page renders each slot with `<CmsSections sections={extra['slot']} />`, and
+  an empty CMS renders nothing at any anchor. Only `page: home` exists so far —
+  extending to another page = add its option + anchors in that page's file.
 - **`brand_pages` entry slug MUST equal the atelier-api brand slug** — that is
   the only key joining CMS editorial to the live catalogue brand. A
   `collection_cards` row's **`collection` sub-field joins the same way at the

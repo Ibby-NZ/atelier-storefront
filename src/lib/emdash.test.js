@@ -4,8 +4,10 @@ import {
   applySection,
   mediaUrl,
   bandClasses,
+  groupPageSections,
   normaliseBanner,
   normalisePage,
+  normalisePageSection,
   normaliseSection,
   overlayArtwork,
 } from './emdash.js'
@@ -205,4 +207,48 @@ test('bandClasses emits classes only for a real, known choice', () => {
   assert.deepEqual(bandClasses({ align: 'diagonal', scrim: 'plaid' }), [])
   assert.deepEqual(bandClasses({}), [])
   assert.deepEqual(bandClasses(undefined), [])
+})
+
+test('normalisePageSection defaults the risky choices and keeps the safe ones', () => {
+  const section = normalisePageSection({
+    slug: 'winter-story',
+    data: {
+      page: 'home',
+      placement: 'after-manifesto',
+      position: '2',
+      section_type: 'split-feature',
+      title: 'Winter Story',
+      body: 'Copy.',
+      cta_label: 'Read',
+      cta_href: '/resources',
+      image: { src: '/w.jpg' },
+      align: 'centre',
+    },
+  })
+  assert.equal(section.placement, 'after-manifesto')
+  assert.equal(section.position, 2)
+  assert.equal(section.type, 'split-feature')
+  assert.equal(section.image, '/w.jpg')
+  assert.equal(section.align, 'centre')
+  // Unknown placement → end of page; unknown type → photo band; junk position → 0.
+  const odd = normalisePageSection({
+    slug: 'odd',
+    data: { title: 'Odd', placement: 'sidebar', section_type: 'carousel', position: 'first' },
+  })
+  assert.equal(odd.placement, 'end-of-page')
+  assert.equal(odd.type, 'photo-band')
+  assert.equal(odd.position, 0)
+})
+
+test('groupPageSections buckets by placement and orders by position', () => {
+  const make = (slug, placement, position) => ({ slug, placement, position })
+  const groups = groupPageSections([
+    make('c', 'after-manifesto', 5),
+    make('a', 'after-manifesto', 1),
+    make('z', 'end-of-page', 0),
+  ])
+  assert.deepEqual(groups['after-manifesto'].map((s) => s.slug), ['a', 'c'])
+  assert.deepEqual(groups['end-of-page'].map((s) => s.slug), ['z'])
+  assert.equal(groups['after-hero'], undefined)
+  assert.deepEqual(groupPageSections(undefined), {})
 })

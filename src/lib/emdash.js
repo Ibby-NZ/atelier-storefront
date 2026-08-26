@@ -268,3 +268,70 @@ export async function getEmdashPage(slug) {
     return null
   }
 }
+
+// --- Page sections (office-added bands) -------------------------------------
+// A `page_sections` entry: one EXTRA section the office has added to a page,
+// rendered by components/CmsSections.astro from a small library of designed
+// section types. Placement names one of the page's fixed slots; position
+// orders sections sharing a slot.
+export const PAGE_SECTION_PLACEMENTS = Object.freeze([
+  'after-hero',
+  'after-shop-tiles',
+  'after-brands-row',
+  'after-manifesto',
+  'after-featured',
+  'end-of-page',
+])
+
+export const normalisePageSection = (entry) => {
+  const data = entry?.data ?? {}
+  const choice = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
+  const placement = choice(data.placement)
+  return Object.freeze({
+    slug: entry?.slug ?? entry?.id ?? '',
+    page: choice(data.page) || 'home',
+    // Unknown placements land at the end of the page rather than vanishing.
+    placement: PAGE_SECTION_PLACEMENTS.includes(placement) ? placement : 'end-of-page',
+    position: Number.isFinite(Number(data.position)) ? Number(data.position) : 0,
+    // Two designed types; anything unrecognised renders as the photo band,
+    // which degrades to a plain dark band without an image.
+    type: choice(data.section_type) === 'split-feature' ? 'split-feature' : 'photo-band',
+    title: data.title ?? '',
+    subtitle: data.subtitle ?? '',
+    body: data.body ?? '',
+    cta: data.cta_label ?? '',
+    href: data.cta_href ?? '',
+    image: mediaUrl(data.image),
+    align: choice(data.align),
+    scrim: choice(data.scrim),
+    hidden: data.hidden === true || data.hidden === 1 || data.hidden === 'true',
+  })
+}
+
+// Published, visible sections for one page. [] on any failure — a page with
+// no office-added sections is simply the page as shipped.
+export async function listPageSections(page) {
+  try {
+    const { entries } = await getEmDashCollection('page_sections')
+    return entries
+      .map(normalisePageSection)
+      .filter((section) => section.page === page && !section.hidden && section.title)
+  } catch {
+    return []
+  }
+}
+
+// Group by placement slot, ordered by position (stable within a tie). The
+// page asks for each slot by name; a slot with nothing is simply absent.
+export const groupPageSections = (sections) => {
+  const groups = {}
+  for (const section of sections ?? []) {
+    groups[section.placement] = [...(groups[section.placement] ?? []), section]
+  }
+  for (const placement of Object.keys(groups)) {
+    groups[placement] = Object.freeze(
+      [...groups[placement]].sort((a, b) => a.position - b.position)
+    )
+  }
+  return Object.freeze(groups)
+}
