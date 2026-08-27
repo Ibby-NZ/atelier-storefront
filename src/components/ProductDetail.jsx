@@ -8,7 +8,13 @@ import {
   METRES_STEP,
   MAX_METRES,
 } from '../lib/requestList.js'
-import { priceInfo, productClassLabel, weaveBackground, isFabric } from '../lib/catalogue.js'
+import {
+  priceInfo,
+  productClassLabel,
+  weaveBackground,
+  isFabric,
+  TRADE_CURRENCY,
+} from '../lib/catalogue.js'
 import {
   isTradeGateError,
   signInHref,
@@ -289,6 +295,14 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
 
   const onAddToCart = () => {
     if (!canAddToCart) return
+    // The cart line carries the price THIS viewer was quoted, on the same
+    // precedence priceInfo() renders (FR-3): the API only ever sends
+    // `trade_price_cents` to an approved trade shopper, so its presence IS the
+    // entitlement. Storing retail here made the card say "Trade $X" and the cart
+    // say retail. Trade money is NZD cents whatever `product.currency` (the
+    // supplier's, and the retail figure's) says. The API re-resolves the charge
+    // on the same rule — this figure is never trusted for money.
+    const tradePriceCents = product.trade_price_cents ?? null
     addToCart(
       {
         sku: selected.sku,
@@ -297,8 +311,8 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
         brand: product.brand?.name ?? null,
         slug: product.slug,
         image_url: selected.image_url ?? product.hi_res_asset_url ?? null,
-        price_cents: product.retail_price_cents ?? null,
-        currency: product.currency,
+        price_cents: tradePriceCents ?? product.retail_price_cents ?? null,
+        currency: tradePriceCents == null ? product.currency : TRADE_CURRENCY,
       },
       qty
     )
