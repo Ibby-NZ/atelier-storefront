@@ -69,6 +69,15 @@
 .library-aside {
   position: sticky;
   top: var(--s6);
+  /* Cap it to the sticky viewport and let the column carry its own scrollbar.
+     A sticky element with no height cap pins its TOP, so once the catalogue
+     holds more than a handful of houses the Brands list pushes Lead time below
+     the fold and the only way to reach it is to scroll the whole page past the
+     grid — by which point the sidebar has scrolled away too (Userback, 27 Aug
+     2026). `--s6` twice: the top offset above, the same again as breathing room
+     under it. */
+  max-height: calc(100vh - var(--s6) * 2);
+  overflow-y: auto;
   min-width: 0;
 }
 
@@ -467,6 +476,8 @@
   flex-direction: column;
   gap: var(--s3);
   padding-inline: var(--s3);
+  /* Fills the card so the price below can pin itself to the bottom. */
+  flex: 1;
 }
 
 /* --- Round tiles ------------------------------------------------------------
@@ -511,6 +522,15 @@
 
 .product-grid-round .product-swatches {
   justify-content: center;
+}
+
+/* `.product-price.muted` shrink-wraps to its underline, which needs an
+   alignment of its own — and `align-self` on the child beats the `align-items`
+   above, so without this the "Price on request" / "Sign in for trade pricing"
+   action was the one line in a round card hanging off the left edge while the
+   house, the name, the specs and every real price were centred. */
+.product-grid-round .product-price.muted {
+  align-self: center;
 }
 
 .product-card .product-brand {
@@ -588,7 +608,14 @@
    underlined ghost action, which is exactly what the mock's card carries. */
 .product-price {
   display: block;
-  margin: var(--s1) 0 0;
+  /* `auto`, not a value: the rows above a price vary per card (a design with no
+     colourways has no swatch strip, a spec line wraps to two), so a fixed
+     margin left the price sitting at a different height in every card of the
+     same row (Userback, 27 Aug 2026). Pinned to the bottom of the body they
+     line up. The `0` top margin it replaces was ALSO stacking on the body's own
+     `gap`, making this the one row in the card spaced 16px from its neighbour
+     where every other row is 12px. */
+  margin: auto 0 0;
   font-family: var(--font-ui);
   font-size: var(--t-base);
   font-weight: 600;
@@ -597,7 +624,7 @@
 
 .product-price.muted {
   align-self: flex-start;
-  margin-top: var(--s1);
+  margin-top: auto;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--umber-soft);
   font-size: var(--t-xs);
@@ -719,6 +746,8 @@
   .library-aside {
     display: none;
     position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .library-aside.is-open {
