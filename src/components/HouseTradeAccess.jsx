@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api.js'
-import {
-  TRADE_APPLICATION_PATH,
-  TRADE_GATE_COPY,
-  houseDesignsHref,
-  isTradeGatedList,
-  signInHref,
-} from '../lib/tradeGate.js'
+import { TRADE_GATE_COPY, houseDesignsHref, isTradeGatedList } from '../lib/tradeGate.js'
 
 // The trade note on a represented house's page (/brands/[slug]) — the one part
 // of that page that has to know WHO is reading.
@@ -61,30 +55,21 @@ export default function HouseTradeAccess({ brandSlug }) {
     }
   }, [brandSlug])
 
-  if (entitled) {
-    return (
-      <div className="house-trade">
-        <p className="house-trade-head">{TRADE_GATE_COPY.houseEntitled.heading}</p>
-        <p className="house-trade-body">{TRADE_GATE_COPY.houseEntitled.body}</p>
-        <div className="house-actions">
-          <a className="cta-underline" href={houseDesignsHref(brandSlug)}>
-            {TRADE_GATE_COPY.houseEntitled.browse}
-          </a>
-        </div>
-      </div>
-    )
-  }
+  // The GUEST note is deliberately nothing. An unentitled shopper is told about
+  // the trade library by the grid's own banner (`meta.trade_gated`), and the
+  // house page's job is the house — so the apply/sign-in block was removed here
+  // rather than said twice. The entitled note stays: it is the only route this
+  // page gives an approved account into the designs it holds, and dropping it
+  // would restore the bug this island was built for.
+  if (!entitled) return null
 
   return (
     <div className="house-trade">
-      <p className="house-trade-head">{TRADE_GATE_COPY.house.heading}</p>
-      <p className="house-trade-body">{TRADE_GATE_COPY.house.body}</p>
+      <p className="house-trade-head">{TRADE_GATE_COPY.houseEntitled.heading}</p>
+      <p className="house-trade-body">{TRADE_GATE_COPY.houseEntitled.body}</p>
       <div className="house-actions">
-        <a className="cta-underline" href={TRADE_APPLICATION_PATH}>
-          {TRADE_GATE_COPY.house.apply}
-        </a>
-        <a className="cta-underline" href={signInHref(`/brands/${brandSlug}`)}>
-          {TRADE_GATE_COPY.house.signIn}
+        <a className="cta-underline" href={houseDesignsHref(brandSlug)}>
+          {TRADE_GATE_COPY.houseEntitled.browse}
         </a>
       </div>
     </div>
