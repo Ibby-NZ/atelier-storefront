@@ -787,14 +787,38 @@ Where it surfaces:
     (Brands and Products match their routes). There is no Home item — the
     wordmark is the way home. The current section is marked with the
     direction's underline, not a colour swap.
-  - **`Wordmark.astro` is the Figma logo export, INLINED.** Since the August
-    2026 redraw it is the NEW stacked mark ("New Atelier Logo", 9434:7358 —
-    script "atelier" over spaced TEXTILES caps), and it is **single-tone**: one
-    path on `fill="currentColor"`, so each caller just sets `color` (umber on
-    the cream header, bone on a photograph, `--umber-soft` in the footer). The
-    old two-tone gold/ink mark is gone; `--gold` survives only as a token.
-    130px in the header (~52px tall, so the wordmark now centres on the header
-    row instead of hanging from a fixed top), 175.656px in the footer.
+  - **`Wordmark.astro` is the logo export, INLINED.** Since the client's Aug
+    2026 supply it is the HORIZONTAL lockup — geometric ATELIER caps over
+    spaced TEXTILES caps, 636 × 141 (4.51:1) where the stacked mark of the
+    August 2026 redraw was 130 × 51.93 (2.50:1). Hence the widths moved with
+    it: **200px in the header** (~44px tall, still centred on the row rather
+    than hanging from a fixed top) and **240px in the footer**.
+    - **It is TWO-TONE, so it no longer rides on `currentColor`.** The ATELIER
+      row fills from `--wordmark-accent` and the TEXTILES row from
+      `--wordmark-ink`; tokens.css declares the light-ground pair on `:root`
+      and the reversed pair as `--wordmark-accent-rev` / `--wordmark-ink-rev`.
+      A dark surface re-declares the pair **on the header or footer element,
+      not on the mark** — custom properties inherit, so one two-line block
+      covers every copy inside it. Three do so: `.site-header--overlay` +
+      `.theme-dark .site-header` (chrome.css), and the dark-mode footer +
+      dark-ground header (dark-mode.css). Callers pass only `width`.
+      These are the mark's own brand values, and the one deliberate exception
+      to "use the tokens": the logo does not re-tint with the palette, it
+      swaps between the two colourways the client supplied.
+    - The client supplied it as two files, a light-ground and a dark-ground
+      colourway. They are the SAME artwork — identical path data, index-for-
+      index identical fill order, differing only in the two hexes — which is
+      why this is one copy of the geometry with the colourway lifted into CSS
+      rather than two inlined marks.
+    - **Run it through SVGO on the way in** (precision 2, `removeViewBox`
+      off, `removeDimensions` on). This component is inlined in the header AND
+      the footer of every page, so it pays twice per document: the previous
+      mark shipped its raw 6-decimal Figma export and was 47.6 kB, which was
+      ~86% of every page's HTML (404.html: 109 kB raw / 41 kB gzipped). The
+      current one is 4.7 kB and the same page is 21 kB / 7 kB.
+    - SVGO strips `role="img"` — put it back. `aria-label` alone on a bare
+      `<svg>` is not reliably exposed by older VoiceOver, and that label is the
+      only text inside the header's home link.
   - **Footer** (August 2026 redraw, master 9434:7202 family): a recessed cream
     band (`--shell-subtle` #f0e3d3) — the wordmark over the Facebook/Instagram
     icons on the left, two columns of 14px muted links (Products/Brands/Our

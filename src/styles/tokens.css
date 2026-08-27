@@ -59,6 +59,20 @@
   --tan: #dcc8b1; /* color/neutral-300 — the filled button of the redraw */
   --gold: #b5985b; /* the earlier wordmark's gold — link hovers on umber */
 
+  /* The wordmark. It is TWO-TONE, so unlike the single-tone mark it replaced it
+     cannot ride on `currentColor`; `Wordmark.astro` fills the ATELIER row from
+     `--wordmark-accent` and the TEXTILES row from `--wordmark-ink`. These are
+     the mark's OWN brand values, not palette colours — the logo does not
+     re-tint with the theme, it swaps between the two colourways the client
+     supplied. The light-ground pair is the default here; a dark surface
+     re-declares the pair from `-rev` (chrome.css / dark-mode.css), and because
+     custom properties inherit it is set on the header or footer element rather
+     than on the mark. */
+  --wordmark-accent: #a57b55;
+  --wordmark-ink: #63594c;
+  --wordmark-accent-rev: #cdb295;
+  --wordmark-ink-rev: #fff;
+
   /* Rules and muted text, both grounds. The Figma binds these as
      color/border/{subtle,default,strong} and color/text/muted, and resolves
      each against whichever ground it sits on — hence two families. */
