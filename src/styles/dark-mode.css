@@ -48,10 +48,12 @@
   color: var(--bone-soft);
 }
 
-/* The wordmark is a single `currentColor` path, so the logo re-colours with the
-   brand link — "adjust the logo in the footer accordingly" (feedback). */
-:root[data-theme="dark"] .site-footer-brand {
-  color: var(--bone);
+/* The wordmark takes its reversed colourway on the dark footer band — "adjust
+   the logo in the footer accordingly" (feedback). Set on the FOOTER, not on
+   the brand link: the pair inherits down to the mark. */
+:root[data-theme="dark"] .site-footer {
+  --wordmark-accent: var(--wordmark-accent-rev);
+  --wordmark-ink: var(--wordmark-ink-rev);
 }
 
 :root[data-theme="dark"] .site-footer-socials a {
@@ -114,8 +116,9 @@
   color: var(--bone);
 }
 
-:root[data-theme="dark"] body.has-dark-ground .site-header:not(.site-header--overlay) .site-wordmark {
-  color: var(--bone);
+:root[data-theme="dark"] body.has-dark-ground .site-header:not(.site-header--overlay) {
+  --wordmark-accent: var(--wordmark-accent-rev);
+  --wordmark-ink: var(--wordmark-ink-rev);
 }
 
 /* --- Page ground (themed pages only) -------------------------------------

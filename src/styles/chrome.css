@@ -106,15 +106,16 @@
 /* Absolutely centred on the header, not on the space left between the two
    flex groups — the mock centres it on the frame and the two sides are not
    symmetrical. */
-/* The redrawn logo is a stacked mark (~52px tall at its 130px header width),
-   so it centres on the row rather than hanging from a fixed top. */
+/* The logo is a horizontal lockup (~44px tall at its 200px header width), so
+   it centres on the row rather than hanging from a fixed top. It sets no
+   `color`: the mark is two-tone and reads `--wordmark-accent`/`--wordmark-ink`
+   instead (tokens.css), which the paper header inherits from `:root`. */
 .site-wordmark {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   display: block;
-  color: var(--umber);
   line-height: 0;
 }
 
@@ -217,9 +218,13 @@
   color: #fff;
 }
 
-.site-header--overlay .site-wordmark,
-.theme-dark .site-header .site-wordmark {
-  color: var(--bone);
+/* The reversed colourway of the wordmark. Declared on the HEADER, not on the
+   mark: custom properties inherit, so one pair covers the mark wherever it
+   sits inside a reversed header. */
+.site-header--overlay,
+.theme-dark .site-header {
+  --wordmark-accent: var(--wordmark-accent-rev);
+  --wordmark-ink: var(--wordmark-ink-rev);
 }
 
 /* --- Dark theme ------------------------------------------------------------
@@ -258,10 +263,11 @@
   gap: var(--s6);
 }
 
+/* No `color`: the mark is two-tone and takes the wordmark pair, which on the
+   recessed cream band is the inherited light colourway. */
 .site-footer-brand {
   display: block;
   flex-shrink: 0;
-  color: var(--umber-soft);
   line-height: 0;
 }
 
