@@ -1,6 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { priceInfo, NO_PRICE_COPY, productSummary, weaveBackground, toneList } from './catalogue.js'
+import {
+  priceInfo,
+  NO_PRICE_COPY,
+  productSummary,
+  weaveBackground,
+  toneList,
+  categoryLabel,
+  productClassLabel,
+  CATEGORY_LABELS,
+} from './catalogue.js'
 
 const GUEST = null
 const CUSTOMER = { role: 'customer', trade_approved: false }
@@ -106,4 +115,45 @@ test('weaveBackground and toneList tolerate junk hex_tones', () => {
   assert.deepEqual(toneList('#fff'), [])
   assert.equal(weaveBackground([]), undefined)
   assert.match(weaveBackground(['#aabbcc', '#112233']), /linear-gradient/)
+})
+
+// --- the merchandising category -------------------------------------------
+
+test('a category is labelled, and a storage spelling is never shown raw', () => {
+  assert.equal(categoryLabel('bed-linen'), 'Bed linen')
+  assert.equal(categoryLabel('throw'), 'Throw')
+  assert.equal(categoryLabel('misc'), 'Miscellaneous')
+  for (const value of Object.keys(CATEGORY_LABELS)) {
+    assert.ok(categoryLabel(value), `${value} has no label`)
+  }
+})
+
+test('an unknown category falls back to its raw value, never to blank', () => {
+  // The storefront and the API deploy separately, so this build can be behind
+  // the vocabulary. Blank would read as "uncategorised" while quietly hiding a
+  // whole facet whose counts still agreed with themselves.
+  assert.equal(categoryLabel('curtain'), 'curtain')
+})
+
+test('blank means genuinely uncategorised — most of the catalogue', () => {
+  assert.equal(categoryLabel(null), '')
+  assert.equal(categoryLabel(undefined), '')
+  assert.equal(categoryLabel(''), '')
+})
+
+test('the class label prefers the category and never prints both', () => {
+  // For every fabric the two are the same word, so the pair reads
+  // "Fabric · Fabric"; where they differ the type is the half a shopper has no
+  // use for (a cushion and a throw are both finished goods).
+  assert.equal(
+    productClassLabel({ product_type: 'finished_good', category: 'cushion' }),
+    'Cushion'
+  )
+  assert.equal(productClassLabel({ product_type: 'fabric', category: 'fabric' }), 'Fabric')
+})
+
+test('the class label falls back to the product type while a design is uncategorised', () => {
+  assert.equal(productClassLabel({ product_type: 'finished_good', category: null }), 'Finished good')
+  assert.equal(productClassLabel({ product_type: 'fabric' }), 'Fabric')
+  assert.equal(productClassLabel(null), '')
 })

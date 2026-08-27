@@ -405,10 +405,34 @@ Where it surfaces:
     sidebar + results column — because the facets and the grid share every
     piece of state.
     - `FILTERS` carries a **`control`** field: `list` renders as a
-      click-to-toggle facet row with a live count (Brands, Collections, Type),
-      `select` as a boxed dropdown with its own ochre head (Application,
-      Composition, Width, Price band, Lead time). The URL keys and the filter
-      semantics are unchanged, so every existing deep link still resolves.
+      click-to-toggle facet row with a live count (Brands, Collections, Type,
+      Category), `select` as a boxed dropdown with its own ochre head
+      (Application, Composition, Width, Price band, Lead time). The URL keys and
+      the filter semantics are unchanged, so every existing deep link still
+      resolves.
+    - **`labels` belongs to the FILTER, not to the `enum` kind.** While Type was
+      the only enum facet, `optionsFor` reached straight for
+      `PRODUCT_TYPE_LABELS`; a second enum would have been labelled with the
+      first one's map — which, since it misses on every key, renders each value
+      raw while looking like it is labelling nothing at all. Each enum filter now
+      names its own map and the lookup is `filter.labels?.[value] || value`.
+    - **`category` is the merchandising axis and it is NOT `product_type`.**
+      `product_type` (`fabric | finished_good`) exists to decide whether stock is
+      counted in metres or in units; a cushion and a throw are both finished
+      goods, which is true and useless on a card. The API's vocabulary is nine
+      values (`CATEGORIES` in its `scripts/lib/price-template.js`, backed by
+      identical CHECKs on three columns). Most of the catalogue is uncategorised
+      and `facetLists` drops an empty facet, so the list does not render until
+      the office has filled some in — exactly how Collections behaves.
+    - **`productClassLabel()` prints the category OR the type, never both.** For
+      every fabric they are the same word, so the pair reads "Fabric · Fabric";
+      where they differ the category is the specific half. It backs the card
+      spec line, the detail eyebrow and the Similar strip, so the three cannot
+      disagree about what a design is.
+    - **`categoryLabel()` falls back to the RAW value, never to blank.** The
+      storefront and the API deploy separately, so this build can be behind the
+      vocabulary — and a blank facet row is unclickable, with a count that reads
+      as belonging to the row above it.
     - **`collection`** filters on `product.collection?.slug` (label from
       `.name`) — the key the brand-page collection tiles deep-link with
       (`/products?brand=&collection=`). Slugs are unique per brand, not
