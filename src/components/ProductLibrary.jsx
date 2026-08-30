@@ -78,6 +78,10 @@ const FILTERS = [
   { key: 'application', label: 'Application', type: 'text', control: 'select' },
   { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
   { key: 'width', label: 'Width', type: 'text', control: 'select' },
+  // One product per size, so this is how a shopper picks the bath towels out of
+  // the towels. Like Collections and Category above it, facetLists drops an
+  // empty facet — the list does not render until the office has set some.
+  { key: 'size', label: 'Size', type: 'text', control: 'select' },
   { key: 'price_band', label: 'Price band', type: 'text', control: 'select' },
   { key: 'lead_time', label: 'Lead time', type: 'text', control: 'select' },
 ]

@@ -75,6 +75,11 @@ import {
 // (see ProductLibrary.jsx, same constraint).
 
 const SPEC_FIELDS = [
+  // First, because on a finished good it is the thing a shopper is actually
+  // choosing between: one product per size, so a bath sheet and a hand towel
+  // are two products and this is what tells them apart. Absent on a fabric,
+  // and the filter below drops a field the product does not carry.
+  { key: 'size', label: 'Size' },
   { key: 'composition', label: 'Composition' },
   { key: 'width', label: 'Width' },
   { key: 'rubs', label: 'Rubs' },
@@ -408,6 +413,12 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
           </p>
 
           <h1 className="detail-name">{product.name}</h1>
+
+          {/* The office's own copy for this product, when it has written any.
+              It sits ABOVE the flow lede rather than replacing it: that
+              sentence explains how the thing is bought, which is still true
+              whatever the description says. */}
+          {product.description && <p className="detail-lede">{product.description}</p>}
 
           <p className="detail-lede">{lede}</p>
 
