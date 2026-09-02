@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   BESPOKE_HOUSES,
   PRICE_VALIDITY_NOTE,
+  blankEnquiryState,
   findBespokeHouse,
   bespokeSubject,
   bespokeEnquiryPayload,
@@ -42,6 +43,27 @@ test('findBespokeHouse resolves a slug and never throws on an unknown one', () =
   assert.equal(findBespokeHouse('maria-flora').name, 'Maria Flora')
   assert.equal(findBespokeHouse('not-a-house'), null)
   assert.equal(findBespokeHouse(undefined), null)
+})
+
+// Switching house resets with this, so a field missing from it is a field that
+// survives the switch: a `sent: true` left standing showed the "enquiry has been
+// sent" panel under the next house with no form at all, and a `submitting: true`
+// (never cleared on success before) would leave the button stuck on "Sending…".
+test('blankEnquiryState clears the category AND the whole submission', () => {
+  assert.deepEqual(blankEnquiryState(), {
+    category: '',
+    submitting: false,
+    submitError: '',
+    fieldErrors: {},
+    sent: false,
+  })
+})
+
+test('blankEnquiryState is a fresh object every call, errors included', () => {
+  const first = blankEnquiryState()
+  const second = blankEnquiryState()
+  assert.notEqual(first, second)
+  assert.notEqual(first.fieldErrors, second.fieldErrors)
 })
 
 test('bespokeSubject names the house, and the category only when chosen', () => {

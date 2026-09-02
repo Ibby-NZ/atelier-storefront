@@ -4,6 +4,7 @@ import { fetchCurrentUser } from '../lib/auth.js'
 import {
   BESPOKE_HOUSES,
   PRICE_VALIDITY_NOTE,
+  blankEnquiryState,
   findBespokeHouse,
   bespokeEnquiryPayload,
 } from '../lib/bespoke.js'
@@ -28,16 +29,17 @@ export default function BespokeExplorer() {
   const house = findBespokeHouse(slug)
   const detail = useRef(null)
 
-  const [category, setCategory] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [message, setMessage] = useState('')
 
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState({}) // { name, email, message }
-  const [sent, setSent] = useState(false)
+  // ONE object, so picking another house cannot clear some of it and leave the
+  // rest: category, submitting, submitError, fieldErrors ({ name, email,
+  // message }) and sent all belong to the house or to the submission.
+  const [enquiry, setEnquiry] = useState(blankEnquiryState)
+  const { category, submitting, submitError, fieldErrors, sent } = enquiry
+  const updateEnquiry = (patch) => setEnquiry((previous) => ({ ...previous, ...patch }))
 
   useEffect(() => {
     let active = true
@@ -60,7 +62,9 @@ export default function BespokeExplorer() {
 
   const selectHouse = (nextSlug) => {
     setSlug(nextSlug)
-    setCategory('') // categories belong to one house; a stale one would mislabel the enquiry
+    // A category would mislabel the next house's enquiry, and a finished or
+    // failed submission is not this house's: the whole object goes.
+    setEnquiry(blankEnquiryState())
   }
 
   const validate = () => {
@@ -84,14 +88,12 @@ export default function BespokeExplorer() {
 
   const onSubmit = async (event) => {
     event.preventDefault()
-    setSubmitError('')
     const clientErrors = validate()
     if (Object.keys(clientErrors).length > 0) {
-      setFieldErrors(clientErrors)
+      updateEnquiry({ submitError: '', fieldErrors: clientErrors })
       return
     }
-    setFieldErrors({})
-    setSubmitting(true)
+    updateEnquiry({ submitError: '', fieldErrors: {}, submitting: true })
 
     try {
       await apiFetch('/contact', {
@@ -99,18 +101,21 @@ export default function BespokeExplorer() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bespokeEnquiryPayload({ house, category, name, email, phone, message })),
       })
-      setSent(true)
+      updateEnquiry({ submitting: false, sent: true })
     } catch (err) {
       const serverErrors = err instanceof ApiError ? err.body?.errors : null
-      if (Array.isArray(serverErrors) && serverErrors.length > 0) {
-        setFieldErrors(applyServerErrors(serverErrors))
-      }
-      setSubmitError(
-        err instanceof ApiError
-          ? err.message
-          : 'We could not send your enquiry. Please try again.'
-      )
-      setSubmitting(false)
+      const mapped =
+        Array.isArray(serverErrors) && serverErrors.length > 0
+          ? applyServerErrors(serverErrors)
+          : null
+      updateEnquiry({
+        submitting: false,
+        submitError:
+          err instanceof ApiError
+            ? err.message
+            : 'We could not send your enquiry. Please try again.',
+        ...(mapped && { fieldErrors: mapped }),
+      })
     }
   }
 
@@ -177,7 +182,10 @@ export default function BespokeExplorer() {
                 {house.categories.length > 1 && (
                   <label className="field">
                     <span>What are you interested in? (optional)</span>
-                    <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                    <select
+                      value={category}
+                      onChange={(e) => updateEnquiry({ category: e.target.value })}
+                    >
                       <option value="">All of the above</option>
                       {house.categories.map((option) => (
                         <option key={option} value={option}>
