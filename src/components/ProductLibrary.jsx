@@ -79,8 +79,8 @@ const FILTERS = [
   { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
   { key: 'width', label: 'Width', type: 'text', control: 'select' },
   // One product per size, so this is how a shopper picks the bath towels out of
-  // the towels. Like Collections and Category above it, facetLists drops an
-  // empty facet — the list does not render until the office has set some.
+  // the towels. Nothing in the seeded catalogue carries one yet — see
+  // selectSets, which drops a dropdown with no options for exactly that reason.
   { key: 'size', label: 'Size', type: 'text', control: 'select' },
   { key: 'price_band', label: 'Price band', type: 'text', control: 'select' },
   { key: 'lead_time', label: 'Lead time', type: 'text', control: 'select' },
@@ -321,8 +321,16 @@ export default function ProductLibrary() {
     [products, selection, needle]
   )
 
+  // Dropped when it has nothing to offer, like the facet lists above: options
+  // come from the whole catalogue, so an empty set means NO product carries the
+  // field and the control could only ever say "All". A selection made from a
+  // deep link survives that — it still filters, and "Clear all" is its exit.
   const selectSets = useMemo(
-    () => SELECT_FILTERS.map((filter) => ({ filter, options: optionsFor(products, filter) })),
+    () =>
+      SELECT_FILTERS.map((filter) => ({
+        filter,
+        options: optionsFor(products, filter),
+      })).filter(({ options }) => options.length > 0),
     [products]
   )
 
