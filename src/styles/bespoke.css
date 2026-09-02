@@ -1,7 +1,8 @@
 /*
  * Bespoke page (platform-handoff vocabulary, like the other enquiry pages).
- * A house picker, that house's gallery + blurb, and the quote enquiry form.
- * No monetary figure appears on this page by design — bespoke is quoted.
+ * A wall of the commissioning houses, the picked house's gallery + blurb, and
+ * the quote enquiry form. No monetary figure appears on this page by design —
+ * bespoke is quoted.
  */
 
 .bespoke-explorer {
@@ -10,8 +11,94 @@
   padding-bottom: var(--s6);
 }
 
-.bespoke-picker-field {
-  max-width: 26rem;
+/* --- The wall ---------------------------------------------------------------
+   The brands wall's tile (`.house-card`, houses.css) COPIED rather than shared:
+   that figure belongs to the 2026 brands index, and one selector dressing both
+   pages would mean a restyle of one silently redrawing the other. The card is a
+   button here, not a link — it picks the house the panels below are about. */
+.bespoke-wall {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s6) var(--s3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bespoke-card {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bespoke-card-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 371 / 497;
+  overflow: hidden;
+  background-color: var(--surface);
+}
+
+.bespoke-card-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--zoom);
+}
+
+.bespoke-card:hover .bespoke-card-media img {
+  transform: scale(1.03);
+}
+
+.bespoke-card-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  transition: background var(--slow);
+}
+
+/* The picked house wears a lighter scrim — the panel it opened is below the
+   wall, off screen on a short viewport, so the card has to say it is the one. */
+.bespoke-card[aria-pressed="true"] .bespoke-card-media::after {
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.bespoke-card-logo {
+  position: relative;
+  z-index: 1;
+  padding-inline: var(--s4);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  line-height: 1.2;
+  text-align: center;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.bespoke-card-made {
+  display: block;
+  margin-top: var(--s2);
+  font-size: var(--t-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.bespoke-card[aria-pressed="true"] .bespoke-card-made {
+  color: var(--accent);
 }
 
 .bespoke-house h2 {
@@ -74,7 +161,21 @@
   margin: var(--s3) 0 0;
 }
 
+@media (max-width: 1024px) {
+  .bespoke-wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
+  .bespoke-wall {
+    grid-template-columns: 1fr;
+  }
+
+  .bespoke-card-media {
+    aspect-ratio: 4 / 5;
+  }
+
   .bespoke-gallery {
     grid-template-columns: 1fr;
   }

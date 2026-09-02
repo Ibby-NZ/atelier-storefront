@@ -20,16 +20,18 @@ import Wordmark from './Wordmark.astro'
 //
 // The nav labels are the client's own (Userback, 25 Aug 2026): Shop for
 // /products and Our Brands for /brands, Story for /story, Journal for
-// /resources. There is no Home item — the wordmark is the way home. The LABEL
-// is all that moved; every href, every `isActive` test and every link into
-// these routes elsewhere on the site is unchanged.
+// /resources. Story became Our Story (Userback, Sept 2026) — the footer, the
+// home CTA and the page's own heading already read that way, so the nav was
+// the last place still calling it Story. There is no Home item — the wordmark
+// is the way home. The LABEL is all that moved; every href, every `isActive`
+// test and every link into these routes elsewhere on the site is unchanged.
 const { overlay = false } = Astro.props
 
 const links = [
   { href: '/products', label: 'Shop' },
   { href: '/brands', label: 'Our Brands' },
   { href: '/bespoke', label: 'Bespoke' },
-  { href: '/story', label: 'Story' },
+  { href: '/story', label: 'Our Story' },
   { href: '/resources', label: 'Journal' },
 ]
 
