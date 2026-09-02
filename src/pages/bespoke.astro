@@ -4,10 +4,11 @@ import Layout from '../layouts/Layout.astro'
 import BespokeExplorer from '../components/BespokeExplorer.jsx'
 
 // Bespoke (made-to-measure) page — client brief of 10 Aug 2026. Five houses
-// take custom commissions; a dropdown picks the house, and the page shows its
-// images and a short blurb. No pricing anywhere: every piece is quoted, and
-// the enquiry posts to POST /contact with the house in the subject line. The
-// houses' stock items stay in the shop under each brand's name, separately.
+// take custom commissions; all five are on the page at once as a wall of
+// cards, and picking one opens its images and a short blurb. No pricing
+// anywhere: every piece is quoted, and the enquiry posts to POST /contact with
+// the house in the subject line. The houses' stock items stay in the shop
+// under each brand's name, separately.
 ---
 
 <Layout
@@ -20,9 +21,9 @@ import BespokeExplorer from '../components/BespokeExplorer.jsx'
     <p>
       Beyond the bolt, five of our houses make pieces entirely to order: area
       rugs, furniture, bedding, table linen, throws and cushions, sized and
-      finished to your scheme. Choose a house to see what its ateliers can do,
-      then tell us about the piece you have in mind. Every commission is quoted
-      individually.
+      finished to your scheme. Choose a house below to see what its ateliers can
+      do, then tell us about the piece you have in mind. Every commission is
+      quoted individually.
     </p>
   </section>
 

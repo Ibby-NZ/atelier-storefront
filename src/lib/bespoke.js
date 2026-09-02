@@ -119,6 +119,22 @@ export const BESPOKE_HOUSES = Object.freeze([
 export const findBespokeHouse = (slug) =>
   BESPOKE_HOUSES.find((house) => house.slug === slug) ?? null
 
+// Everything an enquiry accumulates that belongs to ONE house or ONE
+// submission: the chosen category, and the outcome of pressing send. It is a
+// single object, and the same function seeds it and clears it, because the
+// island resets it wholesale when the shopper picks another house — as separate
+// flags it was reset in part, which left the sent panel (and no form) standing
+// under the next house's gallery, and a stale 422 painted over an empty form.
+// The shopper's own name / email / phone / brief are deliberately NOT here:
+// they belong to the person, not to the house, and survive the switch.
+export const blankEnquiryState = () => ({
+  category: '',
+  submitting: false,
+  submitError: '',
+  fieldErrors: {},
+  sent: false,
+})
+
 // Subject line the back office sees in the enquiries inbox / email. The house
 // (and category, when chosen) travel here because POST /contact has no
 // structured fields for them.

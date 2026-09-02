@@ -407,9 +407,15 @@ Where it surfaces:
     - `FILTERS` carries a **`control`** field: `list` renders as a
       click-to-toggle facet row with a live count (Brands, Collections, Type,
       Category), `select` as a boxed dropdown with its own ochre head
-      (Application, Composition, Width, Price band, Lead time). The URL keys and
-      the filter semantics are unchanged, so every existing deep link still
-      resolves.
+      (Application, Composition, Width, Size, Price band, Lead time). The URL
+      keys and the filter semantics are unchanged, so every existing deep link
+      still resolves.
+    - **Both builders drop a control with no options.** `facetLists` always did;
+      `selectSets` did not, which is why Size shipped as a dropdown offering
+      only "All" while no product carried one. Options come from the whole
+      catalogue, so an empty set means the field is unused across it and the
+      control could never do anything. A selection arriving by deep link
+      survives the drop — it still filters, and "Clear all" is its exit.
     - **`labels` belongs to the FILTER, not to the `enum` kind.** While Type was
       the only enum facet, `optionsFor` reached straight for
       `PRODUCT_TYPE_LABELS`; a second enum would have been labelled with the
