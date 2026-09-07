@@ -981,7 +981,11 @@ brand pages below. Entry `id` is the filename slug.
 redraw (Figma "Brands Page", 9379:3562), `<Layout bleed overlay>`: a 74vh
 photo hero (the SAME commissioned photograph and copy as the home's
 design-houses band — the mock reuses the art, so the page reuses
-`design-brands-banner-bg.jpg`), then the **wall of house tiles** (3-up
+`design-brands-banner-bg.jpg` AND the same CMS entry: `applySection` over the
+`home-houses` site section, so an image or copy the office sets there is the
+/brands hero too, and an empty CMS renders the shipped art and copy; image,
+title and body only — the band's align/scrim knobs stay the home's), then the
+**wall of house tiles** (3-up
 371×497, photograph under a flat 0.38 scrim with the maison's mark centred —
 no logo assets exist, so the house NAME stands in via `.house-card-logo`
 until a logo library lands), then the **featured-collection band**
@@ -1255,17 +1259,35 @@ markdown collections (above) remain the shipped baseline.
     seed's `content` block, published, carrying the page's shipped copy) so
     editors edit rather than create-with-a-magic-slug. Existing entries are
     skipped on re-seed (`onConflict: skip`), never overwritten. Note the
-    seed's content block only applies via the CLI — the startup auto-seed
-    creates collections, not entries.
-  - **A field ADDED to the seed never reaches an existing database** — the
-    seed CLI skips every field of a collection that already exists, and its
-    `--on-conflict update` escape hatch also rewrites CONTENT from the seed
-    (`--no-content` does not stop it — verified on 0.29.0, editor edits get
-    clobbered). **Never run `--on-conflict update` against a database with
-    editor content.** The upgrade path is `npm run seed:cms:fields`
-    (`scripts/migrate-cms-fields.mjs`): creates the fields missing from the
-    live schema via the schema API, touches nothing else, idempotent. Same
-    `EMDASH_TOKEN` + base-URL convention as the art import.
+    seed's content block only applies via the CLI or the sync script below —
+    the startup auto-seed creates collections, not entries.
+  - **Nothing ADDED to the seed reaches an existing database on its own.**
+    EmDash's startup auto-seed runs ONLY on a brand-new database (its gate is
+    "zero collections and setup not done"), and the seed CLI skips every
+    field of a collection that already exists. Staging (checked 8 Sep 2026
+    over the content API) is the standing example of where that leaves the
+    office: `site_sections` was there and they had uploaded the four band
+    photographs through the admin themselves, but `collection_banners` sat
+    EMPTY — a hero frame needs an entry keyed by house + collection slug that
+    nobody had made — so the hero and featured band fell back to the shipped
+    art, and the /brands hero had no CMS hook at all (it has one now). The
+    CLI's `--on-conflict update` escape hatch is worse: it also rewrites
+    CONTENT from the seed (`--no-content` does not stop it — verified on
+    0.29.0, editor edits get clobbered). **Never run `--on-conflict update`
+    against a database with editor content.** The upgrade path is
+    `npm run seed:cms:fields` (`scripts/migrate-cms-fields.mjs`), which works
+    over the HTTP API so it reaches staging (no shell there): it creates the
+    collections missing from the live schema (with their fields), the fields
+    missing from an existing collection, and the seed's content entries whose
+    slug does not exist yet; it modifies nothing that exists and is idempotent.
+    Same `EMDASH_TOKEN` + base-URL convention as the art import, which is the
+    step after it. Verified locally by deleting both collections and re-running
+    the pair: the admin gets them back with the five entries, and the art
+    import attaches the shipped photography to them. The token needs the
+    scopes both scripts hit — schema read + manage, content read + create +
+    edit + publish, media read + upload — a token short of one fails with
+    `INSUFFICIENT_SCOPE` naming it; and the proxy must let the Bearer header
+    through (see the staging gate section).
   - **`npm run import:cms-art`** (`scripts/import-cms-art.mjs`) uploads the
     SHIPPED art into the CMS media library and attaches it: the three hero
     banners + featured portrait become `collection_banners` entries, and the
@@ -1453,6 +1475,15 @@ sits behind HTTP Basic Auth and is blocked from search indexing.
   passkey session for admin API) and a Basic gate would clash with the
   `Authorization` header those clients send. Note this leaves EmDash media
   files (`/_emdash/api/media/file/...`) publicly fetchable by URL.
+  **On staging this exemption is moot**: RunCloud's nginx (openresty) puts its
+  own Basic Auth in front of EVERY path, `/_emdash/api/*` and `/_emdash/admin`
+  included (`WWW-Authenticate: Basic realm="Authorization Required"`, 8 Sep
+  2026). HTTP carries one `Authorization` header, and EmDash resolves a user
+  ONLY from `Authorization: Bearer` or the passkey `astro-session` cookie, so
+  `seed:cms:fields` / `import:cms-art` run against the public URL die with the
+  proxy's 401 before EmDash sees the token. Either exempt `/_emdash/api/` from
+  the proxy's Basic Auth (or switch it off for the minutes the scripts run), or
+  run them on the box against `http://127.0.0.1:<pm2 port>`.
 - **Exemption matching is path-normalisation sensitive** — two bypasses were
   found and fixed while building it, so do not "simplify" it back:
   match on `new URL(req.url).pathname`, never `req.path` (Express keeps `..`

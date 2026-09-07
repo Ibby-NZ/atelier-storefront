@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content'
 import { getImage } from 'astro:assets'
 import Layout from '../../layouts/Layout.astro'
 import { safeFetch } from '../../lib/api.js'
-import { listEmdashBrandPages } from '../../lib/emdash.js'
+import { applySection, getSiteSections, listEmdashBrandPages } from '../../lib/emdash.js'
 import { houseArtwork } from '../../lib/houses.js'
 import { brandDesignCounts, collectionHref, featuredCollections } from '../../lib/home.js'
 import brandsBanner from '../../assets/img/design-brands-banner-bg.jpg'
@@ -91,7 +91,21 @@ const houses = brands.map((brand) => ({
   ),
 }))
 
+// The hero is the home's design-houses band again — the mock reuses that
+// photograph and copy — so it reads the same CMS entry (`home-houses` in
+// site_sections): an image or copy the office changes there changes here too,
+// and the shipped art and copy below are what an empty CMS renders. Image,
+// title and body only; the band's layout knobs belong to the home's figure.
 const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 2200 })
+const sections = await getSiteSections()
+const hero = applySection(
+  {
+    title: "The World's Finest Design Houses",
+    body: "From the legendary textile mills of Europe to innovative global creators, we are a boutique importer and distributor of the world's most luxurious furnishing brands.",
+    image: heroImage.src,
+  },
+  sections['home-houses']
+)
 ---
 
 <Layout
@@ -102,16 +116,12 @@ const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 220
   darkGround
 >
   <section class="photo-band photo-band--parallax house-hero">
-    <span class="photo-band-art" style={`background-image: url(${heroImage.src});`}></span>
+    <span class="photo-band-art" style={`background-image: url(${hero.image});`}></span>
     <div class="container photo-band-body">
       <div class="photo-band-row">
-        <h1 class="photo-band-title">The World's Finest Design Houses</h1>
+        <h1 class="photo-band-title">{hero.title}</h1>
         <div class="photo-band-aside">
-          <p>
-            From the legendary textile mills of Europe to innovative global
-            creators, we are a boutique importer and distributor of the world's
-            most luxurious furnishing brands.
-          </p>
+          <p>{hero.body}</p>
         </div>
       </div>
     </div>
