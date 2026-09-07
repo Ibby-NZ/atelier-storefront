@@ -1011,8 +1011,8 @@ design-houses band — the mock reuses the art, so the page reuses
 title and body only — the band's align/scrim knobs stay the home's), then the
 **wall of house tiles** (3-up
 371×497, photograph under a flat 0.38 scrim with the maison's mark centred —
-no logo assets exist, so the house NAME stands in via `.house-card-logo`
-until a logo library lands), then the **featured-collection band**
+the brand's `logo_url` PNG as `img.house-card-logo` when the CRM has
+one, else the house NAME in the same class), then the **featured-collection band**
 (`--shell-subtle`, photograph left / "Featured collection" badge + name +
 description + "Explore collection" right — the first `featured_rank`
 collection that carries a catalogue photograph, omitted when none does; the

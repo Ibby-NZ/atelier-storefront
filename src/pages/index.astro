@@ -315,7 +315,11 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
               <a class="house-card" href={`/brands/${house.slug}`}>
                 <span class:list={['house-card-media', { weave: !house.image }]}>
                   {house.image && <img src={house.image} alt="" loading="lazy" />}
-                  <span class="house-card-logo">{house.name}</span>
+                  {house.logo_url ? (
+                    <img class="house-card-logo" src={house.logo_url} alt={house.name} loading="lazy" />
+                  ) : (
+                    <span class="house-card-logo">{house.name}</span>
+                  )}
                 </span>
               </a>
             </li>

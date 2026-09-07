@@ -160,15 +160,19 @@ const hero = applySection(
             <li>
               <a class="house-card" href={`/brands/${house.slug}`}>
                 {
-                  /* The mock centres each maison's own logotype on the tile.
-                     No logo assets exist in the catalogue, so the house NAME
-                     stands in, set in the display face — swap to an image the
-                     day a logo library lands. No <img> is ever emitted without
-                     a source: an unphotographed house paints the weave. */
+                  /* The mock centres each maison's own logotype on the tile:
+                     the house's `logo_url` (a transparent PNG set in the CRM)
+                     when it has one, else the house NAME set in the display
+                     face. No <img> is ever emitted without a source: an
+                     unphotographed house paints the weave. */
                 }
                 <span class:list={['house-card-media', { weave: !house.image }]}>
                   {house.image && <img src={house.image} alt="" loading="lazy" />}
-                  <span class="house-card-logo">{house.name}</span>
+                  {house.logo_url ? (
+                    <img class="house-card-logo" src={house.logo_url} alt={house.name} loading="lazy" />
+                  ) : (
+                    <span class="house-card-logo">{house.name}</span>
+                  )}
                 </span>
               </a>
             </li>
