@@ -1004,8 +1004,6 @@ catalogue photography → the weave, exactly as before.
   point: an outage must never turn a real brand into a 404.
 - **Editorial**: `getEmdashBrandPage(slug)` first, then the markdown `brandPage`
   entry (`entry.data.brand === slug`) — **only when the CMS has nothing**.
-- `relatedPosts` (posts whose `brands` include the slug) moved from
-  `getStaticPaths` to request time, logic unchanged.
 
 Derivation chain: `name = brand?.name ?? emPage?.name ?? mdPage?.id ?? slug`;
 blurb falls back CMS → markdown → `brand.story`; slideshow/cards CMS → markdown
@@ -1053,10 +1051,10 @@ name + `View collection`) → the related-reading band.
   own gap stays between the name and the action. `collectionTiles()` still
   returns `description` (the CMS card / API text) — it is simply not rendered
   here, and is there for whatever renders a collection next.
-- **The related-reading band is not in the mock** — the Figma's house page ends
-  at the tiles. It stays because the journal ties posts to houses and dropping
-  it would strip content the CMS publishes; it is painted umber so it reads as
-  the footer's opening rather than as a leftover from the Maison direction.
+- **There is no related-reading band.** The page ends at the collection tiles,
+  as the Figma does. The umber "Related reading" list of journal posts tagged
+  with the house was removed in September 2026 at the client's request; the
+  markdown posts and their `brands` tag remain for `/resources`.
 - **The collection tiles are driven by the live catalogue, decorated by
   editorial** (`collectionTiles` in `src/lib/collections.js`, pure + tested):
   `safeFetch('/catalogue/collections?brand=')` supplies the tiles. **There is no
