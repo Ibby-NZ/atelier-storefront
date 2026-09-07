@@ -9,7 +9,7 @@
       "slug": "site_sections",
       "label": "Site Sections",
       "labelSingular": "Site Section",
-      "description": "Copy and imagery for the storefront's art-directed bands. The entry slug is the join key and is FIXED per section — create/edit these slugs only: shop-by-type and shop-by-application (the two shop tiles), latest-collections (heading + View all link), home-manifesto (the espresso Atelier band; Subtitle is the pronunciation), home-houses (the design-houses band). A blank field falls back to the copy shipped in the site, so a section can override just its image or just its title.",
+      "description": "Copy and imagery for the storefront's art-directed bands. The entry slug is the join key and is FIXED per section — create/edit these slugs only: shop-by-type and shop-by-application (the two shop tiles), latest-collections (heading + View all link), home-manifesto (the espresso Atelier band; Subtitle is the pronunciation), home-houses (the design-houses band — its image and copy are also the hero of the /brands page). A blank field falls back to the copy shipped in the site, so a section can override just its image or just its title.",
       "supports": ["drafts", "revisions"],
       "fields": [
         {
