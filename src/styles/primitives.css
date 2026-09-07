@@ -447,8 +447,7 @@
 }
 
 /* --- Section head (headline + link over a hairline) ----------------------- */
-/* Used by the journal index, the brands index and the brand page's related
-   reading. It lived in home.css while the Maison homepage's journal band was
+/* Used by the journal index and the brands index. It lived in home.css while the Maison homepage's journal band was
    its first caller; the 2026 home has no such band, and a figure three other
    screens share belongs in primitives rather than as one page's export. */
 .section-head {

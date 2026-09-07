@@ -586,80 +586,6 @@
   border-top: 0;
 }
 
-/* --- Related reading ------------------------------------------------------ */
-/* Not in the mock — the Figma's house page ends at the tiles — but the journal
-   ties posts to houses and dropping the link would strip content the CMS
-   publishes. Painted umber so it reads as the footer's opening rather than as a
-   leftover from the Maison direction. */
-.house-reading {
-  background: var(--umber);
-  color: var(--shell);
-}
-
-.house-reading > .container {
-  padding-block: var(--s9);
-}
-
-.house-reading-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s6);
-  margin-bottom: var(--s6);
-}
-
-.house-reading-head h2 {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: var(--g-lg);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--bone);
-}
-
-.house-reading-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.house-reading-list a {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s5);
-  padding-block: 1.25rem;
-  border-top: 1px solid var(--umber-line);
-  text-decoration: none;
-  color: var(--shell);
-  transition: color var(--quick);
-}
-
-.house-reading-list a:hover {
-  color: var(--gold);
-}
-
-.house-reading-list li:last-child a {
-  border-bottom: 1px solid var(--umber-line);
-}
-
-.house-reading-title {
-  font-family: var(--font-ui);
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.house-reading-date {
-  flex-shrink: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  font-weight: 500;
-  color: var(--bone-muted);
-}
-
 /* The brands index lives in houses.css — it is a page of its own now, not a
    card variant, so `.brand-card` / `.brand-meta` went with the `.card-grid`. */
 
@@ -682,11 +608,6 @@
 }
 
 @media (max-width: 640px) {
-  .house-reading-list a {
-    flex-direction: column;
-    gap: var(--s2);
-  }
-
   .post .prose > p:first-of-type::first-letter {
     font-size: 3.25rem;
   }

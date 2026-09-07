@@ -64,12 +64,6 @@ const heroImage = slideshow[0] ?? null
 const story = emPage?.story ?? null
 const Body = mdPage ? (await render(mdPage)).Content : null
 
-// Related reading, previously computed in getStaticPaths — same logic, now at
-// request time.
-const relatedPosts = (await getCollection('post'))
-  .filter((post) => (post.data.brands ?? []).includes(slug))
-  .sort((a, b) => b.data.date - a.data.date)
-
 // The facts list replaces the design's mock rows (Founded / Archive / Made in /
 // Held at Atelier) with the four we can actually source: the founded year stated
 // in the house's own story, the country, how many designs of theirs we hold, and
@@ -117,8 +111,6 @@ const tiles = collectionTiles({
   cards,
   brandSlug: slug,
 })
-
-const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
 
 // Only a genuine miss 404s: the API answered and has no such brand, AND no
 // editorial page exists in either source. An API outage renders whatever
@@ -253,29 +245,6 @@ if (notFound) {
                 </span>
               </a>
             ))}
-          </section>
-        )}
-
-        {relatedPosts.length > 0 && (
-          <section class="house-reading">
-            <div class="container">
-              <div class="house-reading-head">
-                <h2>Related reading</h2>
-                <a class="cta-underline cta-underline-light" href="/resources">
-                  The journal
-                </a>
-              </div>
-              <ul class="house-reading-list">
-                {relatedPosts.map((post) => (
-                  <li>
-                    <a href={`/resources/${post.id}`}>
-                      <span class="house-reading-title">{post.data.title}</span>
-                      <span class="house-reading-date">{dateFormat.format(post.data.date)}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </section>
         )}
       </>
