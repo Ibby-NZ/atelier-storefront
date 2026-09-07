@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
 import { BREAK_GLASS, breakGlassEnabled } from '../lib/breakGlassConfig.js'
 import { TRADE_APPLICATION_PATH } from '../lib/tradeGate.js'
+import { FORGOT_PASSWORD_PATH } from '../lib/passwordReset.js'
 import {
   browserStorage,
   isApiUnreachable,
@@ -133,6 +134,10 @@ export default function LoginForm() {
       <button className="cta-underline cta-underline-light" type="submit" disabled={submitting}>
         {submitting ? 'Signing in…' : 'Sign in'}
       </button>
+
+      <p className="auth-screen-alt">
+        <a href={FORGOT_PASSWORD_PATH}>Forgot your password?</a>
+      </p>
 
       {/* The mock omits this line; it cannot simply go, because the trade
           application is reachable from nowhere else on a signed-out site. It

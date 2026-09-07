@@ -764,6 +764,19 @@ Where it surfaces:
       brought into the direction; it is still on the Maison `.auth-form` in
       `commerce.css`, since inventing it in a language the Figma never drew it
       in would be guessing.
+  - **`/forgot-password` and `/reset-password`** wear the same screen
+    (`auth-screen`, the committed photograph) around `ForgotPasswordForm.jsx`
+    and `ResetPasswordForm.jsx`; "Forgot your password?" sits under the sign-in
+    action. Forgot POSTs `/auth/forgot-password` and shows the API's one
+    sentence back — it is the same sentence for a known and an unknown address,
+    so the screen never claims a mail is on its way. Reset lands from the
+    emailed link with `?token=`, read client-side (`readResetToken`, the page is
+    prerendered), asks for the password twice, holds it to the API's 12-character
+    floor before posting (`newPasswordError`, `src/lib/passwordReset.js`, tested)
+    and POSTs `/auth/reset-password`; success is a "Sign in" link, because the
+    API mints no session on a reset. A link without a token, or one the API
+    refuses (400: unknown, spent, expired), points back at `/forgot-password`.
+    Staff never land here — the API sends backoffice/director links to the CRM.
   - Login POSTs to
   `/auth/login`; on success the API sets the session cookie
   and the island does `window.location.href = '/'` (login honours a same-site
