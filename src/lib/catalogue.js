@@ -83,6 +83,50 @@ const noPriceCopyFor = (viewer) => {
 }
 
 /**
+ * The price a shopper may actually see, in cents, or null. Trade first (only
+ * ever present for an approved trade user), then a visible retail figure. The
+ * library sorts and bands on this and nothing else — never on a figure the
+ * card is not showing.
+ */
+export function visiblePriceCents(product) {
+  if (product?.trade_price_cents != null) return product.trade_price_cents
+  if (product && !product.price_hidden && product.retail_price_cents != null) {
+    return product.retail_price_cents
+  }
+  return null
+}
+
+// The library's Price facet: $100 bands over the visible price. The bands are
+// the office's ("100–200, 201–300, …"): the first closed band starts at $100,
+// each later one at the previous ceiling plus one, and anything under $100 is
+// its own row. Banded on the figure the card shows, so a trade viewer's rows
+// are NZD trade figures and a guest's are the supplier-currency retail ones —
+// the facet reads the same way the price line under it does.
+export const PRICE_BAND_WIDTH = 100
+const UNDER_FIRST_BAND = Object.freeze({
+  value: `under-${PRICE_BAND_WIDTH}`,
+  label: `Under $${PRICE_BAND_WIDTH}`,
+  from: 0,
+})
+const dollars = new Intl.NumberFormat('en-NZ', { maximumFractionDigits: 0 })
+
+/**
+ * @param {number|null|undefined} cents
+ * @returns {{ value: string, label: string, from: number }|null} — `value` is
+ *   the URL token (`100-200`), `label` the facet row, `from` its sort key.
+ */
+export function priceBandFor(cents) {
+  if (cents == null || !Number.isFinite(cents)) return null
+  const amount = cents / 100
+  if (amount < PRICE_BAND_WIDTH) return UNDER_FIRST_BAND
+  // Band 1 is [100, 200], band k>1 is [(k×100)+1, (k+1)×100].
+  const band = Math.max(1, Math.ceil((amount - PRICE_BAND_WIDTH) / PRICE_BAND_WIDTH))
+  const from = band === 1 ? PRICE_BAND_WIDTH : band * PRICE_BAND_WIDTH + 1
+  const to = (band + 1) * PRICE_BAND_WIDTH
+  return { value: `${from}-${to}`, label: `$${dollars.format(from)}–$${dollars.format(to)}`, from }
+}
+
+/**
  * What to show where a price goes.
  *
  * Order of precedence (FR-3):
