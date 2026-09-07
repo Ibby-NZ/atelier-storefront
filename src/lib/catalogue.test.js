@@ -9,6 +9,8 @@ import {
   categoryLabel,
   productClassLabel,
   CATEGORY_LABELS,
+  priceBandFor,
+  visiblePriceCents,
 } from './catalogue.js'
 
 const GUEST = null
@@ -156,4 +158,27 @@ test('the class label falls back to the product type while a design is uncategor
   assert.equal(productClassLabel({ product_type: 'finished_good', category: null }), 'Finished good')
   assert.equal(productClassLabel({ product_type: 'fabric' }), 'Fabric')
   assert.equal(productClassLabel(null), '')
+})
+
+test('visiblePriceCents: trade first, then a visible retail figure, else null', () => {
+  assert.equal(visiblePriceCents({ trade_price_cents: 18776, retail_price_cents: 25000 }), 18776)
+  assert.equal(visiblePriceCents({ price_hidden: false, retail_price_cents: 25000 }), 25000)
+  assert.equal(visiblePriceCents({ price_hidden: true, retail_price_cents: 25000 }), null)
+  assert.equal(visiblePriceCents({ price_hidden: false, retail_price_cents: null }), null)
+  assert.equal(visiblePriceCents(null), null)
+})
+
+test('priceBandFor: the office bands — under 100, 100–200, 201–300, …', () => {
+  assert.equal(priceBandFor(null), null)
+  assert.equal(priceBandFor(undefined), null)
+  assert.deepEqual(priceBandFor(0), { value: 'under-100', label: 'Under $100', from: 0 })
+  assert.deepEqual(priceBandFor(9999), { value: 'under-100', label: 'Under $100', from: 0 })
+  assert.deepEqual(priceBandFor(10000), { value: '100-200', label: '$100–$200', from: 100 })
+  assert.deepEqual(priceBandFor(20000), { value: '100-200', label: '$100–$200', from: 100 })
+  assert.deepEqual(priceBandFor(20050), { value: '201-300', label: '$201–$300', from: 201 })
+  assert.deepEqual(priceBandFor(30000), { value: '201-300', label: '$201–$300', from: 201 })
+  assert.deepEqual(priceBandFor(30100), { value: '301-400', label: '$301–$400', from: 301 })
+  assert.deepEqual(priceBandFor(48600), { value: '401-500', label: '$401–$500', from: 401 })
+  assert.deepEqual(priceBandFor(100000), { value: '901-1000', label: '$901–$1,000', from: 901 })
+  assert.deepEqual(priceBandFor(123456), { value: '1201-1300', label: '$1,201–$1,300', from: 1201 })
 })

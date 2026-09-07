@@ -3,10 +3,11 @@ import { apiFetch, ApiError } from '../lib/api.js'
 import { fetchCurrentUser } from '../lib/auth.js'
 import {
   priceInfo,
+  priceBandFor,
   productClassLabel,
+  visiblePriceCents,
   weaveBackground,
   CATEGORY_LABELS,
-  PRODUCT_TYPE_LABELS,
 } from '../lib/catalogue.js'
 import {
   isTradeGatedList,
@@ -65,24 +66,28 @@ const FILTERS = [
   // (membership is staff-assigned in the CRM), and facetLists drops an empty
   // facet, so this list simply doesn't render until collections are in use.
   { key: 'collection', label: 'Collections', type: 'collection', control: 'list' },
-  // `labels` belongs to the FILTER, not to the enum kind. Before there was a
-  // second enum facet, `optionsFor` reached straight for PRODUCT_TYPE_LABELS —
-  // which would have labelled every category as its own raw value while looking
-  // like it was labelling nothing.
-  { key: 'product_type', label: 'Type', type: 'enum', control: 'list', labels: PRODUCT_TYPE_LABELS },
-  // The merchandising axis, and a different question from Type: a cushion and a
-  // throw are both finished goods. Most of the catalogue is uncategorised and
-  // facetLists DROPS AN EMPTY FACET, so this list simply does not render until
-  // the office has filled some in — the same way Collections behaves.
+  // The merchandising axis. There is no Type (fabric / finished good) facet
+  // beside it any more: the office asked for one question, not two, and
+  // "finished good" is a stock-unit fact rather than something a shopper
+  // browses by. A finished good with no category still SAYS "Finished good" on
+  // its card (productClassLabel); it just is not a row here. Most of the
+  // catalogue is uncategorised and facetLists DROPS AN EMPTY FACET, so this list
+  // does not render until the office has filled some in — like Collections.
+  // `labels` belongs to the FILTER, not to the enum kind.
   { key: 'category', label: 'Category', type: 'enum', control: 'list', labels: CATEGORY_LABELS },
+  // $100 bands over the price the card shows (priceBandFor). Derived, not a
+  // column: `products.price_band` is a per-product string like "NZ$486 / m",
+  // which as a facet was one row per product. A product with no visible price
+  // has no band, so a guest browsing hidden-retail houses sees no Price facet.
+  { key: 'price', label: 'Price', type: 'price', control: 'list' },
   { key: 'application', label: 'Application', type: 'text', control: 'select' },
   { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
-  { key: 'width', label: 'Width', type: 'text', control: 'select' },
+  // Width was a select here and is not any more, at the office's request; it is
+  // still on every card's spec line.
   // One product per size, so this is how a shopper picks the bath towels out of
   // the towels. Nothing in the seeded catalogue carries one yet — see
   // selectSets, which drops a dropdown with no options for exactly that reason.
   { key: 'size', label: 'Size', type: 'text', control: 'select' },
-  { key: 'price_band', label: 'Price band', type: 'text', control: 'select' },
   { key: 'lead_time', label: 'Lead time', type: 'text', control: 'select' },
 ]
 
@@ -148,6 +153,7 @@ function writeUrlState(selection, query, sort) {
 function productValue(product, key) {
   if (key === 'brand') return product.brand?.slug || ''
   if (key === 'collection') return product.collection?.slug || ''
+  if (key === 'price') return priceBandFor(visiblePriceCents(product))?.value || ''
   return product[key] == null ? '' : String(product[key])
 }
 
@@ -166,12 +172,19 @@ function optionsFor(products, filter) {
     // blank. A facet row with no text is unclickable and its count reads as
     // belonging to the row above it.
     else if (filter.type === 'enum') label = filter.labels?.[value] || value
+    else if (filter.type === 'price') label = priceBandFor(visiblePriceCents(product)).label
     seen.set(value, label)
   }
-  return [...seen.entries()]
-    .map(([value, label]) => ({ value, label }))
-    .sort((a, b) => a.label.localeCompare(b.label))
+  const options = [...seen.entries()].map(([value, label]) => ({ value, label }))
+  // Bands sort by amount — alphabetically "$1,001–$1,100" lands before "$100–$200".
+  if (filter.type === 'price') {
+    return options.sort((a, b) => bandFrom(a.value) - bandFrom(b.value))
+  }
+  return options.sort((a, b) => a.label.localeCompare(b.label))
 }
+
+// The lower bound of a band token: "201-300" → 201, "under-100" → 0.
+const bandFrom = (value) => Number.parseInt(value, 10) || 0
 
 function matchesFilters(product, selection) {
   return FILTERS.every((filter) => {
@@ -227,13 +240,7 @@ function facetOptions(products, filter, selection, needle) {
 
 // The price a shopper may actually see, for sorting. A hidden or absent price
 // sorts last in both directions — never order on a figure we are not showing.
-function sortablePrice(product) {
-  if (product.trade_price_cents != null) return product.trade_price_cents
-  if (!product.price_hidden && product.retail_price_cents != null) {
-    return product.retail_price_cents
-  }
-  return null
-}
+const sortablePrice = visiblePriceCents
 
 function compareProducts(a, b, sort) {
   if (sort === 'in_stock' && a.in_stock !== b.in_stock) {

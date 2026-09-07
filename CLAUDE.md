@@ -362,7 +362,7 @@ Where it surfaces:
   "Collections" display headline, the one line of copy on the right, the header
   floating inside the band), then the browse area — boxed 44px search, "Refine"
   row with an always-present "Clear all", facet lists under ochre 12px heads on
-  hairlines ("Brands", "Type" — the labels are the frame's), boxed selects for
+  hairlines ("Brands", "Category", "Price" — the labels are the frame's), boxed selects for
   the rest (no "More filters" group heading any more), and surface-cream cards
   (photo, in-stock chip on the photograph, ochre house badge, 20px Inter-medium
   name, muted spec line, and a price line that doubles as the underlined
@@ -405,11 +405,23 @@ Where it surfaces:
     sidebar + results column — because the facets and the grid share every
     piece of state.
     - `FILTERS` carries a **`control`** field: `list` renders as a
-      click-to-toggle facet row with a live count (Brands, Collections, Type,
-      Category), `select` as a boxed dropdown with its own ochre head
-      (Application, Composition, Width, Size, Price band, Lead time). The URL
-      keys and the filter semantics are unchanged, so every existing deep link
-      still resolves.
+      click-to-toggle facet row with a live count (Brands, Collections,
+      Category, Price), `select` as a boxed dropdown with its own ochre head
+      (Application, Composition, Size, Lead time).
+    - **There is no Type facet and no Width select** (September 2026, the
+      office's call): one question about what a thing is, not two, and width
+      stays on the card's spec line. `?product_type=` and `?width=` deep links
+      no longer filter. A finished good with no category still reads "Finished
+      good" on its card — `productClassLabel` is untouched.
+    - **Price is a derived facet, not the `price_band` column.** `type: 'price'`
+      bands the figure the card shows (`visiblePriceCents` → `priceBandFor`,
+      both in `lib/catalogue.js`, tested): "Under $100", "$100–$200",
+      "$201–$300", … — the office's bands, so band 1 is closed at both ends and
+      every later one starts at the previous ceiling plus one. URL key `price`,
+      token `201-300`. Options sort by amount, not label. A product with no
+      visible price has no band, so the facet disappears where every price is
+      hidden. `products.price_band` ("NZ$486 / m", one string per product) was
+      a select that offered one row per product; it is no longer read here.
     - **Both builders drop a control with no options.** `facetLists` always did;
       `selectSets` did not, which is why Size shipped as a dropdown offering
       only "All" while no product carried one. Options come from the whole
@@ -463,10 +475,9 @@ Where it surfaces:
     Maison base figures still underlie it in primitives.css and are overridden
     per property (`.product-stock`'s pill dot/border, `.product-brand`'s
     uppercase) — check both before restyling either base.
-  - **Deviations from the mock, deliberate:** Width stays as a select even
-    though the mock lists only four — dropping it would silently remove a
-    working filter; the swatch strip and the count/sort row stay (working
-    merchandising over dummy-frame fidelity).
+  - **Deviations from the mock, deliberate:** the swatch strip and the
+    count/sort row stay (working merchandising over dummy-frame fidelity).
+    Width, which the mock drew as four values, is no longer a filter at all.
 
 - **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` is
   `prerender = false`. It had `getStaticPaths` enumerating website-visible
