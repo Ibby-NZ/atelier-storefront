@@ -71,7 +71,7 @@
   background-position: center;
 }
 
-.house-card-media img {
+.house-card-media img:not(.house-card-logo) {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -80,7 +80,7 @@
   transition: transform var(--zoom);
 }
 
-.house-card:hover .house-card-media img {
+.house-card:hover .house-card-media img:not(.house-card-logo) {
   transform: scale(1.03);
 }
 
@@ -91,8 +91,9 @@
   background: rgba(0, 0, 0, 0.38); /* the mock's flat scrim under the mark */
 }
 
-/* The maison's own logotype in the mock; the house NAME stands in until a
-   logo library exists (see brands/index.astro). */
+/* The maison's own logotype in the mock: its `logo_url` PNG when the CRM has
+   one, else the house NAME set in the display face (see brands/index.astro).
+   Both share the class so they sit at the same spot above the scrim. */
 .house-card-logo {
   position: relative;
   z-index: 1;
@@ -105,6 +106,15 @@
   text-align: center;
   color: #fff;
   text-wrap: balance;
+}
+
+/* The mark, as an image: contained inside the tile's middle, never cropped or
+   zoomed like the photograph under it. */
+img.house-card-logo {
+  width: 55%;
+  max-height: 36%;
+  padding: 0;
+  object-fit: contain;
 }
 
 .house-card-name {
