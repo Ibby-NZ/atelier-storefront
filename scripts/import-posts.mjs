@@ -19,6 +19,8 @@
 //
 // Usage (local):   EMDASH_TOKEN=<token> node scripts/import-posts.mjs
 // Usage (remote):  EMDASH_TOKEN=<token> node scripts/import-posts.mjs https://atelier-storefront.disrupted.co.nz
+// EMDASH_TOKEN may also sit in .env (gitignored), like import-brand-pages.mjs.
+import 'dotenv/config'
 import { readFileSync, readdirSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import yaml from 'js-yaml'
