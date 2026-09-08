@@ -1,25 +1,32 @@
 ---
-export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+export const prerender = false // live: which houses take commissions is a CRM flag
 import Layout from '../layouts/Layout.astro'
-import BespokeExplorer from '../components/BespokeExplorer.jsx'
+import { safeFetch } from '../lib/api.js'
+import { bespokeCards } from '../lib/bespoke.js'
 
-// Bespoke (made-to-measure) page — client brief of 10 Aug 2026. Five houses
-// take custom commissions; all five are on the page at once as a wall of
-// cards, and picking one opens its images and a short blurb. No pricing
-// anywhere: every piece is quoted, and the enquiry posts to POST /contact with
-// the house in the subject line. The houses' stock items stay in the shop
-// under each brand's name, separately.
+// Bespoke (made-to-measure) page — client brief of 10 Aug 2026, reshaped Sept
+// 2026. A wall of the houses whose ateliers take custom commissions; each card
+// LINKS to the house's own page, where the house copy and the quote enquiry
+// form now live (the panel that used to open under the wall on a click is
+// gone). Which houses appear is `brands.bespoke`, ticked in the CRM's Houses
+// screen — not a list in this repo. No pricing anywhere: every piece is quoted.
+// The houses' stock items stay in the shop under each brand's name, separately.
+//
+// safeFetch: with the API down the wall falls back to the editorial houses
+// (lib/bespoke.js) rather than 500ing a marketing page.
+const { data } = await safeFetch('/catalogue/brands')
+const cards = bespokeCards(data?.brands ?? null)
 ---
 
 <Layout
   title="Bespoke — Atelier Textiles"
-  description="Made-to-measure area rugs, furniture, bedding, table linen, throws and cushions from Pierre Frey, C&C Milano, Loro Piana Interiors, Maria Flora and de Le Cuona. Every piece individually quoted."
+  description="Made-to-measure area rugs, furniture, bedding, table linen, throws and cushions from the maisons whose ateliers take commissions. Every piece individually quoted."
 >
   <section class="page-intro">
     <p class="page-eyebrow">Made to measure</p>
     <h1>Bespoke, <em>by the maisons</em></h1>
     <p>
-      Beyond the bolt, five of our houses make pieces entirely to order: area
+      Beyond the bolt, some of our houses make pieces entirely to order: area
       rugs, furniture, bedding, table linen, throws and cushions, sized and
       finished to your scheme. Choose a house below to see what its ateliers can
       do, then tell us about the piece you have in mind. Every commission is
@@ -27,5 +34,22 @@ import BespokeExplorer from '../components/BespokeExplorer.jsx'
     </p>
   </section>
 
-  <BespokeExplorer client:load />
+  <div class="bespoke-explorer">
+    <ul class="bespoke-wall">
+      {
+        cards.map((card) => (
+          <li>
+            {/* alt="" because the house name is set over the photograph — the
+                link reads out the house, not the picture. */}
+            <a class="bespoke-card" href={card.href}>
+              <span class:list={['bespoke-card-media', { weave: !card.image }]}>
+                {card.image && <img src={card.image} alt="" loading="lazy" />}
+                <span class="bespoke-card-logo">{card.name}</span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
 </Layout>

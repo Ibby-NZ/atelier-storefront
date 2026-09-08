@@ -323,18 +323,6 @@
   color: var(--tan);
 }
 
-:root[data-theme="dark"] .house-trade {
-  border-top-color: var(--umber-line);
-}
-
-:root[data-theme="dark"] .house-trade-head {
-  color: var(--bone-muted);
-}
-
-:root[data-theme="dark"] .house-trade-body {
-  color: var(--bone-soft);
-}
-
 /* #2 — the collection tile wall is covered by the shared `.tile-wall` rule. */
 
 /* ==========================================================================

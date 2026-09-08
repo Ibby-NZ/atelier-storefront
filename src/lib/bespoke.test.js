@@ -5,6 +5,8 @@ import {
   PRICE_VALIDITY_NOTE,
   blankEnquiryState,
   findBespokeHouse,
+  bespokeHouseFor,
+  bespokeCards,
   bespokeSubject,
   bespokeEnquiryPayload,
 } from './bespoke.js'
@@ -43,6 +45,47 @@ test('findBespokeHouse resolves a slug and never throws on an unknown one', () =
   assert.equal(findBespokeHouse('maria-flora').name, 'Maria Flora')
   assert.equal(findBespokeHouse('not-a-house'), null)
   assert.equal(findBespokeHouse(undefined), null)
+})
+
+// The wall is the CRM's flag, not this file's list: a house the office ticks
+// appears even with no editorial here, and one it unticks disappears even with.
+test('bespokeCards keeps the flagged houses — editorial photo first, house image second', () => {
+  const cards = bespokeCards([
+    { slug: 'pierre-frey', name: 'Pierre Frey', bespoke: true, image_url: null },
+    { slug: 'houles', name: 'Houlès', bespoke: true, image_url: 'https://x/h.jpg' },
+    { slug: 'de-le-cuona', name: 'de Le Cuona', bespoke: false, image_url: 'https://x/d.jpg' },
+    { slug: 'no-photo', name: 'No Photo', bespoke: true },
+  ])
+  assert.deepEqual(
+    cards.map((card) => [card.slug, card.name, card.href, card.image]),
+    [
+      ['pierre-frey', 'Pierre Frey', '/brands/pierre-frey', BESPOKE_HOUSES[0].images[0].src],
+      ['houles', 'Houlès', '/brands/houles', 'https://x/h.jpg'],
+      ['no-photo', 'No Photo', '/brands/no-photo', null],
+    ]
+  )
+})
+
+test('bespokeCards falls back to the editorial houses when there is no brand list', () => {
+  assert.deepEqual(
+    bespokeCards(null).map((card) => card.slug),
+    BESPOKE_HOUSES.map((house) => house.slug)
+  )
+  assert.deepEqual(bespokeCards([]), [])
+})
+
+test('bespokeHouseFor takes the CRM name and the editorial categories, if any', () => {
+  assert.deepEqual(bespokeHouseFor({ slug: 'loro-piana', name: 'Loro Piana' }), {
+    slug: 'loro-piana',
+    name: 'Loro Piana',
+    categories: ['Throws', 'Cushions', 'Area rugs'],
+  })
+  assert.deepEqual(bespokeHouseFor({ slug: 'houles', name: 'Houlès' }), {
+    slug: 'houles',
+    name: 'Houlès',
+    categories: [],
+  })
+  assert.equal(bespokeHouseFor(null), null)
 })
 
 // Switching house resets with this, so a field missing from it is a field that
