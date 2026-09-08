@@ -115,18 +115,47 @@ export const BESPOKE_HOUSES = Object.freeze([
   }),
 ])
 
-// The selected house, or null — never throws on an unknown slug.
+// The editorial entry for a slug, or null — never throws on an unknown slug.
 export const findBespokeHouse = (slug) =>
   BESPOKE_HOUSES.find((house) => house.slug === slug) ?? null
 
-// Everything an enquiry accumulates that belongs to ONE house or ONE
-// submission: the chosen category, and the outcome of pressing send. It is a
-// single object, and the same function seeds it and clears it, because the
-// island resets it wholesale when the shopper picks another house — as separate
-// flags it was reset in part, which left the sent panel (and no form) standing
-// under the next house's gallery, and a stale 422 painted over an empty form.
-// The shopper's own name / email / phone / brief are deliberately NOT here:
-// they belong to the person, not to the house, and survive the switch.
+// The house a page hands the enquiry form: the API's own name (the CRM's
+// spelling) with the editorial categories where this file has them. A house
+// flagged bespoke in the CRM but absent here still gets a working form — the
+// subject line only needs the name.
+export const bespokeHouseFor = (brand) => {
+  if (!brand?.slug) return null
+  const editorial = findBespokeHouse(brand.slug)
+  return Object.freeze({
+    slug: brand.slug,
+    name: brand.name ?? editorial?.name ?? brand.slug,
+    categories: editorial?.categories ?? Object.freeze([]),
+  })
+}
+
+// Cards for the /bespoke wall. Membership is the CRM's `bespoke` flag, so the
+// office adds a house without a deploy; the photograph is the editorial one
+// here, else the house's own image from the CRM, else none (the card paints the
+// weave). With no brand list at all (the API is down) the wall falls back to the
+// editorial houses, so the page still renders.
+export const bespokeCards = (brands) => {
+  const list = Array.isArray(brands) ? brands.filter((brand) => brand?.bespoke) : BESPOKE_HOUSES
+  return Object.freeze(
+    list.map((brand) => {
+      const editorial = findBespokeHouse(brand.slug)
+      return Object.freeze({
+        slug: brand.slug,
+        name: brand.name,
+        href: `/brands/${encodeURIComponent(brand.slug)}`,
+        image: editorial?.images[0]?.src ?? brand.image_url ?? null,
+      })
+    })
+  )
+}
+
+// Everything an enquiry accumulates that belongs to ONE submission: the chosen
+// category, and the outcome of pressing send. One object, seeded by one
+// function, so the form's state is a single value with a known blank.
 export const blankEnquiryState = () => ({
   category: '',
   submitting: false,

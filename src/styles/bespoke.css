@@ -1,8 +1,9 @@
 /*
- * Bespoke page (platform-handoff vocabulary, like the other enquiry pages).
- * A wall of the commissioning houses, the picked house's gallery + blurb, and
- * the quote enquiry form. No monetary figure appears on this page by design —
- * bespoke is quoted.
+ * Bespoke (platform-handoff vocabulary, like the other enquiry pages).
+ * /bespoke is a wall of the commissioning houses, each card a link to the
+ * house's own page; the quote enquiry form (`.bespoke-enquiry`) lives on that
+ * page, in the intro's right-hand column. No monetary figure appears in either
+ * place by design — bespoke is quoted.
  */
 
 .bespoke-explorer {
@@ -14,8 +15,7 @@
 /* --- The wall ---------------------------------------------------------------
    The brands wall's tile (`.house-card`, houses.css) COPIED rather than shared:
    that figure belongs to the 2026 brands index, and one selector dressing both
-   pages would mean a restyle of one silently redrawing the other. The card is a
-   button here, not a link — it picks the house the panels below are about. */
+   pages would mean a restyle of one silently redrawing the other. */
 .bespoke-wall {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -27,18 +27,12 @@
 
 .bespoke-card {
   display: block;
-  width: 100%;
   min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
   color: inherit;
-  text-align: left;
-  cursor: pointer;
+  text-decoration: none;
 }
 
+/* `.weave` (primitives.css) paints the ground for a house with no photograph. */
 .bespoke-card-media {
   position: relative;
   display: flex;
@@ -70,10 +64,8 @@
   transition: background var(--slow);
 }
 
-/* The picked house wears a lighter scrim — the panel it opened is below the
-   wall, off screen on a short viewport, so the card has to say it is the one. */
-.bespoke-card[aria-pressed="true"] .bespoke-card-media::after {
-  background: rgba(0, 0, 0, 0.16);
+.bespoke-card:hover .bespoke-card-media::after {
+  background: rgba(0, 0, 0, 0.28);
 }
 
 .bespoke-card-logo {
@@ -88,63 +80,7 @@
   text-wrap: balance;
 }
 
-.bespoke-card-made {
-  display: block;
-  margin-top: var(--s2);
-  font-size: var(--t-eyebrow);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.bespoke-card[aria-pressed="true"] .bespoke-card-made {
-  color: var(--accent);
-}
-
-.bespoke-house h2 {
-  margin: 0 0 var(--s2);
-}
-
-.bespoke-categories {
-  font-size: var(--t-eyebrow);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  margin: 0 0 var(--s3);
-}
-
-.bespoke-blurb {
-  max-width: 38rem;
-  color: var(--ink-soft);
-  margin: 0 0 var(--s4);
-}
-
-.bespoke-gallery {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s3);
-}
-
-.bespoke-tile {
-  margin: 0;
-  border: 1px solid var(--hair);
-  overflow: hidden;
-}
-
-.bespoke-tile img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-}
-
-.bespoke-enquiry {
-  max-width: 30rem;
-  border-top: 1px solid var(--hair);
-  padding-top: var(--s5);
-}
-
+/* --- The enquiry form (house page) ---------------------------------------- */
 .bespoke-enquiry h2 {
   margin: 0 0 var(--s2);
 }
@@ -174,9 +110,5 @@
 
   .bespoke-card-media {
     aspect-ratio: 4 / 5;
-  }
-
-  .bespoke-gallery {
-    grid-template-columns: 1fr;
   }
 }
