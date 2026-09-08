@@ -6,6 +6,7 @@ import {
   bandClasses,
   normaliseBanner,
   normalisePage,
+  normalisePost,
   normaliseSection,
   overlayArtwork,
 } from './emdash.js'
@@ -205,4 +206,31 @@ test('bandClasses emits classes only for a real, known choice', () => {
   assert.deepEqual(bandClasses({ align: 'diagonal', scrim: 'plaid' }), [])
   assert.deepEqual(bandClasses({}), [])
   assert.deepEqual(bandClasses(undefined), [])
+})
+
+test('normalisePost splits the houses field into brand slugs and dates from publishedAt', () => {
+  const post = normalisePost({
+    slug: 'inside-cappuccino',
+    data: {
+      title: 'Inside Cappuccino',
+      houses: ' Pierre-Frey, larsen ,',
+      publishedAt: '2026-06-01T00:00:00.000Z',
+      featured_image: { meta: { storageKey: 'k.jpg' } },
+      content: [],
+    },
+  })
+  assert.equal(post.id, 'inside-cappuccino')
+  assert.deepEqual(post.brands, ['pierre-frey', 'larsen'])
+  assert.equal(post.date.toISOString(), '2026-06-01T00:00:00.000Z')
+  assert.equal(post.hero, '/_emdash/api/media/file/k.jpg')
+  assert.equal(post.content, null)
+  assert.equal(post.source, 'emdash')
+})
+
+test('normalisePost tolerates a bare entry and an array of houses', () => {
+  const bare = normalisePost({ slug: 'bare', data: {} })
+  assert.deepEqual(bare.brands, [])
+  assert.equal(bare.date, null)
+  assert.equal(bare.hero, null)
+  assert.deepEqual(normalisePost({ slug: 'x', data: { houses: ['larsen'] } }).brands, ['larsen'])
 })
