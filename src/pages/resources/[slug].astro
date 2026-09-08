@@ -1,5 +1,5 @@
 ---
-export const prerender = false // resolves markdown baseline first, else live EmDash post
+export const prerender = false // resolves the live EmDash post first, else the markdown baseline
 import Layout from '../../layouts/Layout.astro'
 import { getEntry, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
@@ -7,31 +7,34 @@ import { getEmdashPost } from '../../lib/emdash.js'
 import { excerptFromBody } from '../../lib/journal.js'
 import { safeFetch } from '../../lib/api.js'
 
-// One journal post. The markdown `post` collection is the baseline and wins on
-// slug collisions; a slug with no markdown entry falls back to a post authored
-// in the EmDash CMS (US-026). Server-rendered so the CMS is queried live. When
+// One journal post. A post published in the EmDash CMS (US-026) is the editor
+// of record and wins on its slug; the markdown `post` collection is only read
+// when the CMS has nothing for it (per post, never a hybrid — the brand pages'
+// rule, see lib/posts.js). Server-rendered so the CMS is queried live. When
 // neither source has the slug we return a 404 body.
 const { slug } = Astro.params
 
-const mdPost = await getEntry('post', slug)
+const emPost = await getEmdashPost(slug)
+const mdPost = emPost ? null : await getEntry('post', slug)
 let Content = null
 if (mdPost) {
   Content = (await render(mdPost)).Content
 }
 
-const emPost = mdPost ? null : await getEmdashPost(slug)
-const found = mdPost ?? emPost
+const found = emPost ?? mdPost
 
-const title = mdPost?.data.title ?? emPost?.title ?? 'Not found'
-const date = mdPost?.data.date ?? emPost?.date ?? null
-const hero = mdPost?.data.hero ?? emPost?.hero ?? null
-const brandSlugs = mdPost?.data.brands ?? []
+const title = emPost?.title ?? mdPost?.data.title ?? 'Not found'
+const date = emPost?.date ?? mdPost?.data.date ?? null
+const hero = emPost?.hero ?? mdPost?.data.hero ?? null
+const brandSlugs = emPost?.brands ?? mdPost?.data.brands ?? []
 
 // The standfirst doubles as the page's meta description, so a post is
 // shareable without anyone writing a second summary.
-const excerpt = mdPost
-  ? mdPost.data.excerpt ?? excerptFromBody(mdPost.body)
-  : emPost?.excerpt ?? ''
+const excerpt = emPost
+  ? emPost.excerpt
+  : mdPost
+    ? mdPost.data.excerpt ?? excerptFromBody(mdPost.body)
+    : ''
 
 // A tag showed the raw slug ("pierre-frey"). The house names come from the
 // catalogue API; safeFetch never throws, so a missing/unavailable API just

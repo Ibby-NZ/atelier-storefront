@@ -41,14 +41,27 @@ export const mediaUrl = (value) => {
   return null
 }
 
-const normalise = (entry) => {
+// The `houses` field is a comma-separated list of atelier-api brand slugs (the
+// office types what the collection banners already ask for); an array is
+// tolerated should the field ever become a multi-select.
+const houseSlugs = (value) => {
+  const raw = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []
+  return raw.map((slug) => String(slug).trim().toLowerCase()).filter(Boolean)
+}
+
+// A `posts` entry in the shape lib/posts.js gives a markdown post, so the
+// journal index, a post page and a brand page's related reading treat either
+// source identically.
+export const normalisePost = (entry) => {
   const data = entry?.data ?? {}
   return {
-    id: entry.slug ?? entry.id,
-    title: data.title ?? entry.slug ?? 'Untitled',
+    id: entry?.slug ?? entry?.id ?? '',
+    title: data.title ?? entry?.slug ?? 'Untitled',
+    // The live loader folds the entry's publishedAt/createdAt into `data`.
     date: toDate(data.publishedAt ?? data.createdAt),
     hero: mediaUrl(data.featured_image),
     excerpt: data.excerpt ?? '',
+    brands: houseSlugs(data.houses),
     // Portable Text blocks for the body; render with <PortableText /> from
     // 'emdash/ui'. Null when the post has no body (excerpt is the fallback).
     content: Array.isArray(data.content) && data.content.length > 0 ? data.content : null,
@@ -93,7 +106,7 @@ export async function listEmdashPosts() {
   try {
     const { entries } = await getEmDashCollection('posts')
     return entries
-      .map(normalise)
+      .map(normalisePost)
       .sort((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0))
   } catch {
     return []
@@ -106,7 +119,7 @@ export async function listEmdashPosts() {
 export async function getEmdashPost(slug) {
   try {
     const result = await getEmDashEntry('posts', slug)
-    return result?.entry ? normalise(result.entry) : null
+    return result?.entry ? normalisePost(result.entry) : null
   } catch {
     return null
   }

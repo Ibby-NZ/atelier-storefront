@@ -210,6 +210,12 @@
           "slug": "excerpt",
           "label": "Excerpt",
           "type": "text"
+        },
+        {
+          "slug": "houses",
+          "label": "Houses (catalogue web addresses)",
+          "type": "string",
+          "description": "Comma-separated house web addresses from atelier-api (e.g. pierre-frey, larsen). The post is tagged with each house and listed under Related reading on that house's page."
         }
       ]
     },
