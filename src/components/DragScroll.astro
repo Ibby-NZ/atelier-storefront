@@ -10,7 +10,7 @@
 //
 // Opt in with `data-drag-scroll` on the scrolling element. Nothing else on the
 // page is touched, so any other row can adopt it by adding the attribute —
-// `.story-brands-row` and the home's `.home-brands-row` both do.
+// the shared `BrandsRow.astro` does.
 //
 // Progressive: without JavaScript the row is still a native scroller — touch
 // swipe, keyboard focus and Shift+wheel all keep working, and the tiles are
@@ -18,114 +18,132 @@
 ---
 
 <script>
-  const rows = document.querySelectorAll('[data-drag-scroll]')
   // How long the wheel must be quiet before the snap comes back on.
   const WHEEL_SETTLE_MS = 150
 
-  for (const row of rows) {
-    const canScroll = () => row.scrollWidth - row.clientWidth > 1
+  const bindRows = (rows) => {
+    for (const row of rows) {
+      const canScroll = () => row.scrollWidth - row.clientWidth > 1
 
-    // --- Wheel ---------------------------------------------------------------
-    // A trackpad sends deltaX for a sideways gesture and the row handles that
-    // natively; what needs mapping is the vertical wheel of an ordinary mouse.
-    // preventDefault ONLY when the row actually consumed the delta — at either
-    // end of the track the page must go on scrolling, or the row becomes a trap
-    // the reader cannot get out of.
-    //
-    // The snap must come off while the wheel drives the row, exactly as it does
-    // mid-drag: `scroll-snap-type: x proximity` re-snaps after every
-    // programmatic scrollLeft write, and a wheel notch is a few pixels — well
-    // inside the proximity band — so each step was pulled straight back to the
-    // tile edge it had just left and the row never moved (drag only worked
-    // because `.is-dragging` already switches the snap off). Inline, so neither
-    // stylesheet needs a class; the snap returns once the wheel has been quiet
-    // for a beat, which is also what settles the row onto a tile.
-    let wheelSettle
-    row.addEventListener(
-      'wheel',
-      (event) => {
-        if (!canScroll() || event.ctrlKey) return
-        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+      // --- Wheel ---------------------------------------------------------------
+      // A trackpad sends deltaX for a sideways gesture and the row handles that
+      // natively; what needs mapping is the vertical wheel of an ordinary mouse.
+      // preventDefault ONLY when the row actually consumed the delta — at either
+      // end of the track the page must go on scrolling, or the row becomes a trap
+      // the reader cannot get out of.
+      //
+      // The snap must come off while the wheel drives the row, exactly as it does
+      // mid-drag: `scroll-snap-type: x proximity` re-snaps after every
+      // programmatic scrollLeft write, and a wheel notch is a few pixels — well
+      // inside the proximity band — so each step was pulled straight back to the
+      // tile edge it had just left and the row never moved (drag only worked
+      // because `.is-dragging` already switches the snap off). Inline, so neither
+      // stylesheet needs a class; the snap returns once the wheel has been quiet
+      // for a beat, which is also what settles the row onto a tile.
+      let wheelSettle
+      row.addEventListener(
+        'wheel',
+        (event) => {
+          if (!canScroll() || event.ctrlKey) return
+          if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
 
-        const limit = row.scrollWidth - row.clientWidth
-        const next = Math.min(Math.max(row.scrollLeft + event.deltaY, 0), limit)
-        if (next === row.scrollLeft) return
+          const limit = row.scrollWidth - row.clientWidth
+          const next = Math.min(Math.max(row.scrollLeft + event.deltaY, 0), limit)
+          if (next === row.scrollLeft) return
 
-        row.style.scrollSnapType = 'none'
-        clearTimeout(wheelSettle)
-        wheelSettle = setTimeout(() => {
-          row.style.scrollSnapType = ''
-        }, WHEEL_SETTLE_MS)
-        row.scrollLeft = next
-        event.preventDefault()
-      },
-      { passive: false }
-    )
+          row.style.scrollSnapType = 'none'
+          clearTimeout(wheelSettle)
+          wheelSettle = setTimeout(() => {
+            row.style.scrollSnapType = ''
+          }, WHEEL_SETTLE_MS)
+          row.scrollLeft = next
+          event.preventDefault()
+        },
+        { passive: false }
+      )
 
-    // --- Drag ----------------------------------------------------------------
-    // Mouse only: a touch pointer already pans the row natively, and taking it
-    // over here would fight the platform's own inertia.
-    //
-    // **No `setPointerCapture`.** Capturing on pointerdown retargets the click
-    // that follows to the capturing element, so every plain click landed on the
-    // <ul> and no house ever opened. The pointer is tracked on `window` instead,
-    // which follows it outside the row just as well and leaves click targeting
-    // alone.
-    let startX = 0
-    let startLeft = 0
-    let moved = false
+      // --- Drag ----------------------------------------------------------------
+      // Mouse only: a touch pointer already pans the row natively, and taking it
+      // over here would fight the platform's own inertia.
+      //
+      // **No `setPointerCapture`.** Capturing on pointerdown retargets the click
+      // that follows to the capturing element, so every plain click landed on the
+      // <ul> and no house ever opened. The pointer is tracked on `window` instead,
+      // which follows it outside the row just as well and leaves click targeting
+      // alone.
+      let startX = 0
+      let startLeft = 0
+      let moved = false
 
-    const onMove = (event) => {
-      const travel = event.clientX - startX
-      // A few pixels of slop, so a click that wobbles still opens the house.
-      // The dragging class goes on only once it is a real drag, or a plain
-      // click would flicker the cursor.
-      if (!moved && Math.abs(travel) > 4) {
-        moved = true
-        row.classList.add('is-dragging')
-      }
-      if (!moved) return
-      row.scrollLeft = startLeft - travel
-      event.preventDefault()
-    }
-
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
-      row.classList.remove('is-dragging')
-    }
-
-    row.addEventListener('pointerdown', (event) => {
-      if (event.pointerType !== 'mouse' || event.button !== 0 || !canScroll()) return
-      // Cleared here rather than after a suppressed click: a drag that ends on
-      // empty space fires no click at all, and the flag would swallow the next
-      // real one.
-      moved = false
-      startX = event.clientX
-      startLeft = row.scrollLeft
-      window.addEventListener('pointermove', onMove, { passive: false })
-      window.addEventListener('pointerup', onUp)
-      window.addEventListener('pointercancel', onUp)
-    })
-
-    // A drag that ends on a tile must not also navigate to that house. Capture
-    // phase, because the anchor's own default would otherwise already be on its
-    // way.
-    row.addEventListener(
-      'click',
-      (event) => {
+      const onMove = (event) => {
+        const travel = event.clientX - startX
+        // A few pixels of slop, so a click that wobbles still opens the house.
+        // The dragging class goes on only once it is a real drag, or a plain
+        // click would flicker the cursor.
+        if (!moved && Math.abs(travel) > 4) {
+          moved = true
+          row.classList.add('is-dragging')
+        }
         if (!moved) return
+        row.scrollLeft = startLeft - travel
         event.preventDefault()
-        event.stopPropagation()
-      },
-      true
-    )
+      }
 
-    // Dragging a link or an image otherwise starts a native drag-and-drop and
-    // the scroll stops dead a few pixels in.
-    row.addEventListener('dragstart', (event) => {
-      if (moved) event.preventDefault()
-    })
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        window.removeEventListener('pointercancel', onUp)
+        row.classList.remove('is-dragging')
+      }
+
+      row.addEventListener('pointerdown', (event) => {
+        if (event.pointerType !== 'mouse' || event.button !== 0 || !canScroll()) return
+        // Cleared here rather than after a suppressed click: a drag that ends on
+        // empty space fires no click at all, and the flag would swallow the next
+        // real one.
+        moved = false
+        startX = event.clientX
+        startLeft = row.scrollLeft
+        window.addEventListener('pointermove', onMove, { passive: false })
+        window.addEventListener('pointerup', onUp)
+        window.addEventListener('pointercancel', onUp)
+      })
+
+      // A drag that ends on a tile must not also navigate to that house. Capture
+      // phase, because the anchor's own default would otherwise already be on its
+      // way.
+      row.addEventListener(
+        'click',
+        (event) => {
+          if (!moved) return
+          event.preventDefault()
+          event.stopPropagation()
+        },
+        true
+      )
+
+      // Dragging a link or an image otherwise starts a native drag-and-drop and
+      // the scroll stops dead a few pixels in.
+      row.addEventListener('dragstart', (event) => {
+        if (moved) event.preventDefault()
+      })
+    }
   }
+
+  // Bind every row that is not yet bound. A bound row is marked so a second
+  // pass never double-binds it.
+  const bind = () => {
+    const rows = document.querySelectorAll('[data-drag-scroll]:not([data-drag-bound])')
+    rows.forEach((row) => row.setAttribute('data-drag-bound', ''))
+    return rows
+  }
+
+  // Runs on the first load AND after every client-side navigation
+  // (<ClientRouter /> in Layout.astro swaps the page in place, and a
+  // bundled script would otherwise run once for the whole session).
+  document.addEventListener('astro:page-load', () => bindRows(bind()))
+
+  // An island announces a row it has just rendered (`atelier-drag-scroll`,
+  // fired by the product page's "Similar Products" row after its fetch).
+  document.addEventListener('atelier-drag-scroll', () => bindRows(bind()))
 </script>

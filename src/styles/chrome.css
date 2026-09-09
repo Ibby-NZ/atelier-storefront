@@ -40,7 +40,7 @@
   position: relative;
   z-index: 50;
   background: var(--shell);
-  border-bottom: 1px solid var(--shell-line-soft);
+  /* No rule under the bar, on any page (page feedback, Sept 2026). */
 }
 
 .site-header-inner {
@@ -62,7 +62,84 @@
   inset-inline: 0;
   top: 0;
   background: transparent;
-  border-bottom-color: transparent;
+}
+
+/* --- Scroll behaviour (Header.astro's script) --------------------------------
+   Down: the bar slides away. Up: it slides back on the page's own ground. At
+   the top it is its natural self again. A contained header is sticky, so it
+   only needs the slide; a floating one is pinned (`fixed`) once scrolled past,
+   which also stops the hero's wash and, on a light page, un-reverses its type. */
+.site-header {
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1), background-color 0.3s ease;
+}
+
+.site-header:not(.site-header--overlay) {
+  position: sticky;
+  top: 0;
+}
+
+.site-header.is-hidden {
+  transform: translateY(-100%);
+}
+
+.site-header--overlay.is-pinned {
+  position: fixed;
+  background: var(--shell);
+}
+
+.site-header--overlay.is-pinned::before {
+  display: none;
+}
+
+.theme-dark .site-header--overlay.is-pinned {
+  background: var(--color-bg-inverse);
+}
+
+/* Pinned over a LIGHT page, the reversed type has nothing dark under it. */
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-nav a,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-util-link,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-icon,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-burger {
+  color: var(--umber-soft);
+}
+
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-nav a:hover,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-util-link:hover,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-icon:hover,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-burger:hover,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-nav a[aria-current="page"],
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-util-link[aria-current="page"] {
+  color: var(--umber);
+}
+
+body:not(.theme-dark) .site-header--overlay.is-pinned {
+  --wordmark-accent: var(--color-pink-500);
+  --wordmark-ink: var(--color-neutral-900);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
+  }
+}
+
+/* A wash under the floating header so the nav holds its own against whatever
+   photograph is behind it (page feedback, 1920x968 #7). ONE straight linear
+   fade, black to nothing, and two and a half times the bar's height — the
+   earlier three-stop version dropped most of its weight in the top half and
+   read as a solid band with a soft edge ("linear transparent overlay, not
+   solid", feedback #1). A single stop pair over a tall run has no shelf to read
+   as an edge. `-1` puts it under the row's own content but inside the header's
+   stacking context; `pointer-events: none` so it cannot eat a click meant for
+   the hero beneath. */
+.site-header--overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 250%;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+  pointer-events: none;
 }
 
 /* --- Nav ------------------------------------------------------------------ */
@@ -77,6 +154,8 @@
 
 .site-nav a,
 .site-util-link {
+  position: relative;
+  padding-bottom: 3px;
   font-family: var(--font-ui);
   font-size: var(--t-base); /* 14px */
   font-weight: 500;
@@ -86,7 +165,33 @@
   text-decoration: none;
   white-space: nowrap;
   color: var(--umber-soft);
-  transition: color var(--quick);
+  transition: color var(--slow);
+}
+
+/* The hover: the item's rule DRAWS in from the left and, on leaving, draws
+   off to the right — the same sweep every action on the site now makes — while
+   the type steps up to full ink. Obvious without being loud (page feedback,
+   Sept 2026: "more obvious … and more elegant"). The current section holds the
+   rule fully drawn, so "where am I" and "where would this take me" are the same
+   figure at two moments. `currentcolor`, so the reversed headers need nothing
+   of their own. */
+.site-nav a::after,
+.site-util-link::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: currentcolor;
+  transform: scaleX(0);
+  transform-origin: right;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-nav a::after,
+  .site-util-link::after {
+    transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+  }
 }
 
 .site-nav a:hover,
@@ -94,12 +199,17 @@
   color: var(--umber);
 }
 
-/* The current section, marked the way the direction marks anything: the
-   underlined action's rule, not a colour swap. */
+.site-nav a:hover::after,
+.site-util-link:hover::after,
+.site-nav a[aria-current="page"]::after,
+.site-util-link[aria-current="page"]::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
 .site-nav a[aria-current="page"],
 .site-util-link[aria-current="page"] {
   color: var(--umber);
-  border-bottom: 1.5px solid currentcolor;
 }
 
 /* --- Wordmark ------------------------------------------------------------- */
@@ -130,7 +240,8 @@
   gap: var(--s5);
 }
 
-.site-icon {
+.site-icon,
+.site-burger {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -141,7 +252,8 @@
   transition: color var(--quick);
 }
 
-.site-icon:hover {
+.site-icon:hover,
+.site-burger:hover {
   color: var(--umber);
 }
 
@@ -149,29 +261,6 @@
   display: block;
   width: 24px;
   height: 24px;
-}
-
-/* --- Theme toggle --------------------------------------------------------- */
-/* A <button> wearing `.site-icon`, so it needs the control reset the anchors
-   don't. Which of its two glyphs shows is decided by CSS off the root theme
-   attribute — no JS paints the icon, so there is no flash on load. */
-.theme-toggle {
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.theme-toggle .theme-icon-sun {
-  display: none;
-}
-
-:root[data-theme="dark"] .theme-toggle .theme-icon-moon {
-  display: none;
-}
-
-:root[data-theme="dark"] .theme-toggle .theme-icon-sun {
-  display: block;
 }
 
 /* The cart count. Ochre rather than claret: on this header claret belongs to
@@ -199,23 +288,57 @@
 .site-header--overlay .site-nav a,
 .site-header--overlay .site-util-link,
 .site-header--overlay .site-icon,
+.site-header--overlay .site-burger,
 .theme-dark .site-header .site-nav a,
 .theme-dark .site-header .site-util-link,
-.theme-dark .site-header .site-icon {
+.theme-dark .site-header .site-icon,
+.theme-dark .site-header .site-burger {
   color: var(--bone);
 }
 
 .site-header--overlay .site-nav a:hover,
 .site-header--overlay .site-util-link:hover,
 .site-header--overlay .site-icon:hover,
+.site-header--overlay .site-burger:hover,
 .site-header--overlay .site-nav a[aria-current="page"],
 .site-header--overlay .site-util-link[aria-current="page"],
 .theme-dark .site-header .site-nav a:hover,
 .theme-dark .site-header .site-util-link:hover,
 .theme-dark .site-header .site-icon:hover,
+.theme-dark .site-header .site-burger:hover,
 .theme-dark .site-header .site-nav a[aria-current="page"],
 .theme-dark .site-header .site-util-link[aria-current="page"] {
   color: #fff;
+}
+
+/* Floating over a LIGHT band (`overlay="light"`: the shop and journal banners,
+   drawn on bg/subtle with the header inside them — Figma 9457:5255, Header
+   Theme=Light): the header floats, but keeps its paper-theme type, its light
+   wordmark, and takes no wash. Three classes deep so it beats the reversal
+   above. */
+.site-header--overlay.site-header--overlay-light .site-nav a,
+.site-header--overlay.site-header--overlay-light .site-util-link,
+.site-header--overlay.site-header--overlay-light .site-icon,
+.site-header--overlay.site-header--overlay-light .site-burger {
+  color: var(--umber-soft);
+}
+
+.site-header--overlay.site-header--overlay-light .site-nav a:hover,
+.site-header--overlay.site-header--overlay-light .site-util-link:hover,
+.site-header--overlay.site-header--overlay-light .site-icon:hover,
+.site-header--overlay.site-header--overlay-light .site-burger:hover,
+.site-header--overlay.site-header--overlay-light .site-nav a[aria-current="page"],
+.site-header--overlay.site-header--overlay-light .site-util-link[aria-current="page"] {
+  color: var(--umber);
+}
+
+.site-header--overlay.site-header--overlay-light {
+  --wordmark-accent: var(--color-pink-500);
+  --wordmark-ink: var(--color-neutral-900);
+}
+
+.site-header--overlay.site-header--overlay-light::before {
+  display: none;
 }
 
 /* The reversed colourway of the wordmark. Declared on the HEADER, not on the
@@ -231,11 +354,17 @@
    A dark page's header takes the page's ground and reverses its type through
    the SAME rules the overlay theme uses, above — a cream bar over an umber page
    is the light strip the client reported on the product page, at full
-   strength. `--overlay` still wins where both apply: it comes later in the
-   cascade and its `transparent` is what a floating header needs. */
-.theme-dark .site-header {
+   strength.
+
+   **The overlay header is excluded by name, and it has to be.** This rule is
+   two classes deep; `.site-header--overlay` is one. Specificity decides, not
+   source order — so the moment the home became a dark page its floating header
+   was painted solid umber straight over the `transparent` the overlay rule
+   sets, and the client saw a solid bar where a wash was meant to be (page
+   feedback, three rounds running). The earlier comment here said the overlay
+   "comes later in the cascade and wins"; it never did. */
+.theme-dark .site-header:not(.site-header--overlay) {
   background: var(--umber);
-  border-bottom-color: var(--umber-line);
 }
 
 /* --- Footer --------------------------------------------------------------- */
@@ -384,22 +513,179 @@
 /* Below the container's own breakpoint the two flex groups meet in the middle
    of the wordmark, so the row becomes three stacked rows: wordmark, nav,
    utilities. The wordmark leaves the absolute layer to do it. */
+/* --- Burger + full-screen menu (phones and tablets) ------------------------
+   Above 1024px none of this exists: the desktop row is the frame's. Below it
+   the inline nav and the Contact link leave the row for a full-screen menu on
+   the dark ground, reached by a two-line burger that folds into a cross. The
+   menu is CLIPPED rather than faded: closed it is `inset(0 0 100% 0)` — nothing
+   showing, clipped to the top edge — and opening runs that to `inset(0)`, so
+   it is revealed downward from the top; closing runs it back, so it retracts
+   upward (page feedback, Sept 2026). The links arrive one after another on a
+   short stagger (`--i` from the markup). */
+.site-burger,
+.site-menu {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-menu,
+  .site-burger-line,
+  .site-menu-nav li,
+  .site-menu-foot {
+    transition: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .site-header-inner {
-    flex-wrap: wrap;
-    justify-content: center;
     gap: var(--s4);
     padding-block: var(--s5) var(--s4);
   }
 
+  /* One row, two ends: the mark on the left at 70% of its desktop width, the
+     icon row and the burger on the right. With the nav gone the mark can no
+     longer be absolutely centred — it sat under the icons. */
   .site-wordmark {
+    --wordmark-width: 140px;
     position: static;
-    top: auto;
     transform: none;
     order: -1;
-    flex: 0 0 100%;
-    display: flex;
+  }
+
+  .site-nav,
+  .site-util-link {
+    display: none;
+  }
+
+  .site-burger {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    flex-direction: column;
     justify-content: center;
+    gap: 5px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    /* No `color` here: the burger is listed beside `.site-icon` in every
+       colour rule above (paper, overlay, dark, pinned, light), so it reads
+       exactly as the icons do on whatever ground the header is on. An
+       `inherit` here used to beat those rules and drew it umber on the dark
+       heroes — invisible. */
+  }
+
+  .site-burger-line {
+    display: block;
+    width: 20px;
+    height: 1.5px;
+    background: currentcolor;
+    transform-origin: center;
+    transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.2s;
+  }
+
+  .is-menu-open .site-burger-line:first-child {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  .is-menu-open .site-burger-line:last-child {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  .site-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--s8);
+    padding: calc(var(--s10) + var(--s6)) var(--gutter) var(--s9);
+    background: var(--color-bg-inverse);
+    color: var(--bone);
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  .is-menu-open .site-menu {
+    clip-path: inset(0);
+  }
+
+  /* The row stays above the panel and reads reversed on it, whatever theme
+     the page's header is in. */
+  .site-header-inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  .is-menu-open .site-nav a,
+  .is-menu-open .site-util-link,
+  .is-menu-open .site-icon,
+  .is-menu-open .site-burger {
+    color: var(--bone);
+  }
+
+  .is-menu-open {
+    --wordmark-accent: var(--wordmark-accent-rev);
+    --wordmark-ink: var(--wordmark-ink-rev);
+  }
+
+  .site-menu-nav ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-menu-nav li,
+  .site-menu-foot {
+    opacity: 0;
+    transform: translate3d(0, 0.6em, 0);
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
+  .is-menu-open .site-menu-nav li,
+  .is-menu-open .site-menu-foot {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(0.18s + var(--i, 0) * 0.06s);
+  }
+
+  .site-menu-nav a {
+    font-family: var(--font-grotesk);
+    font-size: var(--g-lg);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--bone);
+    text-decoration: none;
+  }
+
+  .site-menu-nav a[aria-current="page"] {
+    color: var(--tan);
+  }
+
+  .site-menu-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s5);
+    margin: 0;
+    padding-top: var(--s6);
+    border-top: 1px solid var(--umber-line);
+  }
+
+  .site-menu-foot a {
+    font-size: var(--t-base);
+    font-weight: 500;
+    color: var(--bone-soft);
+    text-decoration: none;
+  }
+
+  html.menu-open {
+    overflow: hidden;
   }
 
   .site-footer-inner {
@@ -421,19 +707,106 @@
 }
 
 @media (max-width: 640px) {
-  /* The nav scrolls rather than wrapping to a second line: four labels wrapped
-     to two rows reads as two navs. */
-  .site-nav {
-    max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .site-nav::-webkit-scrollbar {
-    display: none;
-  }
-
   .site-utils {
     gap: var(--s4);
+  }
+
+  /* The phone footer: the mark centred at 70% width, the two link columns
+     under it, the social icons under the second column (under Terms &
+     Conditions), the newsletter across the foot. The two wrappers become
+     `display: contents` so the grid places their children directly; the
+     desktop markup does not change. */
+  .site-footer-inner {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s6) var(--s5);
+    align-items: start;
+  }
+
+  .site-footer-brand-col,
+  .site-footer-links {
+    display: contents;
+  }
+
+  .site-footer-brand {
+    --wordmark-width: 168px;
+    grid-column: 1 / -1;
+    justify-self: center;
+    order: 0;
+  }
+
+  .site-footer-nav {
+    order: 1;
+  }
+
+  .site-footer-socials {
+    grid-column: 2;
+    order: 2;
+  }
+
+  .site-footer-newsletter {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
+
+/* --- Page transitions --------------------------------------------------------
+   `<ClientRouter />` in Layout.astro turns every same-site link into a
+   client-side navigation, and the View Transitions API drives what happens on
+   screen between the two pages. That "what" is a CURTAIN, not a crossfade:
+
+     1. the leaving page dims to the design's dark brown over 0.3s;
+     2. the brown holds, alone on screen, for a beat;
+     3. the arriving page comes up out of the brown over 0.35s.
+
+   The first version crossfaded — old snapshot fading out while the new faded
+   in with a 14px rise — and for the overlap both pages were on screen at half
+   strength, which reads as a double exposure ("it feels like it's doubling",
+   page feedback, Sept 2026). Here the two never share a frame: the new
+   snapshot is held at zero until the old has fully gone, and there is no
+   movement at all — dimming alone is the calm the client asked for.
+
+   The brown is the `::view-transition` root's own background — the layer every
+   snapshot sits on — so it is what shows through the moment both snapshots are
+   transparent. It is a TOKEN (`--color-bg-inverse`, the file's own dark
+   ground), never a literal, and the pseudo-element inherits it from :root.
+
+   `!important` is deliberate and the only way in: Astro injects its own
+   default `fade` onto the same root pseudo-elements, a pseudo-element cannot be
+   made more specific, and the injected sheet's position is not ours to
+   control. */
+::view-transition {
+  background: var(--color-bg-inverse);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: page-dim 0.3s cubic-bezier(0.4, 0, 0.6, 1) both !important;
+  }
+
+  ::view-transition-new(root) {
+    /* The delay IS the curtain: nothing of the new page until the old is gone. */
+    animation: page-lift 0.35s cubic-bezier(0.2, 0, 0.2, 1) 0.3s both !important;
+  }
+}
+
+/* Under reduced motion the switch is instant — no dim, no lift — so a reader
+   who asked for stillness is not shown a third of a second of brown. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+@keyframes page-dim {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-lift {
+  from {
+    opacity: 0;
   }
 }

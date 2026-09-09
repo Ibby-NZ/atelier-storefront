@@ -1,35 +1,27 @@
 /*
  * Our Story, 2026 direction (design: Figma "Story Page", node 9436:3043) —
- * the direction's one DARK page. Every band sits on the umber ground:
- * full-bleed photo bands (the shared .photo-band figure), split photo/copy
- * sections, the strip of house tiles (the brands index's .house-card, its
- * name label reversed here), and the showrooms band.
+ * a DARK page (Layout `dark`). Every band sits on the umber ground: the
+ * full-bleed photo bands (the shared .photo-band figure), two of the home's
+ * featured bands (components/FeaturedBand.astro), the home's Brands row
+ * (components/BrandsRow.astro), and the showrooms band. Only what is this
+ * page's alone is styled here.
  */
 
+/* The bands BUTT, as they do on the home (page feedback, Sept 2026: "remove
+   the gap outside of those sections"). The 25 Aug 2026 gaps existed to make the
+   old split's raised panel read as a panel; that split is gone — the two
+   sections are the home's featured band now, which carries its own 12px air
+   around the photograph — so there is nothing left for a gap to do. The ground
+   is still named so a band with nothing behind it sits on the dark. */
 .story-page {
   background: var(--umber);
   color: var(--bone-soft);
-  /* The bands are SEPARATED, not butted (Userback, 25 Aug 2026): every block
-     ran straight into the next, so a photo band and the section under it read
-     as one continuous scroll. The page's own umber shows through each gap,
-     which is what makes the split's raised panel (`--umber-raised`) read as a
-     panel. */
-  display: flex;
-  flex-direction: column;
-  gap: var(--s6);
-}
-
-/* Room under the copy on this page's bands. The shared figure hugs the bottom
-   edge at `--s6` (direction-2026.css) and that is right where a band runs into
-   the next one; here they are separated, so the copy is given the same air
-   underneath that the gap gives the band. */
-.story-page .photo-band-body {
-  padding-bottom: var(--s8);
 }
 
 /* --- Photo bands ------------------------------------------------------------ */
+/* The full viewport — `--hero-height`, the one figure every photo hero reads. */
 .story-hero {
-  min-height: 74vh;
+  min-height: var(--hero-height);
   display: flex;
   align-items: flex-end;
 }
@@ -46,90 +38,10 @@
   margin: 0;
 }
 
-/* --- Split sections ---------------------------------------------------------- */
-.story-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: stretch;
-}
-
-/* The mock's split is a 622 x 692 photograph beside its copy — TALLER than it
-   is wide. A fixed `min-height` cannot hold that: the media is half the
-   viewport, so at 34rem it came out 838 x 544 on a wide screen and at 42rem
-   838 x 672, both still letterboxes.
-   `55vw` is the mock's own ratio (692 / 622 x 50vw = 55.6vw), so the frame
-   stays the shape the design draws at every width — 922px tall at 1676, 704px
-   at 1280, which is the mock's own 712 to within a pixel. Clamped so a short
-   laptop still gets a floor and an ultrawide does not run away.
-   Both halves stretch (`align-items: stretch`), so this one number raises the
-   copy panel with it. */
-.story-split-media {
-  min-height: clamp(34rem, 55vw, 60rem);
-  background-size: cover;
-  background-position: center;
-}
-
-.story-split-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--s5);
-  padding: var(--s10) clamp(var(--s6), 6vw, var(--s10));
-  /* Lifted off the page's umber rather than matching it (Userback, 25 Aug
-     2026): the copy panel is half of a two-colour figure, and on the page
-     ground it read as a hole beside the photograph instead of as the panel it
-     is. It names its own ground for the same reason it always did — never
-     inherited from `.story-page`, which a later band could change. */
-  background: var(--umber-raised);
-}
-
-.story-split-body h2 {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: var(--g-lg);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: #fff;
-  text-wrap: balance;
-}
-
-.story-split-body p {
-  margin: 0;
-  max-width: 27rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--bone-soft);
-}
-
 /* The pronunciation half of "Atelier [ at–l–yey ]" drops to the muted bone,
    the same figure as the hero's house line. */
 .story-pron {
   color: var(--bone-muted);
-}
-
-/* The section label, in the brand ochre the client asked for (Userback, 25 Aug
-   2026, stated as #8a6747 — `--ochre` is the Figma's own color/brand/primary
-   #8b6746, the same colour to within one unit per channel, so it is the token
-   rather than a second literal).
-   
-   It replaces `--tan`, which the mock used because ochre goes muddy on the
-   page's umber — on the raised `--umber-raised` panel it is the client's call,
-   and it is worth knowing the pair is ~2.9:1, under WCAG AA for 12px text.
-
-   `.story-split-body p` beat this rule on specificity (0,2,1 against 0,1,0) and
-   the badge — which IS a <p> — was rendering bone-soft, so neither the tan the
-   mock asked for nor anything else here had ever reached the screen. Qualified
-   so the label's own colour wins wherever it is used. */
-.story-badge,
-.story-split-body p.story-badge {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--ochre);
 }
 
 /* Bulleted lists, both in the workspace split and the showrooms band. */
@@ -144,118 +56,10 @@
   color: var(--bone-soft);
 }
 
-/* --- Brands strip ------------------------------------------------------------ */
-.story-brands {
-  padding-block: var(--s9);
-}
-
-.story-brands-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s5);
-  margin-bottom: var(--s7);
-}
-
-.story-brands-head h2 {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: var(--g-lg);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: #fff;
-}
-
-/* The row carries EVERY house and runs past the right edge of the frame rather
-   than wrapping — forty-two maisons in a four-up grid is eleven rows of tiles,
-   which is a directory, and the directory is /brands. Scroll padding keeps the
-   first tile on the container gutter after a snap, so it lines up with the
-   heading above it. Same figure as the home's "Latest collections" row; it sits
-   outside `.container` for the bleed (see story.astro). */
-.story-brands-row {
-  display: flex;
-  gap: var(--s3);
-  margin: 0;
-  padding: 0 var(--gutter);
-  list-style: none;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline-start: var(--gutter);
-  scrollbar-width: none;
-  /* The affordance. The scrollbar is hidden by the design and a vertical wheel
-     does nothing to a row that only overflows on X, so without a grab cursor
-     there is nothing at all telling a reader this moves — see
-     components/DragScroll.astro, which supplies the drag and the wheel. */
-  cursor: grab;
-}
-
-.story-brands-row.is-dragging {
-  cursor: grabbing;
-  /* Kill the snap mid-drag: it fights the pointer and the row jumps back to a
-     tile edge on every frame. */
-  scroll-snap-type: none;
-  user-select: none;
-}
-
-/* A dragged row must not leave the tile under the cursor looking clicked. */
-.story-brands-row.is-dragging a {
-  cursor: grabbing;
-}
-
-.story-brands-row::-webkit-scrollbar {
-  display: none;
-}
-
-.story-brands-row > li {
-  flex: 0 0 clamp(15rem, 22vw, 21.9375rem); /* → 351px, the tile the grid gave */
-  scroll-snap-align: start;
-}
-
-/* The house tile's name label reverses onto the dark ground. */
-.story-brands .house-card-name {
-  color: var(--bone-soft);
-}
-
-.story-brands .house-card:hover .house-card-name {
-  color: #fff;
-}
-
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .story-hero {
-    min-height: 58vh;
-  }
-
   .story-sourced,
   .story-showrooms {
     min-height: 62vh;
-  }
-
-  .story-split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* Photograph first in both splits when they stack. */
-  .story-split-reverse .story-split-media {
-    order: -1;
-  }
-
-  /* Stacked, the media is FULL width rather than half, so the desktop's 55vw
-     would be a portrait taller than the screen. 62vw is the same idea at the
-     new width: a frame that keeps its shape, floored so a phone still gets a
-     photograph and capped so a tablet does not get a wall. */
-  .story-split-media {
-    min-height: clamp(22rem, 62vw, 34rem);
-  }
-
-  .story-split-body {
-    padding: var(--s8) var(--gutter);
-  }
-}
-
-@media (max-width: 640px) {
-  .story-brands-row > li {
-    flex-basis: 74vw;
   }
 }

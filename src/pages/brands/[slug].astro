@@ -2,6 +2,9 @@
 export const prerender = false // live: API brand + EmDash/markdown editorial overlay
 import { getCollection, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
+import { getImage } from 'astro:assets'
+import brandsBanner from '../../assets/img/brands-hero-bg.jpg'
+import { houseMeta } from '../../lib/houses.js'
 import Layout from '../../layouts/Layout.astro'
 import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
 import BespokeEnquiry from '../../components/BespokeEnquiry.jsx'
@@ -60,6 +63,11 @@ const blurb = emPage?.blurb || mdPage?.data.blurb || brand?.story || ''
 const slideshow = emPage?.slideshow ?? mdPage?.data.slideshow ?? []
 const cards = emPage?.collectionCards ?? mdPage?.data.collectionCards ?? []
 const heroImage = slideshow[0] ?? null
+// The Story hero's right-hand line — for a house, its provenance ("France ·
+// est. 1935", degrading to the country alone). And the photograph a house with
+// no banner of its own opens on.
+const meta = brand ? houseMeta(brand) : ''
+const fallbackHero = await getImage({ src: brandsBanner, format: 'webp', width: 2200 })
 
 // Extended copy: Portable Text blocks from the CMS, or the markdown body.
 const story = emPage?.story ?? null
@@ -121,7 +129,7 @@ if (notFound) {
 }
 ---
 
-<Layout title={`${name} — Atelier Textiles`} bleed overlay={Boolean(heroImage) && !notFound} darkGround={!notFound}>
+<Layout title={`${name} — Atelier Textiles`} bleed overlay={!notFound} dark={!notFound}>
   {
     notFound ? (
       <div class="container house-missing">
@@ -133,36 +141,30 @@ if (notFound) {
       </div>
     ) : (
       <>
-        {
-          // "Brand Page" (banner) or "Product Page" (band) — see the note at the
-          // top of the file. Same two lines of copy either way, so only the
-          // frame around them changes.
-          heroImage ? (
-            <section class="photo-band photo-band--parallax house-banner">
-              <span class="photo-band-art" style={`background-image: url(${heroImage})`}></span>
-              <div class="photo-band-body">
-                <div class="container house-banner-copy">
-                  {brand?.country && <p class="badge-light">{brand.country}</p>}
-                  <h1 class="photo-band-title">{name}</h1>
-                </div>
-              </div>
-            </section>
-          ) : (
-            <section class="house-band">
-              <div class="container house-banner-copy">
+        {/* The Story page's hero, exactly: full-viewport parallax photograph,
+            the header floating in it, the country badge and the house name at
+            the foot on the left, one line on the right. A house with no banner
+            photography of its own opens on the client's brands photograph —
+            never the umber band it used to get (page feedback, Sept 2026:
+            "no hero banner"). Below: the frame's intro (9379:2657), two TEXT
+            columns — the blurb on the left, the body copy and the actions on
+            the right. */}
+        <section class="photo-band photo-band--parallax house-banner">
+          <span class="photo-band-art" style={`background-image: url(${heroImage ?? fallbackHero.src})`}></span>
+          <div class="container photo-band-body">
+            <div class="photo-band-row">
+              <div class="house-banner-copy">
                 {brand?.country && <p class="badge-light">{brand.country}</p>}
                 <h1 class="photo-band-title">{name}</h1>
               </div>
-            </section>
-          )
-        }
-
-        {
-          /* The August 2026 redraw ("Brand Page", 9379:2647) sets the intro as
-             two TEXT columns: the blurb on the left, the body copy and the
-             actions on the right. The facts list (Made in / Designs held /
-             Held at Atelier) is gone from the frame and goes here too. */
-        }
+              {meta && (
+                <div class="photo-band-aside">
+                  <p>{meta}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
         <section class="house-intro">
           <div class="container house-intro-inner">
             <div class="house-intro-blurb">
@@ -239,11 +241,10 @@ if (notFound) {
         {tiles.length > 0 && (
           <section class="tile-wall house-collections">
             {tiles.map((tile) => (
-              <a
-                class:list={['tile', { weave: !tile.image }]}
-                style={tile.image ? `background-image: url(${tile.image})` : undefined}
-                href={tile.href}
-              >
+              <a class:list={['tile', { weave: !tile.image }]} href={tile.href}>
+                {tile.image && (
+                  <span class="tile-art" style={`background-image: url(${tile.image})`} />
+                )}
                 <span class="tile-body">
                   <span class="tile-heading">
                     {tile.season && <span class="badge-light">{tile.season}</span>}

@@ -7,7 +7,9 @@ import { safeFetch } from '../../lib/api.js'
 import { applySection, getSiteSections, listEmdashBrandPages } from '../../lib/emdash.js'
 import { houseArtwork } from '../../lib/houses.js'
 import { brandDesignCounts, collectionHref, featuredCollections } from '../../lib/home.js'
-import brandsBanner from '../../assets/img/design-brands-banner-bg.jpg'
+// The client's own supply, Sept 2026 (2560 × 1348).
+import brandsBanner from '../../assets/img/brands-hero-bg.jpg'
+import FeaturedBand from '../../components/FeaturedBand.astro'
 
 // Brands index, 2026 direction (design: Figma "Brands Page", node 9379:3562).
 //
@@ -113,7 +115,7 @@ const hero = applySection(
   description="The maisons we represent in Aotearoa — French, Italian and British houses, and our own workroom."
   bleed
   overlay
-  darkGround
+  dark
 >
   <section class="photo-band photo-band--parallax house-hero">
     <span class="photo-band-art" style={`background-image: url(${hero.image});`}></span>
@@ -183,27 +185,24 @@ const hero = applySection(
   }
 
   {
+    /* The SAME band the home closes its merchandising on
+       (components/FeaturedBand.astro): spacing, height, sizing and drift are
+       one figure, only the content differs (page feedback, Sept 2026).
+
+       A JS comment, not a template one: a braced template comment as the first
+       child of this expression is two nodes and fails to compile — and in dev
+       that is silent, the page just drops out of the route table and /brands
+       falls through to the [slug] catch-all's 404. (Do not quote the closing
+       comment token in here either; that is what broke it the second time.) */
     feature && (
-      <section class="house-feature">
-        <div
-          class="house-feature-media"
-          style={`background-image: url(${feature.image_url});`}
-          role="img"
-          aria-label={`${feature.name} — ${feature.brand?.name ?? 'featured collection'}`}
-        >
-        </div>
-        <div class="house-feature-body">
-          <p class="badge-ochre">Featured collection</p>
-          <h2>{feature.name}</h2>
-          {feature.description && <p class="house-feature-copy">{feature.description}</p>}
-          <a
-            class="cta-underline"
-            href={collectionHref(feature, designCounts[feature.brand?.slug] ?? 0)}
-          >
-            Explore collection
-          </a>
-        </div>
-      </section>
+      <FeaturedBand
+        title={feature.name}
+        description={feature.description}
+        href={collectionHref(feature, designCounts[feature.brand?.slug] ?? 0)}
+        image={feature.image_url}
+        alt={`${feature.name} — ${feature.brand?.name ?? 'featured collection'}`}
+        side="left"
+      />
     )
   }
 </Layout>

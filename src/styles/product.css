@@ -23,12 +23,18 @@
 }
 
 /* --- The band ------------------------------------------------------------- */
+/* The frame (9422:4855): the picture column 622 at x=12, the copy column 562
+   at x=646 — 12px between, 24 above, the two columns as their own proportion. */
 .detail-band {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--s9);
   align-items: center;
-  padding: var(--s5) var(--s9) var(--s3) var(--s3);
+  /* Inside the container now, the copy centred on the picture's height
+     (page feedback, Sept 2026: "too big … fit in a container … more gap"). */
+  max-width: var(--container);
+  margin-inline: auto;
+  padding: var(--s8) var(--gutter);
   /* The canvas, not the raised `--shell-surface` the frame draws. The band is
      full-bleed and fills the viewport, so nothing of the page ground shows
      beside it — the only place its "raised" cream was ever visible was as a
@@ -49,7 +55,6 @@
   position: relative;
   aspect-ratio: 622 / 692; /* the mock's frame */
   overflow: hidden;
-  border: 1px solid var(--shell-line-soft);
   background-color: var(--shell);
   background-size: cover;
   background-position: center;
@@ -152,6 +157,7 @@
 /* --- Price ------------------------------------------------------------------
    The mock's 24px Inter medium figure ("NZ$420 / m"). The muted variant is the
    no-price copy line chosen by lib/catalogue.js `priceInfo`. */
+/* heading/md in text/muted — the frame's `NZ$420 / m` (9503:5454). */
 .detail-price {
   margin: 0;
   font-family: var(--font-ui);
@@ -159,7 +165,7 @@
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.01em;
-  color: var(--umber);
+  color: var(--shell-muted);
 }
 
 .detail-price.muted {
@@ -367,7 +373,7 @@
   justify-content: space-between;
   gap: var(--s4);
   padding-block: 1.25rem;
-  border-bottom: 1px solid var(--shell-line);
+  border-bottom: 1px solid var(--shell-line-soft); /* the frame's border/subtle */
 }
 
 .detail-specs > div:last-child {
@@ -412,11 +418,111 @@
 }
 
 /* --- Actions + notes -------------------------------------------------------- */
+/* Equal-width actions on a 12px gap, the frame's `flex-1` row (9423:4963). */
 .detail-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
   gap: var(--s3);
+  width: 100%;
+}
+
+.detail-actions > * {
+  flex: 1 0 0;
+  min-width: 10rem;
+  text-align: center;
+}
+
+/* --- Thumbnail rail (9503:4576) --------------------------------------------
+   Squares under the picture, 12px apart; the selected one framed in the umber
+   the frame draws. */
+.detail-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detail-thumb {
+  display: block;
+  width: 5.8125rem; /* the frame's 93 */
+  height: 5.8125rem;
+  padding: 0;
+  border: 1px solid transparent;
+  background: var(--shell-surface);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--quick);
+}
+
+.detail-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-thumb:hover {
+  border-color: var(--shell-line);
+}
+
+.detail-thumb.is-selected {
+  border-color: var(--umber);
+}
+
+/* --- Colour swatches (9503:5416) ------------------------------------------
+   32px discs on a 12px gap; the chosen one carries a 38px ring 3px off it. */
+.detail-colour {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.detail-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+}
+
+.detail-swatch {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--shell-subtle);
+  cursor: pointer;
+}
+
+.detail-swatch::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  transition: border-color var(--quick);
+}
+
+.detail-swatch:hover::after {
+  border-color: var(--shell-line);
+}
+
+.detail-swatch.is-selected::after {
+  border-color: var(--umber);
+}
+
+.detail-swatch:focus-visible {
+  outline: 2px solid var(--umber);
+  outline-offset: 6px;
+}
+
+.detail-swatch-name {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--shell-muted);
 }
 
 .purchase-note,
@@ -445,14 +551,55 @@
 }
 
 /* --- Similar strip ----------------------------------------------------------- */
+/* "Similar Products": the head centred, no action, on the canvas; under it the
+   brands row's figure — three round cards in the container, the rest running
+   off the right, dragged. Up to twelve. */
 .detail-similar {
   padding-block: var(--s10);
+  background: var(--shell);
+  max-width: none;
+  padding-inline: 0;
+}
+
+.detail-similar-head {
+  justify-content: center;
+  text-align: center;
+  padding-inline: var(--gutter);
+}
+
+.detail-similar-row {
+  display: flex;
+  gap: var(--s6);
+  margin: 0;
+  padding: 0 var(--row-inset, var(--gutter));
+  --row-inset: max(var(--gutter), calc((100% - var(--container)) / 2 + var(--gutter)));
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline-start: var(--row-inset);
+  scrollbar-width: none;
+  cursor: grab;
+}
+
+.detail-similar-row::-webkit-scrollbar {
+  display: none;
+}
+
+.detail-similar-row.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
+}
+
+.detail-similar-row > li {
+  flex: 0 0 clamp(15rem, 29vw, 23.1875rem); /* the brands row's tile */
+  scroll-snap-align: start;
 }
 
 .detail-similar-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--s5);
   margin-bottom: var(--s7);
 }
@@ -467,9 +614,7 @@
   color: var(--umber);
 }
 
-.detail-similar-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
+
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
@@ -506,4 +651,14 @@
   .detail-similar-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* The spec rows' rule is border/subtle (the frame, 9422:4927). Two classes deep
+   because a later sheet sets the same row's border in umber. */
+.product-detail .detail-specs > div {
+  border-bottom-color: var(--shell-line-soft);
+}
+
+.product-detail .detail-specs > div:last-child {
+  border-bottom: 0;
 }

@@ -1,0 +1,51 @@
+---
+// The Brands row: a head on the container (title left, "View all" right) and,
+// under it, the maisons' tiles in a row that runs PAST the frame's right edge
+// rather than wrapping — a gallery, not a grid; the directory is /brands. ONE
+// component for the home and /story (page feedback, Sept 2026: "exactly like
+// the same section on the homepage, even the same amount of slides"), so the
+// two cannot drift in rhythm, tile size, cap or motion.
+//
+// Capped at sixteen: past that the drag is a chore and "View all" is the
+// better route. The cap lives here so every caller gets the same count; hand
+// over the whole roster and the row takes what it shows. The tile is
+// `.house-card` minus its name — the photograph with the maison's mark centred
+// on it and NOTHING under it (Userback, 25 Aug 2026).
+//
+// Needs `<DragScroll />` on the page once; the row opts in with
+// `data-drag-scroll`.
+const HOUSES_IN_ROW = 16
+
+const { houses = [], title = 'Brands', href = '/brands', cta = 'View all', classes = [] } = Astro.props
+const row = houses.slice(0, HOUSES_IN_ROW)
+---
+
+<section class:list={['brands-band', ...classes]}>
+  <div class="container brands-band-head">
+    <h2>{title}</h2>
+    <a class="cta-underline cta-underline-lg" href={href}>
+      {cta}
+    </a>
+  </div>
+  {/* Outside the container on purpose: the row runs PAST the frame's right
+      edge. Its own inline padding puts the first tile on the container's own
+      left edge, so it lines up with the heading above. */}
+  <ul class="brands-row" data-drag-scroll>
+    {
+      row.map((house) => (
+        <li>
+          <a class="house-card" href={`/brands/${house.slug}`}>
+            <span class:list={['house-card-media', { weave: !house.image }]}>
+              {house.image && <img src={house.image} alt="" loading="lazy" />}
+              {house.logo_url ? (
+                <img class="house-card-logo" src={house.logo_url} alt={house.name} loading="lazy" />
+              ) : (
+                <span class="house-card-logo">{house.name}</span>
+              )}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>

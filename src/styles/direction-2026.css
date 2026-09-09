@@ -24,6 +24,7 @@
    and as a <span> inside a tile link, where the whole photograph is the
    anchor. */
 .cta-underline {
+  position: relative;
   display: inline-block;
   align-self: flex-start;
   font-family: var(--font-ui);
@@ -36,8 +37,48 @@
   white-space: nowrap;
   color: var(--umber);
   padding-bottom: var(--s2);
-  border-bottom: 1.5px solid currentcolor;
-  transition: color var(--quick);
+  transition: color var(--slow);
+}
+
+/* The rule is a pseudo-element rather than a border so it can MOVE: on hover it
+   draws off to the right and back in from the left — one sweep, seven tenths
+   of a second, the kind of hover a good editorial site has and a border-bottom
+   cannot do (page feedback, Sept 2026: "more interesting and designer-y yet
+   simple and elegant"). `currentcolor`, so every colour variant keeps working
+   and the tile's own hover (below) drives it too. */
+.cta-underline::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: currentcolor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a.cta-underline:hover::after,
+  .tile:hover .cta-underline::after {
+    animation: cta-sweep 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+}
+
+@keyframes cta-sweep {
+  0% {
+    transform: scaleX(1);
+    transform-origin: right;
+  }
+  45% {
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+  50% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  100% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
 }
 
 .cta-underline-lg {
@@ -67,6 +108,9 @@ a.cta-underline-light:hover,
    CLAUDE.md describes the earlier frames, not these. */
 .action-fill,
 .action-outline {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -81,35 +125,78 @@ a.cta-underline-light:hover,
   text-transform: none;
   text-decoration: none;
   white-space: nowrap;
-  color: var(--umber);
+  color: var(--button-ink);
   cursor: pointer;
-  transition: background var(--quick), border-color var(--quick),
-    color var(--quick), filter var(--quick);
+  transition: color var(--slow);
 }
 
-.action-fill {
+/* The hover fill is a layer that SWEEPS in from the left and, on leaving,
+   collapses away to the right — `transform-origin` flips with the hover so the
+   same transition reads as a wipe in both directions. Under the label
+   (`z-index: -1` inside the button's own stacking context) and clipped to the
+   button. Nothing flashes: the base colour is still painted underneath. */
+.action-fill::before,
+.action-outline::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  transform: scaleX(0);
+  transform-origin: right;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .action-fill::before,
+  .action-outline::before {
+    transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+}
+
+.action-fill:hover:not(:disabled)::before,
+.action-outline:hover:not(:disabled)::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* One button. The frame drew a filled tan primary and a hairline outline
+   secondary; the client has since asked for every button on the site to be the
+   same — white at rest, beige swept in on hover — so `.action-outline` is now
+   the same figure as `.action-fill` and the name survives only for its call
+   sites. Tokens: `--button-ground` / `--button-ground-hover` / `--button-ink`. */
+.action-fill,
+.action-outline {
   border: 0;
-  background: var(--tan);
+  background: var(--button-ground);
+  color: var(--button-ink);
+}
+
+.action-fill::before,
+.action-outline::before {
+  background: var(--button-ground-hover);
+}
+
+/* The primary is latte, hovering one step darker (Sept 2026). */
+.action-fill {
+  background: var(--button-primary-ground);
+}
+
+.action-fill::before {
+  background: var(--button-primary-ground-hover);
 }
 
 .action-fill:hover:not(:disabled) {
-  filter: brightness(0.95);
-}
-
-.action-outline {
-  border: 1px solid var(--shell-line-strong);
-  background: transparent;
-}
-
-.action-outline:hover:not(:disabled) {
-  border-color: var(--umber);
+  color: var(--color-brand-on-primary); /* white on the darker latte (feedback) */
 }
 
 .action-fill:disabled,
 .action-outline:disabled {
   opacity: 0.45;
   cursor: default;
-  filter: none;
+}
+
+.action-fill:disabled::before,
+.action-outline:disabled::before {
+  display: none;
 }
 
 /* --- Badge ---------------------------------------------------------------
@@ -152,23 +239,38 @@ a.cta-underline-light:hover,
   background-position: center;
 }
 
-/* The scrim runs deeper than the mock's. The mock is drawn over commissioned
-   interiors that are already dark at the bottom of the frame; the live bands
-   take whatever the catalogue holds, and half of it is a pale product shot on
-   white linen. These values keep 16px bone copy at ~5:1 against the worst case
-   in the seeded catalogue rather than only against the mock's own photography. */
+/* The ground UNDER the photography. A rotator crossfades two slides at
+   fractional opacity, and for those frames whatever is behind them shows
+   through — on the cream canvas that read as a white flash on every turn (page
+   feedback, 1920x968 #9). The band is dark, so there is nothing to flash. */
+.photo-band {
+  background-color: var(--dark-bg);
+}
+
+/* The default scrim is the FILE'S hero scrim, exactly (9379:2566): a flat 30%
+   wash under a gradient that is clear to 53.83% and 20% black at 84.76%. It
+   is what the home rotator carries, and it is now what every photo band on the
+   site carries — /brands, a house banner, /story, the manifesto and houses
+   bands — so no two heroes read differently (page feedback: "consistent across
+   the entire website").
+
+   History, because it has swung: the site shipped 0.62/0.12 (about twice the
+   file); feedback #14 took it to nothing; feedback #2 asked for "a slight
+   overlay so I can read the text"; the file's own values are the tiebreaker.
+   The stops stay on the CMS scrim knob's custom properties (site_sections
+   `scrim` → .band-scrim-* below), so one band can still be retuned; the
+   fallbacks ARE the frame. */
 .photo-band::after {
   content: "";
   position: absolute;
   inset: 0;
-  /* The stops are custom properties so the CMS scrim knob (site_sections
-     `scrim` → .band-scrim-* below) can retune a band without a specificity
-     fight; the fallbacks ARE the designed values. */
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, var(--scrim-deep, 0.62)),
-    rgba(0, 0, 0, var(--scrim-faint, 0.12)) 58%
-  );
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, var(--scrim-faint, 0)) 53.83%,
+      rgba(0, 0, 0, var(--scrim-deep, 0.2)) 84.76%
+    ),
+    rgba(0, 0, 0, var(--scrim-flat, 0.3));
 }
 
 /* --- Parallax art layer ---------------------------------------------------
@@ -187,24 +289,26 @@ a.cta-underline-light:hover,
    leaves the home's hero rotator (a stack of crossfading slides with its own
    machinery) alone.
 
-   The layer is 130% of the band and hung at -15%, so the band shows the MIDDLE
-   100/130 of it. That is the whole fallback story: with no animation — an
+   The layer is 140% of the band and hung at -20%, so the band shows the MIDDLE
+   100/140 of it. That is the whole fallback story: with no animation — an
    engine without scroll-driven timelines, or a reader who asked for reduced
    motion — the art sits centred and correctly cropped, exactly as the
-   background version did. The animation only ever borrows the 15% of headroom
-   above and below.
+   background version did. The animation only ever borrows the 20% of headroom
+   above and below. (It was 130% / -15% with ±10% of travel; the client asked
+   for more movement across every background — page feedback, 1920x968 #5 —
+   and the tiles, the hero and the featured portrait now run the same figure.)
 
    **The two figures are in DIFFERENT bases and must be checked together.** The
    headroom is a percentage of the BAND; a percentage inside `translate3d`
-   resolves against the moving element's OWN height, so the ±10% default
-   (`--band-parallax`) is 13% of the band — inside the 15% of headroom, with 2%
-   to spare. Setting the travel to the same figure as the headroom is the
+   resolves against the moving element's OWN height, so the ±13% default
+   (`--band-parallax`) is 18.2% of the band — inside the 20% of headroom, with
+   1.8% to spare. Setting the travel to the same figure as the headroom is the
    obvious mistake and slides a hard edge into frame at the extremes. */
 .photo-band-art {
   position: absolute;
   inset-inline: 0;
-  top: -15%;
-  height: 130%;
+  top: -20%;
+  height: 140%;
   background-size: cover;
   background-position: center;
   /* Only the layer moves; the scrim and the copy above it stay put. It sits
@@ -214,10 +318,10 @@ a.cta-underline-light:hover,
 
 @keyframes photo-band-drift {
   from {
-    transform: translate3d(0, calc(var(--band-parallax, 10%) * -1), 0);
+    transform: translate3d(0, calc(var(--band-parallax, 13%) * -1), 0);
   }
   to {
-    transform: translate3d(0, var(--band-parallax, 10%), 0);
+    transform: translate3d(0, var(--band-parallax, 13%), 0);
   }
 }
 
@@ -254,7 +358,9 @@ a.cta-underline-light:hover,
   left: 0;
   right: 0;
   bottom: 0;
-  padding-bottom: var(--s6);
+  /* 64 under the copy (page feedback, Sept 2026, twice: "a bit more gap from
+     bottom", then "more … so text can go higher"). The frame draws 48. */
+  padding-bottom: var(--s8);
 }
 
 .photo-band-title {
@@ -277,9 +383,11 @@ a.cta-underline-light:hover,
 
 /* Headline left, description + action right — the row the home hero and the
    design-houses band both use. */
+/* Title left, aside right, their BOTTOMS on one line (page feedback, Sept
+   2026) — the frame's `items-end` on the hero text wrapper. */
 .photo-band-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: var(--s8);
 }
@@ -319,33 +427,130 @@ a.cta-underline-light:hover,
   gap: var(--s3);
   padding: var(--s3);
   background: var(--shell);
+  /* The banners keep bleeding; only their COPY is reined in. `100cqi` is this
+     wall measured INSIDE its own --s3 padding, which is exactly the figure
+     `.tile` needs to find the container's content edge — see the note there. */
+  container-type: inline-size;
 }
 
+/* The banner's own padding, read off the frame (9379:2577): 64 leading, 32
+   trailing, 32 block. It is NOT symmetrical, and the leading 64 is what the
+   copy actually sits on at the drawn width.
+
+   `--tile-edge` is that leading padding GROWN, when the viewport passes the
+   96rem frame, to wherever the container's content edge has got to. The mock is
+   drawn once, at 1280, and says nothing about 1920 — where a fixed 64 walked the
+   copy out 188px to the left of every heading on the page (Userback, 1920x968).
+   At 1280 the first term wins and the tile is pixel-identical to the frame; past
+   the cap the third takes over and the copy tracks the container. The middle
+   term is the container's edge BELOW the cap (a plain `--gutter`), less the
+   wall's own --s3; dropping it is a real bug and was one here, when the gutter
+   went to the file's 72px and outgrew the tile's padding.
+
+   `100cqi` is the wall measured inside its --s3 padding, and the tile sits flush
+   in it, so that padding cancels — the same figure `.home-brands-row`
+   reproduces for the maison row. */
 .tile {
+  --tile-pad-block: var(--s6); /* 32 */
+  --tile-pad-start: var(--s8); /* 64 */
+  --tile-pad-end: var(--s6); /* 32 */
+  /* One per side, each floored at ITS OWN designed padding — flooring the
+     trailing edge at the leading 64 made the right inset 64 where the frame
+     draws 32. */
+  --tile-edge-start: max(
+    var(--tile-pad-start),
+    calc(var(--gutter) - var(--s3)),
+    calc((100cqi - var(--container)) / 2 + var(--gutter))
+  );
+  --tile-edge-end: max(
+    var(--tile-pad-end),
+    calc(var(--gutter) - var(--s3)),
+    calc((100cqi - var(--container)) / 2 + var(--gutter))
+  );
   position: relative;
   display: flex;
   align-items: flex-end;
-  aspect-ratio: 311 / 350; /* the mock's 622 × 700 */
-  min-height: 24rem;
-  padding: var(--s7);
+  /* The frame draws 622 × 700. The client took it 30% shorter (490), then
+     15% back up on desktop (Sept 2026): 490 × 1.15 = 563.5. Global — every
+     two-up wall on the site reads this one rule. */
+  aspect-ratio: 622 / 563.5;
+  min-height: 19.5rem;
+  padding-block: var(--tile-pad-block);
+  padding-inline: var(--tile-pad-start) var(--tile-pad-end);
   overflow: hidden;
   text-decoration: none;
   background-color: var(--surface);
 }
 
-.tile:not(.weave) {
-  background-size: cover;
-  background-position: center;
+/* **Only the wall's OUTER edges reach for the container.** Applying the inset to
+   every side of every tile is what pushed the second banner's title into the
+   middle of its own photograph (page feedback, 1920x968 #2) — the design has
+   both titles on their tile's own leading padding. The first column supplies the
+   wall's leading edge and the last its trailing one; the inner edges are
+   untouched. */
+.tile-wall > .tile:nth-child(odd) {
+  padding-inline-start: var(--tile-edge-start);
 }
 
+.tile-wall > .tile:nth-child(even) {
+  padding-inline-end: var(--tile-edge-end);
+}
+
+/* --- The photograph, on its own layer -------------------------------------
+   The frame hangs the banner image at 113.25% / -6.62% — headroom, drawn into
+   the design, for exactly the drift below. A background-image on the anchor
+   cannot be transformed, and animating background-position repaints every
+   frame; a child layer is composited. */
+.tile-art {
+  position: absolute;
+  inset-inline: 0;
+  top: -20%;
+  height: 140%;
+  background-size: cover;
+  background-position: center;
+  will-change: transform;
+}
+
+/* The travel is a percentage of the ART, the headroom a percentage of the TILE
+   — different bases, and setting them equal slides a hard edge into frame. The
+   frame's own headroom (113.25% / -6.62%) only allowed ±4%, which read as
+   barely moving; the client asked for more (page feedback, 1920x968 #5), so the
+   layer is 140% at -20% — 14.3% of the art either side — and travels ±13%. The
+   same figure runs on the hero, the featured portrait and the photo bands. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .tile {
+      view-timeline-name: --tile-view;
+    }
+
+    .tile-art {
+      animation: tile-drift linear both;
+      animation-timeline: --tile-view;
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+@keyframes tile-drift {
+  from {
+    transform: translate3d(0, -13%, 0);
+  }
+  to {
+    transform: translate3d(0, 13%, 0);
+  }
+}
+
+/* The frame's own scrim: nothing until 52.93%, then down to 30% black at the
+   foot. The 0.62 this used to run was set when the bands took whatever the
+   catalogue held; the banners are art-directed, and the file draws them light. */
 .tile::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, var(--scrim-deep, 0.62)),
-    rgba(0, 0, 0, var(--scrim-faint, 0)) 52%
+    to bottom,
+    rgba(0, 0, 0, var(--scrim-faint, 0)) 52.93%,
+    rgba(0, 0, 0, var(--scrim-deep, 0.3))
   );
 }
 
@@ -397,20 +602,38 @@ a.cta-underline-light:hover,
   }
 
   .tile {
-    aspect-ratio: 4 / 3;
-    min-height: 20rem;
-    padding: var(--s6);
+    --tile-pad-block: var(--s5);
+    --tile-pad-start: var(--s6);
+    --tile-pad-end: var(--s5);
+    aspect-ratio: 40 / 25.2; /* 4:3, 30% shorter, then 20% taller on tablet */
+    min-height: 16.8rem;
+  }
+
+  /* One column — every tile is both the first and the last. */
+  .tile-wall > .tile {
+    padding-inline: var(--tile-edge-start) var(--tile-edge-end);
   }
 }
 
 @media (max-width: 640px) {
+  /* Deeper wash on the phone: a full-viewport hero at 390px wide puts the
+     copy on far less photograph, and the desktop values left it hard to read.
+     The CMS scrim knobs still override these — they are the same properties. */
+  .photo-band,
+  .tile {
+    --scrim-flat: 0.45;
+    --scrim-deep: 0.4;
+  }
+
   .photo-band-body {
     padding-bottom: var(--s5);
   }
 
   .tile {
-    aspect-ratio: 3 / 4;
-    padding: var(--s5);
+    --tile-pad-block: var(--s5);
+    --tile-pad-start: var(--s5);
+    --tile-pad-end: var(--s5);
+    aspect-ratio: 15 / 14; /* 3:4, 30% shorter */
   }
 
   .tile-body {
@@ -429,10 +652,15 @@ a.cta-underline-light:hover,
   --scrim-flat: 0;
 }
 
+/* The ladder is none < soft < standard (the file's 0.2 / 0 / 0.3, the
+   fallbacks on `.photo-band::after`) < deep. Soft used to be 0.38 / 0.34,
+   which was lighter than the OLD 0.62 default and is heavier than the file's
+   — a "soft" choice that darkened the band. Halved, so it sits where its name
+   says. */
 .band-scrim-soft {
-  --scrim-deep: 0.38;
-  --scrim-faint: 0.04;
-  --scrim-flat: 0.34;
+  --scrim-deep: 0.1;
+  --scrim-faint: 0;
+  --scrim-flat: 0.15;
 }
 
 .band-scrim-deep {
@@ -488,4 +716,339 @@ a.cta-underline-light:hover,
 .band-align-right .home-collections-head {
   justify-content: flex-end;
   gap: var(--s6);
+}
+
+
+
+
+/* --- The Brands row ----------------------------------------------------------
+   Rendered by components/BrandsRow.astro on the home AND on /story: the head
+   (title left, "View all" right) on the container, and under it a row of the
+   maisons' tiles that runs off the right edge of the frame, capped at sixteen,
+   dragged rather than scrolled. It lived in home.css as `.home-collections` /
+   `.home-brands-row` until the client asked for the Story page's Brands
+   section to be the home's "exactly … even the same amount of slides"; the
+   rules below are that block, moved and renamed, nothing else. */
+/* --- Brands ---------------------------------------------------------------
+   The wall of maisons: the shared `.house-card` tile (houses.css) in a
+   horizontal scroller. No caption under a tile here — the photograph with the
+   maison's mark over it IS the tile (Userback, 25 Aug 2026), so nothing in
+   this block styles a name. */
+.brands-band {
+  padding-block: var(--s10);
+  background: var(--shell);
+}
+
+.brands-band-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s6);
+  margin-bottom: var(--s7);
+}
+
+.brands-band-head h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
+}
+
+/* The row bleeds off the right edge rather than wrapping: forty maisons in a
+   grid is a directory, and the directory is /brands.
+
+   It sits OUTSIDE `.container` for that bleed, so it has to reproduce the
+   container's own left edge itself — `--gutter` alone left the first tile out
+   past the heading on any viewport wider than the 96rem frame. `max()` keeps
+   the plain gutter on anything narrower, where the container is not capped and
+   the second term goes negative. */
+.brands-row {
+  --row-inset: max(var(--gutter), calc((100% - var(--container)) / 2 + var(--gutter)));
+  display: flex;
+  gap: var(--s3);
+  margin: 0;
+  padding-inline: var(--row-inset);
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline-start: var(--row-inset);
+  scrollbar-width: none;
+  /* The affordance: the scrollbar is hidden by the design and a vertical wheel
+     does nothing to a row that only overflows on X — see DragScroll.astro,
+     which supplies the drag and the wheel (`data-drag-scroll`). */
+  cursor: grab;
+}
+
+.brands-row.is-dragging {
+  cursor: grabbing;
+  /* Kill the snap mid-drag: it fights the pointer and the row jumps back to a
+     tile edge on every frame. */
+  scroll-snap-type: none;
+  user-select: none;
+}
+
+/* A dragged row must not leave the tile under the cursor looking clicked. */
+.brands-row.is-dragging a {
+  cursor: grabbing;
+}
+
+.brands-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* 29vw, not 24vw: the tile is 371px inside the mock's own 1280px frame, and
+   24vw only reaches that at 1546px — so on the laptop the page is actually read
+   on, every tile came out 307px wide and 383px tall against the drawn 371 × 463,
+   and the row showed a maison and a half more than the frame does. 29vw hits
+   371px at 1280 and is capped there, so the tile is the mock's at the width it
+   was drawn at and never grows past it. */
+.brands-row > li {
+  flex: 0 0 clamp(15rem, 29vw, 23.1875rem); /* → 371px, the mock's tile */
+  scroll-snap-align: start;
+}
+
+/* The uncaptioned tile is the mock's 371 × 463 frame, not the directory's
+   371 × 497 — that one leaves room under the photograph for a name this row
+   does not print. */
+.brands-row .house-card-media {
+  aspect-ratio: 371 / 463;
+}
+
+@media (max-width: 1024px) {
+  .brands-band {
+    padding-block: var(--s9);
+  }
+}
+
+@media (max-width: 640px) {
+  .brands-band {
+    padding-block: var(--s8);
+  }
+
+  /* The head stays one row: title left, "View all" right (mobile feedback,
+     Sept 2026 — it used to stack). */
+  .brands-band-head {
+    align-items: baseline;
+    gap: var(--s4);
+  }
+
+  .brands-row > li {
+    flex-basis: 78vw;
+  }
+}
+
+/* --- The featured-collection band ------------------------------------------
+   Rendered by components/FeaturedBand.astro on the home AND on /brands (and
+   wherever a page next features a collection): a photograph 12px off one screen
+   edge, its copy on the container's column beside it, the frame's 622 / 108 /
+   466 split. It lived in home.css as `.home-featured` until the client asked
+   for the Brands page's closing band to be "exactly like" the home's; one
+   figure here is how that stays true. The rules below are that block, moved
+   and renamed, nothing else. */
+/* --- Featured collection --------------------------------------------------
+   The band is drawn ASYMMETRIC (9379:2624): the photograph sits 12px off the
+   page edge, the copy lands on the container's own right gutter, and the band
+   carries only 12px of ground above and below — it reads as one picture set
+   into the page rather than as a centred two-column section.
+
+   The `.container` keeps the RIGHT edge, which is what holds the copy in line
+   with the header wordmark and the footer; only its start padding is
+   overridden, so the picture bleeds the way it is drawn on every viewport up to
+   the 96rem frame. Below 1024px the band stacks and the start padding goes back
+   to the gutter with it (see Responsive) — a 12px inset under a stacked
+   headline is not a bleed, it is a misaligned column. */
+.feature-band {
+  padding-block: var(--s3);
+  background: var(--shell);
+}
+
+/* The frame (9379:2624) puts the picture at x=12 and its copy at x=742, ending
+   on the container's own right edge at 1208 — so the photograph is hard against
+   the page edge with the same 12px gap it has top and bottom, and only the COPY
+   is on the container. That is what "stretched all the way to the left edge…
+   leaving the gap like top and bottom" means (page feedback, 1920x968 #5).
+   `data-media-side` flips the whole thing for a band drawn the other way round.
+
+   Three tracks, not two plus a gap: 622 / 108 / 466 are the frame's own figures
+   and as `fr` they hold the proportion at any width, where a fixed gap would
+   not. The middle track IS the gutter between them.
+
+   `--container-inset` is the container's content edge. The percentage is
+   resolved on THIS element (its containing block is the full-width band), which
+   is why it is declared and used in the same rule — a custom property carrying
+   a percentage resolves at the point of use, so handing it to a child would
+   measure the child instead. */
+.feature-band-inner {
+  --container-inset: max(
+    var(--gutter),
+    calc((100% - var(--container)) / 2 + var(--gutter))
+  );
+  display: grid;
+  grid-template-columns: minmax(0, 622fr) minmax(0, 108fr) minmax(0, 466fr);
+  align-items: center;
+  padding-inline: var(--s3) var(--container-inset);
+}
+
+.feature-band-media {
+  grid-column: 1;
+}
+
+.feature-band-body {
+  grid-column: 3;
+}
+
+.feature-band[data-media-side="right"] .feature-band-inner {
+  padding-inline: var(--container-inset) var(--s3);
+}
+
+/* With the picture placed FIRST in the DOM at column 3, auto-placement had
+   moved its cursor past column 1 and dropped the copy onto a second row, under
+   the photograph — the Story page's "Workspace" band came out broken. `dense`
+   lets the copy backfill row 1. */
+.feature-band[data-media-side="right"] .feature-band-inner {
+  grid-auto-flow: dense;
+  /* The tracks MIRROR too, or the picture lands in the copy's 466 share and
+     comes out a third shorter than its twin on the left. */
+  grid-template-columns: minmax(0, 466fr) minmax(0, 108fr) minmax(0, 622fr);
+}
+
+.feature-band[data-media-side="right"] .feature-band-media {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.feature-band[data-media-side="right"] .feature-band-body {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* No frame around the photograph: the mock sets it straight on the ground
+   (9379:2625 carries no stroke), and the hairline was reading as an empty box
+   for as long as the image took to arrive. The surface colour stays as the
+   ground under it while it loads. */
+.feature-band-media {
+  aspect-ratio: 9 / 10; /* the mock's 622 × 692 */
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* 140%/-20% is the drift headroom, the same figure the hero and the banner
+   tiles use. With no animation the picture simply sits centred and correctly
+   cropped, exactly as `height: 100%` did. */
+.feature-band-media img,
+.feature-band-media > span {
+  display: block;
+  position: relative;
+  top: -20%;
+  width: 100%;
+  height: 140%;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+@supports (animation-timeline: view()) {
+    .feature-band-media {
+      view-timeline-name: --featured-view;
+    }
+
+    .feature-band-media img,
+    .feature-band-media > span {
+      animation: featured-drift linear both;
+      animation-timeline: --featured-view;
+      animation-range: cover 0% cover 100%;
+    }
+}
+}
+
+.feature-band-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+.feature-band-body h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-xl);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
+}
+
+.feature-band-copy {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--umber-soft);
+}
+
+@media (max-width: 1024px) {
+  .feature-band {
+    padding-block: var(--s7);
+  }
+
+  /* Stacked. The picture keeps its 12px bleed; the copy takes the container's
+     gutter itself, since there is no longer a container track to sit in. */
+  .feature-band-inner,
+  .feature-band[data-media-side="right"] .feature-band-inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s7);
+    padding-inline: var(--s3);
+  }
+
+  .feature-band-media,
+  .feature-band-body,
+  .feature-band[data-media-side="right"] .feature-band-media,
+  .feature-band[data-media-side="right"] .feature-band-body {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .feature-band-body {
+    padding-inline: calc(var(--gutter) - var(--s3));
+  }
+}
+
+/* --- Headlines resolve as they arrive --------------------------------------
+   Every headline blurs up into focus as it enters the viewport (page feedback,
+   1920x968 #4 and #6, "apply this to all headlines globally").
+
+   **It is a TIMED transition, triggered on entry, not a scroll-scrubbed one.**
+   It was scroll-driven first (`animation-timeline: view()`, range `entry 15%
+   → 85%`), which looked right in a test that scrolled the headline in and read
+   its end state — and was invisible in use, because that range is measured
+   against the headline's OWN height: 28px of scroll for a 40px headline, over
+   in ~30ms at any real scroll speed ("there is still no transitions on
+   headlines"). A transition that plays for three-quarters of a second once the
+   headline is in view is what the client means by the word.
+
+   Driven by the IntersectionObserver in Layout.astro, and fail-safe two ways:
+   - Only a headline the script has MARKED (`data-reveal`) is ever hidden. It
+     marks what is below the fold — at load, and again for anything an island
+     adds later — and nothing else, so a headline already on screen never
+     flashes, and if the script does not run at all nothing is hidden.
+   - `.is-revealed` is added once, on entry, and never removed.
+
+   `will-change` is left off on purpose: it would hold a rasterised layer for
+   every headline in a long document, and the transition runs once. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, 0.35em, 0);
+    transition:
+      opacity 0.75s ease-out,
+      filter 0.75s ease-out,
+      transform 0.75s ease-out;
+  }
+
+  [data-reveal].is-revealed {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
 }

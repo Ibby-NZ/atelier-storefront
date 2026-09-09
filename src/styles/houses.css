@@ -5,11 +5,12 @@
  * figures live in editorial.css / direction-2026.css, not here.
  */
 
-/* The hero band. 74vh with the header floating inside it (`overlay`) — the
-   same treatment as the home's design-houses band, whose photograph and copy
-   this page shares. */
+/* The hero band, the full viewport (`--hero-height`, the figure every photo
+   hero shares) with the header floating inside it (`overlay`) — the same
+   treatment as the home's design-houses band, whose photograph and copy this
+   page shares. `min-height`, since the copy sits in flow at its foot. */
 .house-hero {
-  min-height: 74vh;
+  min-height: var(--hero-height);
   display: flex;
   align-items: flex-end;
 }
@@ -23,12 +24,16 @@
   padding-block: var(--s9) var(--s10);
 }
 
+/* Centred: the frame (9379:3579) sets the "Brands" headline at x=506.5 in a
+   1136 wrapper — dead centre. `.bespoke` shares the head, so it is centred there
+   too, which is the point. */
 .house-wall-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--s5);
   margin-bottom: var(--s7);
+  text-align: center;
 }
 
 .house-wall-head h2 {
@@ -131,68 +136,14 @@ img.house-card-logo {
   color: var(--umber);
 }
 
-/* --- Featured collection band ------------------------------------------------
-   A recessed cream band, the collection's photograph filling the left half,
-   the copy centred in the right. */
-.house-feature {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  background: var(--shell-subtle);
-}
-
-.house-feature-media {
-  min-height: 34rem;
-  background-size: cover;
-  background-position: center;
-}
-
-.house-feature-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--s5);
-  padding: var(--s9) clamp(var(--s6), 6vw, var(--s10));
-}
-
-.house-feature-body h2 {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: var(--g-lg);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--umber);
-}
-
-.house-feature-copy {
-  margin: 0;
-  max-width: 29rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--umber-soft);
-}
-
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .house-hero {
-    min-height: 58vh;
-  }
-
   .house-wall {
     padding-block: var(--s7) var(--s8);
   }
 
   .house-wall-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .house-feature {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .house-feature-media {
-    min-height: 22rem;
   }
 }
 

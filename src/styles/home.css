@@ -26,8 +26,11 @@
    laptop with the header inside it, and the 34rem floor is taller than the
    header, the headline, the description and the action stacked on a phone — so
    there is no breakpoint override to keep in sync. */
+/* `--hero-height` (tokens.css) — the same figure every photo hero on the site
+   reads. `height`, not `min-height`, because the slides are absolutely
+   positioned inside it and need a fixed box to fill. */
 .home-hero {
-  height: 88vh;
+  height: var(--hero-height);
   min-height: 34rem;
 }
 
@@ -55,6 +58,12 @@
   content: none;
 }
 
+/* `--hero-fade` is the crossfade, and the zoom below reads it too, so the two
+   cannot be retuned apart. */
+.home-hero {
+  --hero-fade: 0.9s;
+}
+
 .home-hero-slide {
   position: absolute;
   inset: 0;
@@ -64,14 +73,14 @@
      0s delay holds it visible for the length of the fade, then hides it. */
   visibility: hidden;
   transition:
-    opacity 0.9s ease,
-    visibility 0s linear 0.9s;
+    opacity var(--hero-fade) ease,
+    visibility 0s linear var(--hero-fade);
 }
 
 .home-hero-slide.is-active {
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.9s ease;
+  transition: opacity var(--hero-fade) ease;
 }
 
 /* A featured collection with no photograph of its own: the umber ground the
@@ -94,13 +103,112 @@
   object-fit: cover;
 }
 
-/* The band's own scrim, moved onto the slide — same values as
-   `.photo-band::after`, and for the same reason (see direction-2026.css). */
+/* The slide's scrim is the FILE'S OWN, exactly (9379:2566): a flat 30% wash
+   under a vertical gradient that is clear to 53.83% and 20% black at 84.76%.
+   It went to nothing on feedback #14 and came back on feedback #2 ("slight
+   overlay so I can read the text") — the value that was actually wrong was the
+   0.62/0.12 the site shipped before either, about twice the frame. The stops
+   stay on the CMS scrim knob's custom properties so a band can still be
+   retuned; the fallbacks ARE the frame. */
 .home-hero-slide::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12) 58%);
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, var(--scrim-faint, 0)) 53.83%,
+      rgba(0, 0, 0, var(--scrim-deep, 0.2)) 84.76%
+    ),
+    rgba(0, 0, 0, var(--scrim-flat, 0.3));
+}
+
+/* The photograph is hung with headroom so it can drift and push in without
+   ever showing an edge — the file draws the same thing (its hero image is
+   141% tall at -33.87%). `translate` and `scale` are set as INDEPENDENT
+   properties, not as one `transform`, so the scroll-driven drift and the
+   time-driven push-in compose without either overwriting the other.
+
+   **The resting scale is the END of the push-in, not the start.** A slide that
+   loses `.is-active` loses its animation, and whatever `scale` the base rule
+   holds is what it snaps to — at 1 that was a visible jump back to the original
+   crop on the outgoing slide, right as the crossfade began (feedback #4). At
+   1.08 it holds where the animation left it, and the next slide starts its own
+   run from 1 while fading in, which is the cross-dissolve the design wants. */
+.home-hero-photo {
+  top: -20%;
+  height: 140%;
+  scale: 1.08;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The push-in runs on the ACTIVE slide only, and restarts with it, so every
+     turn of the rotator opens on a slow move into the picture rather than a
+     flat crossfade (page feedback, 1920x968 #9).
+
+     Its length is `--hero-period` — the SAME figure the rotator advances on,
+     set as an inline custom property by CollectionHero from its `rotateMs` —
+     PLUS the crossfade. At exactly the period the zoom would reach its end at
+     the same instant the next slide is called, and then sit frozen at full
+     size for the whole 0.9s the outgoing slide is still visible under the
+     fade: a pause, in plain sight, on every turn. Running it the length of the
+     fade longer means the outgoing picture is still moving when it finally
+     hides, and the base `scale` below is where it would have ended anyway, so
+     the hand-over is seamless. `linear`, not `ease-out`: an ease that has all
+     but stopped by two-thirds of the way through reads as the zoom "stopping",
+     and the client wants it moving until the next slide takes over. */
+  /* `.is-leaving` (set by the rotator for the length of the fade) keeps this
+     SAME declaration matching the outgoing slide, and a running animation
+     survives a rule change as long as its computed `animation` does not — so
+     the picture goes on moving under the fade instead of being snapped to the
+     resting scale the instant it stops being current. */
+  .home-hero-slide.is-active .home-hero-photo,
+  .home-hero-slide.is-leaving .home-hero-photo {
+    animation: hero-push-in calc(var(--hero-period, 8s) + var(--hero-fade, 0.9s)) linear both;
+  }
+
+  @supports (animation-timeline: view()) {
+    .home-hero {
+      view-timeline-name: --hero-view;
+    }
+
+    .home-hero-photo {
+      animation: hero-drift linear both;
+      animation-timeline: --hero-view;
+      animation-range: cover 0% cover 100%;
+    }
+
+    /* The active slide needs BOTH, and one `animation` shorthand would drop
+       whichever came second — so they are listed together with their timelines
+       paired positionally. `auto` is the document timeline (time-driven). */
+    .home-hero-slide.is-active .home-hero-photo,
+    .home-hero-slide.is-leaving .home-hero-photo {
+      animation:
+        hero-drift linear both,
+        hero-push-in calc(var(--hero-period, 8s) + var(--hero-fade, 0.9s)) linear both;
+      animation-timeline: --hero-view, auto;
+    }
+  }
+}
+
+@keyframes hero-push-in {
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 1.08;
+  }
+}
+
+/* ±13% of the art against 20% of headroom on a 140% layer (20/140 = 14.3% of
+   the art), so the extremes stay just inside the picture. */
+@keyframes hero-drift {
+  from {
+    translate: 0 -13%;
+  }
+  to {
+    translate: 0 13%;
+  }
 }
 
 /* Nothing featured — the office has featured no collection, or the API was down
@@ -164,94 +272,6 @@
   outline-offset: 6px;
 }
 
-/* --- Brands ---------------------------------------------------------------
-   The wall of maisons: the shared `.house-card` tile (houses.css) in a
-   horizontal scroller. No caption under a tile here — the photograph with the
-   maison's mark over it IS the tile (Userback, 25 Aug 2026), so nothing in
-   this block styles a name. */
-.home-collections {
-  padding-block: var(--s10);
-  background: var(--shell);
-}
-
-.home-collections-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s6);
-  margin-bottom: var(--s7);
-}
-
-.home-collections-head h2 {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: var(--g-lg);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--umber);
-}
-
-/* The row bleeds off the right edge rather than wrapping: forty maisons in a
-   grid is a directory, and the directory is /brands.
-
-   It sits OUTSIDE `.container` for that bleed, so it has to reproduce the
-   container's own left edge itself — `--gutter` alone left the first tile out
-   past the heading on any viewport wider than the 96rem frame. `max()` keeps
-   the plain gutter on anything narrower, where the container is not capped and
-   the second term goes negative. */
-.home-brands-row {
-  --row-inset: max(var(--gutter), calc((100% - var(--container)) / 2 + var(--gutter)));
-  display: flex;
-  gap: var(--s3);
-  margin: 0;
-  padding-inline: var(--row-inset);
-  list-style: none;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline-start: var(--row-inset);
-  scrollbar-width: none;
-  /* The affordance: the scrollbar is hidden by the design and a vertical wheel
-     does nothing to a row that only overflows on X — see DragScroll.astro,
-     which supplies the drag and the wheel (`data-drag-scroll`). */
-  cursor: grab;
-}
-
-.home-brands-row.is-dragging {
-  cursor: grabbing;
-  /* Kill the snap mid-drag: it fights the pointer and the row jumps back to a
-     tile edge on every frame. */
-  scroll-snap-type: none;
-  user-select: none;
-}
-
-/* A dragged row must not leave the tile under the cursor looking clicked. */
-.home-brands-row.is-dragging a {
-  cursor: grabbing;
-}
-
-.home-brands-row::-webkit-scrollbar {
-  display: none;
-}
-
-/* 29vw, not 24vw: the tile is 371px inside the mock's own 1280px frame, and
-   24vw only reaches that at 1546px — so on the laptop the page is actually read
-   on, every tile came out 307px wide and 383px tall against the drawn 371 × 463,
-   and the row showed a maison and a half more than the frame does. 29vw hits
-   371px at 1280 and is capped there, so the tile is the mock's at the width it
-   was drawn at and never grows past it. */
-.home-brands-row > li {
-  flex: 0 0 clamp(15rem, 29vw, 23.1875rem); /* → 371px, the mock's tile */
-  scroll-snap-align: start;
-}
-
-/* The uncaptioned tile is the mock's 371 × 463 frame, not the directory's
-   371 × 497 — that one leaves room under the photograph for a name this row
-   does not print. */
-.home-brands-row .house-card-media {
-  aspect-ratio: 371 / 463;
-}
-
 /* --- Manifesto band ------------------------------------------------------- */
 .home-manifesto {
   display: flex;
@@ -262,9 +282,12 @@
 
 /* A flat wash rather than the bottom gradient the other two bands use: the copy
    sits mid-band here, so there is nothing for a gradient to anchor to. */
-.home-manifesto.photo-band::after {
-  background: rgba(0, 0, 0, var(--scrim-flat, 0.58));
-}
+/* No scrim of its own any more: it takes `.photo-band`'s default, which is the
+   file's hero treatment and is now the one every photo band on the site
+   carries. The flat 0.58 it ran was set when this band still drew its picture
+   from the catalogue at random; it is art-directed now. If this particular
+   photograph ever buries the copy, the CMS scrim knob (`band-scrim-deep`) is
+   the per-band answer — not a rule here that puts this band out of step. */
 
 /* The `.container` is the flex item, so it keeps its own full width and gutter
    and the copy column is constrained INSIDE it. Capping the container itself
@@ -288,72 +311,13 @@
   color: var(--bone);
 }
 
-/* --- Featured collection --------------------------------------------------
-   The band is drawn ASYMMETRIC (9379:2624): the photograph sits 12px off the
-   page edge, the copy lands on the container's own right gutter, and the band
-   carries only 12px of ground above and below — it reads as one picture set
-   into the page rather than as a centred two-column section.
-
-   The `.container` keeps the RIGHT edge, which is what holds the copy in line
-   with the header wordmark and the footer; only its start padding is
-   overridden, so the picture bleeds the way it is drawn on every viewport up to
-   the 96rem frame. Below 1024px the band stacks and the start padding goes back
-   to the gutter with it (see Responsive) — a 12px inset under a stacked
-   headline is not a bleed, it is a misaligned column. */
-.home-featured {
-  padding-block: var(--s3);
-  background: var(--shell);
-}
-
-.home-featured-inner {
-  display: grid;
-  /* The mock's own 622 / 466 split, written as the ratio so it survives the
-     container being wider than the 1280px frame it was drawn in. */
-  grid-template-columns: minmax(0, 622fr) minmax(0, 466fr);
-  gap: var(--s10);
-  align-items: center;
-  padding-inline-start: var(--s3);
-}
-
-/* No frame around the photograph: the mock sets it straight on the ground
-   (9379:2625 carries no stroke), and the hairline was reading as an empty box
-   for as long as the image took to arrive. The surface colour stays as the
-   ground under it while it loads. */
-.home-featured-media {
-  aspect-ratio: 9 / 10; /* the mock's 622 × 692 */
-  overflow: hidden;
-  background: var(--surface);
-}
-
-.home-featured-media img,
-.home-featured-media > span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.home-featured-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s6);
-}
-
-.home-featured-body h2 {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: var(--g-xl);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--umber);
-}
-
-.home-featured-copy {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--umber-soft);
+@keyframes featured-drift {
+  from {
+    translate: 0 -13%;
+  }
+  to {
+    translate: 0 13%;
+  }
 }
 
 /* --- Design houses band ---------------------------------------------------
@@ -367,9 +331,6 @@
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .home-collections {
-    padding-block: var(--s9);
-  }
 
   .home-manifesto {
     min-height: 34rem;
@@ -378,40 +339,14 @@
   .home-houses {
     min-height: 42rem;
   }
-
-  .home-featured {
-    padding-block: var(--s7);
-  }
-
-  .home-featured-inner {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s7);
-    padding-inline-start: var(--gutter);
-  }
 }
 
 @media (max-width: 640px) {
-  .home-hero {
-    height: auto;
-    min-height: 32rem;
-  }
-
-  .home-collections {
-    padding-block: var(--s8);
-  }
-
-  .home-collections-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--s3);
-  }
-
-  .home-brands-row > li {
-    flex-basis: 78vw;
-  }
-
+  /* The hero keeps `--hero-height` on the phone too: every full-bleed hero on
+     the site is one viewport tall on every width (mobile feedback, Sept 2026).
+     The manifesto is 30% taller than the 28rem it had, at the same request. */
   .home-manifesto {
-    min-height: 28rem;
+    min-height: 36.4rem;
   }
 
   .home-houses {

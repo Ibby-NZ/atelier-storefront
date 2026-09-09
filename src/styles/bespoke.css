@@ -6,10 +6,27 @@
  * place by design — bespoke is quoted.
  */
 
-.bespoke-explorer {
-  display: grid;
-  gap: var(--s6);
-  padding-bottom: var(--s6);
+/* The opening band: the Brands page's `.house-hero`, by the same figure. */
+.bespoke-hero {
+  min-height: var(--hero-height);
+  display: flex;
+  align-items: flex-end;
+}
+
+/* "Made to measure" on its own line above the name, as the home hero sets its
+   house line (page feedback, Sept 2026). */
+.bespoke-hero .photo-band-title-sub {
+  display: block;
+}
+
+.bespoke-enquiry h2 {
+  margin: 0 0 var(--s4);
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
 }
 
 /* --- The wall ---------------------------------------------------------------
@@ -23,6 +40,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* The house's mark on its tile: the Brands wall's own figure (grotesk, not the
+   serif the card used to set), so a maison reads the same on both walls. */
+.bespoke-card-logo {
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 .bespoke-card {
@@ -80,7 +105,14 @@
   text-wrap: balance;
 }
 
-/* --- The enquiry form (house page) ---------------------------------------- */
+/* --- The enquiry form (house page) ----------------------------------------
+   A raised panel, the way a form sits on the dark ground elsewhere (the
+   Story page's copy panel, the contact page's form): lifted, squared, no rule. */
+.bespoke-enquiry {
+  padding: var(--s7);
+  background: var(--surface);
+}
+
 .bespoke-enquiry h2 {
   margin: 0 0 var(--s2);
 }

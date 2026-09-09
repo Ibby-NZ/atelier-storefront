@@ -7,12 +7,22 @@ import Cart from '../components/Cart.jsx'
 // page is a client:load React island (quantity edit / remove / subtotal).
 ---
 
-<Layout title="Cart — Atelier Textiles" description="Review the finished goods in your cart before checkout.">
-  <section class="page-intro">
-    <p class="page-eyebrow">Ready to ship</p>
-    <h1>Your <em>cart</em></h1>
-    <p>Finished goods ready to purchase. Fabrics are ordered separately by request.</p>
+<Layout title="Cart — Atelier Textiles" description="Review the finished goods in your cart before checkout." bleed overlay="light">
+  {/* The shop page's banner, exactly (page feedback, Sept 2026): the light
+      band with the header floating in it, badge + headline at its foot on
+      the left, one line of copy on the right; the page under it on the
+      shop's own air (`.library-shell`). */}
+  <section class="library-hero">
+    <div class="container library-hero-row">
+      <div class="library-hero-heading">
+        <p class="badge-ochre">Cart</p>
+        <h1>Your cart</h1>
+      </div>
+      <p class="library-hero-note">Finished goods ready to purchase. Fabrics are ordered separately by request.</p>
+    </div>
   </section>
 
-  <Cart client:load />
+  <div class="container library-shell">
+    <Cart client:load />
+  </div>
 </Layout>

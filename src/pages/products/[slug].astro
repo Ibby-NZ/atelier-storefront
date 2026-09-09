@@ -1,5 +1,6 @@
 ---
 export const prerender = false // on-demand so a newly created product resolves without a rebuild
+import DragScroll from '../../components/DragScroll.astro'
 import Layout from '../../layouts/Layout.astro'
 import ProductDetail from '../../components/ProductDetail.jsx'
 import { apiFetch, ApiError } from '../../lib/api.js'
@@ -125,7 +126,7 @@ const productLdJson = productLd
   : null
 ---
 
-<Layout title={title} description={description} image={socialImage} type="product" bleed darkGround={!notFound}>
+<Layout title={title} description={description} image={socialImage} type="product" bleed>
   {
     notFound ? (
       <div class="container detail-static">
@@ -177,4 +178,5 @@ const productLdJson = productLd
   }
 
   {productLdJson && <script type="application/ld+json" set:html={productLdJson} is:inline />}
+  <DragScroll />
 </Layout>

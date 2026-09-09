@@ -9,18 +9,27 @@ import { PortableText } from 'emdash/ui'
 import { getEmdashPage } from '../lib/emdash.js'
 
 // One of the design's last two footer links (Figma 7307:930). Editable in the
-// EmDash admin (Pages → "privacy") or via src/content/pages/privacy.md; until
-// either exists this renders its empty state — no placeholder legal copy is
-// invented here.
+// EmDash admin (Pages → "privacy") or via src/content/pages/privacy.md — the
+// markdown ships placeholder copy until the client's own lands (Sept 2026).
 const emPage = await getEmdashPage('privacy')
 const entry = emPage ? null : await getEntry('page', 'privacy')
 const Content = entry ? (await render(entry)).Content : null
 const title = emPage?.title || (entry?.data.title ?? 'Privacy Policy')
 ---
 
-<Layout title={`${title} — Atelier Textiles`}>
-  <article class="content-page">
-    <h1>{title}</h1>
+<Layout title={`${title} — Atelier Textiles`} bleed overlay="light">
+  {/* The shop page's banner, then the copy on the container's full width —
+      the legal pages open exactly as /products and /resources do. */}
+  <section class="library-hero">
+    <div class="container library-hero-row">
+      <div class="library-hero-heading">
+        <p class="badge-ochre">Atelier Textiles</p>
+        <h1>{title}</h1>
+      </div>
+    </div>
+  </section>
+
+  <article class="container library-shell legal-page">
     {
       emPage?.content ? (
         <div class="prose">

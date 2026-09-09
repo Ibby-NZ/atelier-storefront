@@ -1,52 +1,16 @@
-/*
- * Editorial: the Journal (resources index + story), brand pages and the plain
- * company pages.
- *
- * Modelled on "Journal", "Journal Story" and the brand-world card patterns —
- * category eyebrow, Fraunces title, mono date, gentle image zoom on hover, and
- * a narrow ~660px measure for long-form reading with a claret drop cap.
- */
 
-/* --- Post meta ------------------------------------------------------------ */
-/* Shared by the journal index and the story header. The old `.post-card` block
-   that used to sit here went with the generic `.card-grid` index it styled. */
-.post-date {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  color: var(--muted);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
 
 /* --- Journal index (/resources) ------------------------------------------- */
 /* The page is `bleed`, so every section owns its own block padding. */
-.journal-head {
-  padding-block: var(--s9) var(--s7);
-}
-
-.journal-head h1 {
-  margin: var(--s3) 0 0;
-  font-weight: 400;
-  font-size: var(--d-xl);
-  line-height: 1.02;
-}
-
-.journal-lede {
-  margin: var(--s5) 0 0;
-  max-width: 34rem;
-  font-size: var(--t-prose);
-  line-height: 1.7;
-  color: var(--ink-soft);
-}
-
+/* Under the banner, the shop's own air (`.library-shell`, --s10) so the two
+   pages match to the pixel. */
 .journal-state {
-  padding-block: var(--s6) var(--s9);
+  padding-block: var(--s10) var(--s9);
 }
 
 /* --- Lead feature --------------------------------------------------------- */
 .journal-lead {
-  padding-bottom: var(--s9);
+  padding-block: var(--s10) var(--s9);
 }
 
 .journal-lead-card {
@@ -58,13 +22,13 @@
   text-decoration: none;
 }
 
+/* The only hover on the card is the photograph, which zooms inside its frame;
+   the type and the frame stay put (page feedback, Sept 2026). */
 .journal-lead-media {
   display: block;
   overflow: hidden;
   aspect-ratio: 3 / 2;
-  border: var(--hair);
   background: var(--surface);
-  transition: border-color var(--slow), box-shadow var(--slow);
 }
 
 .journal-lead-media img,
@@ -75,10 +39,14 @@
   object-fit: cover;
 }
 
-/* Maison hover: the frame moves, the type only takes claret. */
-.journal-lead-card:hover .journal-lead-media {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
+@media (prefers-reduced-motion: no-preference) {
+  .journal-lead-media img {
+    transition: transform 0.9s cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
+  .journal-lead-card:hover .journal-lead-media img {
+    transform: scale(1.05);
+  }
 }
 
 .journal-lead-body {
@@ -97,11 +65,6 @@
   letter-spacing: -0.015em;
   color: var(--ink);
   text-wrap: balance;
-  transition: color var(--quick);
-}
-
-.journal-lead-card:hover .journal-lead-title {
-  color: var(--accent);
 }
 
 .journal-lead-excerpt {
@@ -111,15 +74,27 @@
   color: var(--ink-soft);
 }
 
-/* The CTA is a span inside the card's own anchor (an <a> cannot nest), so its
-   hover has to be driven by the card rather than by `.link-cta:hover`. */
+/* The underlined action (`.cta-underline`), a span inside the card's own
+   anchor (an <a> cannot nest). The whole card is the link, so the CARD's hover
+   runs the rule's sweep, the way `a.cta-underline:hover` does elsewhere. */
 .journal-lead-cta {
   margin-top: var(--s2);
 }
 
-.journal-lead-card:hover .journal-lead-cta {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+@media (prefers-reduced-motion: no-preference) {
+  .journal-lead-card:hover .journal-lead-cta::after {
+    animation: cta-sweep 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+}
+
+/* The date in the article's own figure (its `.post-meta` row): 12px mono. */
+.journal-lead .post-date,
+.journal-grid .post-date {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--muted);
 }
 
 /* --- Rest of the gallery -------------------------------------------------- */
@@ -217,48 +192,6 @@
 .content-page {
   max-width: var(--container-prose);
   margin-inline: auto;
-}
-
-.post-header {
-  margin-bottom: var(--s7);
-  padding-bottom: var(--s5);
-  border-bottom: var(--hair);
-}
-
-/* The story header opens on the direction's brass rule + eyebrow, like every
-   other block in the redesign. */
-.post-header .eyebrow-wide {
-  margin-bottom: var(--s4);
-}
-
-.post-header h1,
-.content-page > h1 {
-  margin: 0 0 var(--s4);
-  font-weight: 400;
-  font-size: var(--d-xl);
-  line-height: 1.05;
-}
-
-.post-brands {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s2);
-  margin: var(--s4) 0 0;
-}
-
-.post-hero {
-  width: 100%;
-  margin: 0 0 var(--s7);
-  border: var(--hair);
-  border-radius: var(--r-md);
-  background: var(--surface);
-}
-
-/* Way back out of the article. */
-.post-footer {
-  margin-top: var(--s8);
-  padding-top: var(--s5);
-  border-top: var(--hair);
 }
 
 /* --- Prose ---------------------------------------------------------------- */
@@ -374,17 +307,6 @@
   margin: var(--s8) 0;
 }
 
-/* Claret drop cap on the article's opening paragraph. */
-.post .prose > p:first-of-type::first-letter {
-  float: left;
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 4.25rem;
-  line-height: 0.78;
-  padding: 6px 12px 0 0;
-  color: var(--accent);
-}
-
 /* --- House page (2026 direction) ------------------------------------------ */
 /* Design: Figma "Brand Page" (9350:479) and "Product Page" (9350:788) — one
    page with two openings. The banner, the badge, the tile wall and the
@@ -405,57 +327,62 @@
    proportion with the header included; the 30rem floor clears the header, the
    badge and the house name stacked on a phone. */
 .house-banner {
-  height: 78vh;
-  min-height: 30rem;
+  min-height: var(--hero-height); /* the figure every photo hero shares */
+  /* The copy at the FOOT, as on every other hero (the Story page's figure);
+     it was centring because nothing pushed it down. */
+  display: flex;
+  align-items: flex-end;
+  /* The frame (9379:2648) lays a flat 20% here where the home lays 30%. */
+  --scrim-flat: 0.2;
 }
 
-/* Two lighter stops than the home hero's: one badge and one line of type sit
-   over this, not a headline plus a paragraph. */
-.house-banner.photo-band::after {
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.5),
-    rgba(0, 0, 0, 0.08) 55%
-  );
-  /* The mock also lays a flat 20% over the whole frame, which is what keeps the
-     header legible against a bright ceiling at the top of the picture. */
-  box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0.2);
-}
+/* No scrim of its own: it carries `.photo-band`'s default, which is the file's
+   hero treatment (a flat 30% under a 0 → 20% foot gradient) and is what the
+   home hero and every other photo band now run. The private pair it had —
+   0.5 → 0.08 with a flat 20% laid on by box-shadow — was within a few points
+   of that and only guaranteed the two would drift apart. */
 
+/* Badge over name, in the row's title slot. The slot's `flex: 0 1 24rem` is
+   written for the title as a ROW item; here the title sits inside this column,
+   where the same basis would become its HEIGHT (it did: a 384px-tall h1 with
+   the name at its top, reading as centred). So the column takes the slot and
+   the title inside it sizes to its text. */
 .house-banner-copy {
   display: flex;
   flex-direction: column;
   gap: var(--s5); /* the mock's 24px between badge and name */
+  flex: 0 1 24rem;
 }
 
-/* --- Opening: band (Product Page) ----------------------------------------- */
-/* Same copy, no photograph: the umber band the mock draws for a house with no
-   banner imagery. Its top padding holds the header, which is NOT floating here
-   — the band is the page ground, so the header sits on it in its paper theme
-   and the band starts below. */
-.house-band {
-  padding-block: var(--s9) var(--s7);
-  background: var(--umber);
-}
-
-.house-band .photo-band-title {
-  color: var(--bone);
+.house-banner-copy .photo-band-title {
+  flex: 0 0 auto;
 }
 
 /* --- Intro ---------------------------------------------------------------- */
+/* On the page ground — the frame (9379:2657) draws this on the dark inverse
+   and the page sets Layout's `dark`; nothing here names a colour of its own. */
 .house-intro {
-  background: var(--shell);
+  background: transparent;
 }
 
 /* The August 2026 redraw (9379:2647): two TEXT columns — the blurb on the
    left, the body copy and the actions on the right, a wide gutter between. */
+/* The frame's two 466px text wrappers at either end of the 1136 column, 102px
+   of padding above and below — as three tracks so the proportion holds at any
+   width, the way the featured band does it. */
 .house-intro-inner {
   display: grid;
-  grid-template-columns: minmax(0, 400fr) minmax(0, 340fr);
-  justify-content: space-between;
-  gap: var(--s9) clamp(var(--s8), 14vw, 16rem);
+  grid-template-columns: minmax(0, 466fr) minmax(0, 204fr) minmax(0, 466fr);
   align-items: start;
-  padding-block: var(--s9);
+  padding-block: 6.375rem; /* the frame's 102 */
+}
+
+.house-intro-blurb {
+  grid-column: 1;
+}
+
+.house-intro-body {
+  grid-column: 3;
 }
 
 .house-intro-blurb,
@@ -475,22 +402,29 @@
   gap: var(--s6); /* 32px */
 }
 
-/* The house blurb: the redraw sets it small — 16px Inter medium, umber. */
+/* The house blurb IS the frame's heading/md: 24px Inter medium, 1.1, -1%,
+   text/primary. (An earlier note here said 16px; the frame says 24.) Token
+   colours so the dark page's remap reaches it. */
 .house-lede {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 1rem;
+  font-size: var(--font-size-2xl);
   font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: 0;
-  color: var(--umber);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
   text-wrap: pretty;
 }
 
+/* body/md, text/secondary. */
 .house-copy {
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--umber-soft);
+  color: var(--ink-soft);
+}
+
+.house-intro .cta-underline {
+  color: var(--ink);
 }
 
 .house-copy > p {
@@ -557,26 +491,26 @@
    card variant, so `.brand-card` / `.brand-meta` went with the `.card-grid`. */
 
 @media (max-width: 1024px) {
-  .house-banner {
-    height: auto;
-    min-height: 28rem;
-    padding-top: 12rem; /* the header stacks to three rows below 1024px */
-  }
-
-  .house-band {
-    padding-block: var(--s8) var(--s6);
-  }
-
+  /* The banner keeps `--hero-height` (no phone cap): every full-bleed hero on
+     the site is one viewport tall on every width. */
   .house-intro-inner {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s7);
     padding-block: var(--s8);
   }
+
+  /* The two columns are pinned to tracks 1 and 3 above; released here, or the
+     body copy would keep forcing a third implicit column beside the blurb. */
+  .house-intro-blurb,
+  .house-intro-body {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 640px) {
-  .post .prose > p:first-of-type::first-letter {
-    font-size: 3.25rem;
+  /* Deeper wash on the phone: the copy sits on far less photograph. */
+  .house-banner {
+    --scrim-flat: 0.35;
   }
 
   .prose {
@@ -585,105 +519,323 @@
 }
 
 /* --- Contact page --------------------------------------------------------- */
-/* Wider than the prose measure so the details column and the enquiry form sit
-   side by side; the intro prose keeps the article measure. */
+/* A dark page (Layout `dark`) laid out in the direction's own figures rather
+   than the Maison prose column it used to be (page feedback, Sept 2026: "looks
+   very different from the rest … play with layouts better"). Nothing here names
+   a colour of its own: the page runs on the tokens `body.theme-dark` remaps, so
+   it is the same ink, surface and hairline the rest of the dark pages are. */
 .contact-page {
-  max-width: 58rem;
+  max-width: none;
+  padding-block: var(--s8) var(--s10);
 }
 
-.contact-page > .prose {
-  max-width: var(--container-prose);
-}
-
-.contact-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: var(--s8);
-  margin-top: var(--s7);
-  align-items: start;
-}
-
-.contact-details {
+.contact-head {
   display: flex;
   flex-direction: column;
-  gap: var(--s6);
+  align-items: flex-start;
+  gap: var(--s5);
+  max-width: 40rem;
 }
 
-.contact-block > p {
-  margin: var(--s2) 0 0;
-  font-size: var(--t-sm);
+/* The display headline at the direction's page size — the same figure as the
+   hero titles, the product name and the sign-in "Welcome". */
+.contact-page h1 {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-xl);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.contact-head > .prose {
+  max-width: var(--container-prose);
   color: var(--ink-soft);
 }
 
-.contact-block a {
-  color: var(--accent);
+/* The featured band's split: copy-side column beside a panel, on a wide
+   gutter, top-aligned. */
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--s10);
+  align-items: start;
+  margin-top: var(--s9);
+}
+
+/* The house page's facts figure: 12px semibold label left, value right, a
+   hairline over every row, the last row ruled below as well so the list closes. */
+.contact-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.contact-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s6);
+  padding-block: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.contact-row:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.contact-row dt {
+  flex: 0 0 7rem;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.contact-row dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin: 0;
+  text-align: right;
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.contact-row a {
+  color: var(--ink);
   text-decoration: none;
   transition: color var(--quick);
 }
 
-.contact-block a:hover {
-  color: var(--accent-soft);
+.contact-row a:hover {
+  color: var(--accent);
 }
 
 .contact-muted {
   color: var(--muted);
 }
 
-.showroom-list,
-.social-list {
-  list-style: none;
-  margin: var(--s3) 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s4);
-}
-
-.showroom-list li {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: var(--t-sm);
-  color: var(--ink-soft);
-}
-
-.showroom-list strong {
-  color: var(--ink);
-  letter-spacing: 0.02em;
-}
-
-.social-list {
+.contact-social {
   flex-direction: row;
   gap: var(--s5);
 }
 
-.social-list a {
-  font-size: var(--t-sm);
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.social-list a:hover {
-  color: var(--accent-soft);
-}
-
+/* The form on a raised panel — lifted off the ground, squared, no rule. */
 .contact-form-panel {
-  border: var(--hair);
-  border-radius: var(--r-md);
+  padding: var(--s7);
   background: var(--surface);
-  padding: var(--s6);
+}
+
+.contact-form-panel h2 {
+  margin: 0 0 var(--s5);
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
 }
 
 .contact-form {
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  margin-top: var(--s4);
 }
 
 @media (max-width: 1024px) {
   .contact-layout {
     grid-template-columns: 1fr;
-    gap: var(--s6);
+    gap: var(--s8);
+  }
+
+  .contact-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s2);
+  }
+
+  .contact-row dd {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-form-panel {
+    padding: var(--s5) var(--s4);
+  }
+}
+
+/* --- Journal post ---------------------------------------------------------
+   Rebuilt on the direction's own figures (page feedback, Sept 2026): a 16:9
+   photo band on the container with the headline at its foot — the
+   `.photo-band` figure, so it drifts like every other picture — the meta on a
+   hairline row under it, the body on the narrow measure, everything at the
+   design system's sizes. Nothing serif, no drop cap, no brass rule. */
+/* `article.post`, two deep on purpose: global.css (the manifest, whose own
+   rules land AFTER every imported sheet) still pins `.post` to the old 41.25rem
+   article measure, and that would cage the hero. The container is the width. */
+article.post {
+  max-width: none;
+  padding-block: var(--s6) var(--s10);
+}
+
+/* 20:9 — the 16:9 frame 20% shorter (page feedback, Sept 2026). */
+.post-hero {
+  aspect-ratio: 20 / 9;
+  min-height: 0;
+}
+
+.post-hero.weave {
+  background: var(--umber);
+}
+
+/* The copy sits 64 from the left AND 64 from the foot — one figure. */
+.post-hero-body {
+  padding-inline: var(--s8);
+  padding-bottom: var(--s8);
+}
+
+.post-hero .photo-band-title {
+  max-width: 22ch;
+}
+
+/* One hairline row under the picture: breadcrumbs on the left; the date and
+   the houses together on the right. 12px semibold, the facts figure. */
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s5);
+  padding-block: var(--s5);
+  margin-bottom: var(--s8);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.post-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.post-crumbs a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.post-crumbs a:hover {
+  color: var(--ink);
+}
+
+.post-crumbs [aria-current="page"] {
+  color: var(--ink);
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-crumbs-sep {
+  color: var(--muted-soft);
+}
+
+.post-meta-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.post-date {
+  font-family: var(--font-mono);
+  font-weight: 400;
+}
+
+.post-brands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin: 0;
+}
+
+.post-brands a {
+  text-decoration: none;
+}
+
+/* The body runs the full width of the container (page feedback, Sept 2026). */
+.post-body {
+  max-width: none;
+}
+
+.post-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s6);
+  margin-top: var(--s8);
+}
+
+/* Share: a label and four 20px marks in the muted ink, full ink on hover. */
+.post-share {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.post-share ul {
+  display: flex;
+  gap: var(--s3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.post-share a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  transition: color var(--quick);
+}
+
+.post-share a:hover {
+  color: var(--ink);
+}
+
+.post-share svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 640px) {
+  .post-hero {
+    aspect-ratio: auto;
+    min-height: var(--hero-height); /* one viewport, like every other hero */
+  }
+
+  .post-hero-body {
+    padding-inline: var(--s5);
+  }
+
+  .post-meta {
+    justify-content: flex-start;
   }
 }

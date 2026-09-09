@@ -130,7 +130,7 @@ export default function Cart() {
         <a className="btn btn-primary" href="/checkout">
           Proceed to checkout
         </a>
-        <a className="cart-continue" href="/products">
+        <a className="cta-underline cart-continue" href="/products">
           Continue shopping
         </a>
       </div>

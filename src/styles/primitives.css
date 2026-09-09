@@ -90,33 +90,60 @@
   align-items: center;
   justify-content: center;
   gap: var(--s2);
-  height: 48px;
-  padding: 0 30px;
-  border: 1px solid var(--ink);
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--ink);
+  /* Since Sept 2026 the SAME button as the 2026 `.action-*` — white at rest,
+     beige swept in on hover, 16px Inter medium on 16/20 padding — so a form on
+     a Maison page and a product action read as one control. The 48px tracked
+     uppercase this was is gone with the "two chromes" it belonged to. */
+  padding: 1rem 1.25rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--button-ground);
+  color: var(--button-ink);
   font-family: var(--font-ui);
-  font-size: var(--t-sm);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  line-height: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.4;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background var(--quick), color var(--quick),
-    border-color var(--quick);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: color var(--slow);
+}
+
+/* The same left-to-right fill sweep the 2026 buttons run (direction-2026.css,
+   `.action-*`): a layer under the label that wipes in on hover and collapses
+   away to the right on leaving. The skins below only choose its colour. */
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--button-ground-hover);
+  transform: scaleX(0);
+  transform-origin: right;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn::before {
+    transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+}
+
+.btn:hover::before {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
 .btn:hover {
-  background: var(--ink);
-  color: var(--paper);
+  color: var(--button-ink);
 }
 
 .btn-lg {
-  height: 50px;
-  padding: 0 34px;
+  padding: 1.125rem 1.5rem;
 }
 
 /* A row of button-sized actions (hero pairs, 404, form footers). */
@@ -128,30 +155,29 @@
   margin-top: var(--s6);
 }
 
+/* The skins are one button now; the names survive for their call sites. */
 .btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--paper);
+  background: var(--button-primary-ground);
+  color: var(--button-ink);
+}
+
+.btn-primary::before {
+  background: var(--button-primary-ground-hover);
 }
 
 .btn-primary:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent-soft);
-  color: var(--paper);
+  color: var(--color-brand-on-primary);
 }
 
 /* Paper button sitting on a photograph (hero CTAs): hovers to an outline of
    itself rather than to a darker fill, which would fight the image. */
 .btn-paper {
-  background: var(--paper);
-  border-color: var(--paper);
-  color: var(--ink);
+  background: var(--button-ground);
+  color: var(--button-ink);
 }
 
 .btn-paper:hover {
-  background: transparent;
-  border-color: var(--paper);
-  color: var(--paper);
+  color: var(--button-ink);
 }
 
 /* Underlined uppercase text action beside a filled button. `-paper` is the
@@ -188,15 +214,16 @@
 }
 
 .btn-danger {
-  background: transparent;
-  border-color: var(--clay);
-  color: var(--clay);
+  background: var(--button-ground);
+  color: var(--button-ink);
+}
+
+.btn-danger::before {
+  background: var(--button-ground-hover);
 }
 
 .btn-danger:hover {
-  background: var(--clay);
-  border-color: var(--clay);
-  color: var(--paper);
+  color: var(--button-ink);
 }
 
 .btn:disabled,
@@ -205,12 +232,17 @@
   cursor: not-allowed;
 }
 
+.btn:disabled::before,
+.btn[aria-disabled="true"]::before {
+  display: none;
+}
+
 .btn:disabled:hover {
-  background: var(--paper);
+  background: var(--button-ground);
 }
 
 .btn-primary:disabled:hover {
-  background: var(--accent);
+  background: var(--button-ground);
 }
 
 /* Quiet text links used as secondary actions. */

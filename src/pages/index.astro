@@ -9,6 +9,8 @@ export const prerender = false
 import { Image, getImage } from 'astro:assets'
 import Layout from '../layouts/Layout.astro'
 import CollectionHero from '../components/CollectionHero.astro'
+import FeaturedBand from '../components/FeaturedBand.astro'
+import BrandsRow from '../components/BrandsRow.astro'
 import DragScroll from '../components/DragScroll.astro'
 import { safeFetch } from '../lib/api.js'
 import {
@@ -130,8 +132,8 @@ const featureArt = overlayArtwork(FEATURE_ART, cmsBanners, 'portrait')
 // show another. /products can never be empty, which is the standing rule for
 // every link out of this page.
 const BANNERS = [
-  { title: 'Shop by type', cta: 'View all types', href: '/products' },
-  { title: 'Shop by application', cta: 'View all applications', href: '/products' },
+  { title: 'Explore by type', cta: 'View all types', href: '/products' },
+  { title: 'Explore by application', cta: 'View all applications', href: '/products' },
 ]
 
 const MANIFESTO = {
@@ -219,6 +221,8 @@ const productImages = products.reduce((images, product) => {
   return { ...images, [slug]: product.image_url }
 }, {})
 
+// The whole roster; BrandsRow caps what it shows (sixteen — page feedback,
+// 1920x968 #13) so the home and /story show the same count.
 const houses = brands.map((brand) => ({
   ...brand,
   image: houseArtwork({ collections: collectionImages, catalogue: productImages }, brand),
@@ -251,7 +255,7 @@ const banners = [
   applySection({ ...BANNERS[1], image: applicationArt.src }, sections['shop-by-application']),
 ].filter((banner) => !banner.hidden)
 const latestHead = applySection(
-  { title: 'Latest collections', cta: 'View all', href: '/products', image: null },
+  { title: 'Brands', cta: 'View all', href: '/brands', image: null },
   sections['latest-collections']
 )
 const manifesto = applySection({ ...MANIFESTO, image: manifestoImage.src }, sections['home-manifesto'])
@@ -266,6 +270,7 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
   image={heroSlides[0]?.image?.src ?? heroSlides[0]?.src ?? undefined}
   bleed
   overlay
+  dark
 >
   <CollectionHero
     slides={heroSlides}
@@ -276,11 +281,12 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
     banners.length > 0 && (
       <section class="tile-wall">
         {banners.map((banner) => (
-          <a
-            class:list={['tile', ...bandClasses(banner)]}
-            style={bandStyle(banner.image)}
-            href={banner.href}
-          >
+          <a class:list={['tile', ...bandClasses(banner)]} href={banner.href}>
+            {/* The photograph moves onto its own layer so it can be
+                parallaxed on the compositor — a background-image on the
+                anchor cannot be, and animating background-position repaints
+                every frame. Same pattern as `.photo-band-art`. */}
+            {banner.image && <span class="tile-art" style={bandStyle(banner.image)} />}
             <span class="tile-body">
               <span class="tile-title">{banner.title}</span>
               <span class="cta-underline cta-underline-light cta-underline-lg">{banner.cta}</span>
@@ -293,48 +299,24 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
 
   {
     !latestHead.hidden && houses.length > 0 && (
-      <section class:list={['home-collections', ...bandClasses(latestHead)]}>
-        <div class="container home-collections-head">
-          <h2>{latestHead.title}</h2>
-          <a class="cta-underline cta-underline-lg" href={latestHead.href}>
-            {latestHead.cta}
-          </a>
-        </div>
-        {/* Outside the container on purpose: the row runs PAST the frame's
-            right edge rather than wrapping, which is what makes it read as a
-            gallery instead of a short grid. Its own inline padding puts the
-            first tile on the container's own left edge, so it lines up with
-            the heading above and with every band below. */}
-        <ul class="home-brands-row" data-drag-scroll>
-          {houses.map((house) => (
-            <li>
-              {/* The tile is the photograph with the maison's mark centred on
-                  it and NOTHING under it (Userback, 25 Aug 2026) — /brands and
-                  /story still caption theirs, which is a directory; this is a
-                  wall. `.house-card` is the shared tile, minus its name. */}
-              <a class="house-card" href={`/brands/${house.slug}`}>
-                <span class:list={['house-card-media', { weave: !house.image }]}>
-                  {house.image && <img src={house.image} alt="" loading="lazy" />}
-                  {house.logo_url ? (
-                    <img class="house-card-logo" src={house.logo_url} alt={house.name} loading="lazy" />
-                  ) : (
-                    <span class="house-card-logo">{house.name}</span>
-                  )}
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <BrandsRow
+        houses={houses}
+        title={latestHead.title}
+        href={latestHead.href}
+        cta={latestHead.cta}
+        classes={bandClasses(latestHead)}
+      />
     )
   }
 
   {
     !manifesto.hidden && (
-      <section
-        class:list={['photo-band', 'home-manifesto', ...bandClasses(manifesto)]}
-        style={bandStyle(manifesto.image)}
-      >
+      <section class:list={['photo-band', 'photo-band--parallax', 'home-manifesto', ...bandClasses(manifesto)]}>
+        {/* The photograph moves onto its own layer so it can drift (page
+            feedback, 1920x968 #3 — "all banners have subtle parallax"). The
+            band's own background cannot be transformed; this layer can, on the
+            compositor. Story and /brands already carry the same pair. */}
+        {manifesto.image && <span class="photo-band-art" style={bandStyle(manifesto.image)} />}
         <div class="container">
           <div class="home-manifesto-body">
             <h2 class="photo-band-title">
@@ -352,45 +334,25 @@ const bandStyle = (image) => (image ? `background-image: url(${image})` : undefi
   }
 
   {
+    /* The band is components/FeaturedBand.astro — the same one /brands closes
+       on, so the two cannot drift. `side` says which screen edge the picture
+       runs to; the file puts Larsen's portrait on the LEFT. */
     featured && (
-      <section class="home-featured">
-        <div class="container home-featured-inner">
-          <div class="home-featured-media">
-            {/* Commissioned portrait, or the collection's own catalogue
-                photograph — the band only renders when it has one of the two,
-                so there is never an empty frame here. */}
-            {featured.image ? (
-              <Image
-                src={featured.image}
-                alt={featured.name}
-                widths={[622, 933, 1244]}
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                format="webp"
-                loading="lazy"
-              />
-            ) : (
-              <img src={featured.src} alt={featured.name} loading="lazy" />
-            )}
-          </div>
-          <div class="home-featured-body">
-            <p class="badge-ochre">Featured collection</p>
-            <h2>{featured.name}</h2>
-            {featured.description && <p class="home-featured-copy">{featured.description}</p>}
-            <a class="cta-underline" href={featured.href}>
-              Explore collection
-            </a>
-          </div>
-        </div>
-      </section>
+      <FeaturedBand
+        title={featured.name}
+        description={featured.description}
+        href={featured.href}
+        image={featured.image ?? featured.src}
+        alt={featured.name}
+        side="left"
+      />
     )
   }
 
   {
     !housesBand.hidden && (
-      <section
-        class:list={['photo-band', 'home-houses', ...bandClasses(housesBand)]}
-        style={bandStyle(housesBand.image)}
-      >
+      <section class:list={['photo-band', 'photo-band--parallax', 'home-houses', ...bandClasses(housesBand)]}>
+        {housesBand.image && <span class="photo-band-art" style={bandStyle(housesBand.image)} />}
         <div class="photo-band-body">
           <div class="container photo-band-row">
             <h2 class="photo-band-title">{housesBand.title}</h2>

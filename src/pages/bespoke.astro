@@ -1,8 +1,13 @@
 ---
 export const prerender = false // live: which houses take commissions is a CRM flag
 import Layout from '../layouts/Layout.astro'
+import { getImage } from 'astro:assets'
 import { safeFetch } from '../lib/api.js'
 import { bespokeCards } from '../lib/bespoke.js'
+// The client's own supply for this page (Sept 2026, 2070 × 1376).
+import heroArt from '../assets/img/bespoke-hero-bg.jpg'
+
+const hero = await getImage({ src: heroArt, format: 'webp', width: 2200 })
 
 // Bespoke (made-to-measure) page — client brief of 10 Aug 2026, reshaped Sept
 // 2026. A wall of the houses whose ateliers take custom commissions; each card
@@ -21,20 +26,39 @@ const cards = bespokeCards(data?.brands ?? null)
 <Layout
   title="Bespoke — Atelier Textiles"
   description="Made-to-measure area rugs, furniture, bedding, table linen, throws and cushions from the maisons whose ateliers take commissions. Every piece individually quoted."
+  bleed
+  overlay
+  dark
 >
-  <section class="page-intro">
-    <p class="page-eyebrow">Made to measure</p>
-    <h1>Bespoke, <em>by the maisons</em></h1>
-    <p>
-      Beyond the bolt, some of our houses make pieces entirely to order: area
-      rugs, furniture, bedding, table linen, throws and cushions, sized and
-      finished to your scheme. Choose a house below to see what its ateliers can
-      do, then tell us about the piece you have in mind. Every commission is
-      quoted individually.
-    </p>
+  {/* The Brands page's opening, reused: a full-viewport photo band with the
+      header floating inside it, the headline left and one line of copy right
+      (page feedback, Sept 2026: "make it look like the brands page"). */}
+  <section class="photo-band photo-band--parallax bespoke-hero">
+    <span class="photo-band-art" style={`background-image: url(${hero.src});`}></span>
+    <div class="container photo-band-body">
+      <div class="photo-band-row">
+        <h1 class="photo-band-title">
+          <span class="photo-band-title-sub">Made to measure</span>
+          Bespoke, by the maisons
+        </h1>
+        <div class="photo-band-aside">
+          <p>
+            Beyond the bolt, some of our houses make pieces entirely to order:
+            area rugs, furniture, bedding, table linen, throws and cushions,
+            sized and finished to your scheme. Every commission is quoted
+            individually.
+          </p>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <div class="bespoke-explorer">
+  {/* The wall — the same section, head and rhythm as the Brands page's wall of
+      houses; the cards are drawn to the same 371 × 497 tile. */}
+  <section class="container house-wall">
+    <div class="house-wall-head">
+      <h2>Choose a house</h2>
+    </div>
     <ul class="bespoke-wall">
       {
         cards.map((card) => (
@@ -51,5 +75,5 @@ const cards = bespokeCards(data?.brands ?? null)
         ))
       }
     </ul>
-  </div>
+  </section>
 </Layout>

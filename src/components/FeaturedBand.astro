@@ -1,0 +1,67 @@
+---
+// The featured-collection band: a photograph hard against one screen edge
+// (12px off it, the same gap it has top and bottom) with its copy on the
+// container's column beside it — the frame's 622 / 108 / 466 split (Figma
+// 9379:2624 on the home, 9379:3621 on the Brands page). ONE component, so the
+// home and /brands cannot drift apart in spacing, height, sizing or motion
+// (page feedback, Sept 2026: "exactly like the featured collection section of
+// the homepage … consistent across the site").
+//
+// `image` is either an imported asset (ImageMetadata — gets a srcset through
+// <Image>) or a plain URL string (a CMS or catalogue photograph). `side` says
+// which screen edge the picture runs to; the frames alternate it.
+import { Image } from 'astro:assets'
+
+const {
+  badge = 'Featured collection',
+  title,
+  description,
+  href,
+  cta = 'Explore collection',
+  image,
+  alt,
+  side = 'left',
+  headingLevel = 'h2',
+} = Astro.props
+
+const isAsset = Boolean(image) && typeof image === 'object'
+const Heading = headingLevel
+---
+
+<section class="feature-band" data-media-side={side}>
+  <div class="feature-band-inner">
+    <div class="feature-band-media">
+      {
+        isAsset ? (
+          <Image
+            src={image}
+            alt={alt ?? title}
+            widths={[622, 933, 1244]}
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            format="webp"
+            loading="lazy"
+          />
+        ) : (
+          <img src={image} alt={alt ?? title} loading="lazy" />
+        )
+      }
+    </div>
+    <div class="feature-band-body">
+      {badge && <p class="badge-ochre">{badge}</p>}
+      {/* A caller with markup in its title (the Story page's pronunciation
+          span) fills the `title` slot; everyone else passes the string. The
+          default slot takes anything that belongs under the copy — a list,
+          a second paragraph. */}
+      <Heading><slot name="title">{title}</slot></Heading>
+      {description && <p class="feature-band-copy">{description}</p>}
+      <slot />
+      {
+        href && (
+          <a class="cta-underline" href={href}>
+            {cta}
+          </a>
+        )
+      }
+    </div>
+  </div>
+</section>
