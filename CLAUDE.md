@@ -1282,35 +1282,51 @@ name + `View collection`) → the related-reading band.
 editorial page still renders (preserving the old `getStaticPaths` UNION
 behaviour), and an API outage renders whatever editorial exists — offline-safe.
 
-**Precedence: EmDash WINS over markdown here**, deliberately diverging from
-`/resources`, where markdown wins. Brand pages were handed to the CMS as the
-editor of record (that is the point of wiring them through EmDash at all), while
-the markdown files stay the offline baseline shipped in the repo; posts are the
-other way round because the markdown journal is the curated, reviewed set.
-Precedence is per PAGE, not per field — the markdown entry is not even loaded
-when a CMS page exists, so a page is never a confusing hybrid of both sources.
+**Precedence: EmDash WINS over markdown here**, and since September 2026 the
+journal follows the same rule (`lib/posts.js`). Brand pages and posts were
+handed to the CMS as the editor of record (that is the point of wiring them
+through EmDash at all), while the markdown files stay the offline baseline
+shipped in the repo. Posts used to be the other way round — markdown won on a
+shared slug — which is how the shipped post was live on `/resources` while the
+admin could not see it, and nothing an editor did could reach it;
+`scripts/import-posts.mjs` moved it across (see US-025/US-026). Precedence is
+per PAGE, not per field — the markdown entry is not even loaded when a CMS
+page exists, so a page is never a confusing hybrid of both sources.
 
 ## Resources + company pages (US-025)
 
-All static (content is build-time; no islands):
+No islands; the journal pages render on demand (`prerender = false`) because
+the CMS is queried live:
 
 - **`/resources` (`resources/index.astro`)** — opens on the shop page's banner
   (`.library-hero`, `<Layout bleed overlay="light">`, no italics — Sept 2026),
-  then lists the `post` collection
-  newest-first via `getCollection('post')` (grid of cards, hero + title + date;
-  empty state when none). Cards link to `/resources/<post.id>`.
-- **`/resources/[slug]` (`resources/[slug].astro`)** — one route per post;
-  `getStaticPaths` maps `post.id` → `params.slug`, renders the markdown body with
-  `render(post)` inside `.prose`. **Rebuilt on the direction's figures, Sept
-  2026** (`<Layout bleed>`, the `.post-*` rules at the foot of editorial.css):
-  a 16:9 `.photo-band` on the container with the headline at its foot (so the
-  picture drifts like every other), a hairline meta row under it — back link,
-  mono date, the `brands` tags as `.badge-ochre` links to `/brands/<slug>` —
-  then the body on the 46rem narrow measure. `article.post` is two deep on
-  purpose: global.css still pins `.post` to the old 41.25rem article measure
-  and lands after every imported sheet. No serif, no drop cap, no brass rule.
-  Slug = entry `.id` = filename (matches the `/resources/<id>` links from brand
-  pages).
+  then `listPosts()` from `src/lib/posts.js`: published EmDash `posts` UNION
+  the markdown `post` collection, newest-first, **the CMS winning a slug both
+  have** (editor of record; markdown is the offline baseline and is not even
+  loaded for a slug the CMS has). Lead card + gallery, hero + title + date +
+  standfirst; empty state when none. Cards link to `/resources/<post.id>`.
+- **`/resources/[slug]` (`resources/[slug].astro`)** — `getEmdashPost(slug)`
+  first (Portable Text body via `<PortableText>`, `houses` → the brand tags),
+  else the markdown entry (`render(post)` inside `.prose`), else 404. **Rebuilt
+  on the direction's figures, Sept 2026** (`<Layout bleed>`, the `.post-*`
+  rules at the foot of editorial.css): a 16:9 `.photo-band` on the container
+  with the headline at its foot (so the picture drifts like every other), a
+  hairline meta row under it — breadcrumb, mono date, the `brands` tags as
+  `.badge-ochre` links to `/brands/<slug>` showing the house NAME from the
+  catalogue API (safeFetch — the slug stands in when it is down) — then the
+  body on the 46rem narrow measure. `article.post` is two deep on purpose:
+  global.css still pins `.post` to the old 41.25rem article measure and lands
+  after every imported sheet. No serif, no drop cap, no brass rule.
+- **`scripts/import-posts.mjs`** (`EMDASH_TOKEN=… node scripts/import-posts.mjs
+  [base-url]`) moves the markdown posts into the CMS: frontmatter `date` →
+  `publishedAt` (the journal keeps its order), `brands` → the comma-separated
+  `houses` field, the hero downloaded into the media library, the body via
+  `markdownToPortableText` (refuses rather than degrades). A slug already in
+  the CMS is skipped, so re-runs are no-ops and an editor's post is never
+  replaced. It shares `scripts/lib/emdash-client.mjs` with the brand-page
+  import (Bearer fetch, cursor walker, media dedupe by filename). Run it
+  against staging after the deploy that flips the precedence, or the imported
+  post sits in the admin while the markdown one keeps rendering.
 - **`/story` is no longer one of these** — the August 2026 redraw (Figma
   "Story Page", 9436:3043) made it a DARK page (the first; `/`, `/brands`,
   `/bespoke` and `/contact` followed in Sept 2026 through Layout's `dark`), fully
@@ -1424,10 +1440,14 @@ markdown collections (above) remain the shipped baseline.
 - **Portable Text** bodies render with `import { PortableText } from 'emdash/ui'`
   → `<PortableText value={blocks} />`. `/resources/[slug]` uses it for a CMS
   post's `content`; before that it fell back to the excerpt and dropped the body.
-- **`/resources`** merges markdown + published EmDash posts (markdown wins on
-  slug); **`/resources/[slug]`** resolves markdown-first then EmDash, else 404.
-  Both are `prerender = false`. **Brand pages invert that precedence** (EmDash
-  wins) — rationale in the US-024 section above.
+- **`/resources`** merges published EmDash posts + markdown (**EmDash wins on
+  slug**, via `lib/posts.js`); **`/resources/[slug]`** resolves EmDash first
+  then markdown, else 404. Both are `prerender = false`. Same precedence as the
+  brand pages — rationale in the US-024 section above. The `posts` collection
+  carries one field beyond EmDash's default four: `houses`, a comma-separated
+  list of atelier-api brand slugs (`normalisePost` → `brands`), the join the
+  post page's house tags use. It is in the seed, so an existing database gets
+  it from `npm run seed:cms:fields`, not from a restart.
 - **Homepage sections and banner art live in TWO further collections** (the
   EmDash revamp, Aug 2026), both read by `/`:
   - **`site_sections`** — one entry per art-directed band, the entry slug FIXED

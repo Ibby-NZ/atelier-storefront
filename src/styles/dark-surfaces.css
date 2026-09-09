@@ -326,18 +326,6 @@ body.theme-dark .house-actions a.cta-underline:hover {
   color: var(--tan);
 }
 
-body.theme-dark .house-trade {
-  border-top-color: var(--umber-line);
-}
-
-body.theme-dark .house-trade-head {
-  color: var(--bone-muted);
-}
-
-body.theme-dark .house-trade-body {
-  color: var(--bone-soft);
-}
-
 /* #2 — the collection tile wall is covered by the shared `.tile-wall` rule. */
 
 /* ==========================================================================

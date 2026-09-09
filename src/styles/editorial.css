@@ -390,6 +390,12 @@
   min-width: 0;
 }
 
+/* A bespoke house stacks its body copy under the blurb (the right-hand column
+   is the enquiry form, bespoke.css), at the body column's own gap. */
+.house-intro-blurb .house-copy {
+  margin-top: var(--s6);
+}
+
 .house-intro-body {
   display: flex;
   flex-direction: column;
@@ -435,45 +441,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s5);
-}
-
-/* --- Trade access note ---------------------------------------------------- */
-/* Shown on a house Atelier holds for the trade (brands.trade_only; see
-   lib/tradeGate.js). Without it the page is silent about the gate — the design
-   count reads 0 for an anonymous visitor, so the "Designs held" fact, the
-   "View all products" action and the whole collection tile wall simply are not
-   there, and the house looks like one we hold nothing from.
-   Drawn in the page's own language: the `.house-fact` hairline as a divider, the
-   facts' 12px uppercase label, `.house-copy`'s body size, and the same
-   `.cta-underline` actions as the block above it — there is no button anywhere
-   in this direction. */
-.house-trade {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  padding-top: var(--s6);
-  border-top: 1px solid var(--shell-line);
-}
-
-.house-trade-head {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--shell-muted);
-}
-
-.house-trade-body {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--umber-soft);
-}
-
-.house-trade .house-actions {
-  margin-top: var(--s2);
 }
 
 /* --- Facts ---------------------------------------------------------------- */

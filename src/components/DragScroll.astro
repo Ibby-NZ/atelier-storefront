@@ -1,14 +1,12 @@
 ---
 // Makes a horizontal overflow row actually drivable with a mouse.
 //
-// `overflow-x: auto` is only half a scroller on a desktop pointer: a native
+// `overflow-x: auto` is only half a scroller on a desktop pointer: a vertical
+// wheel does nothing to it (the browser sends deltaY, and a row that only
+// overflows on X ignores it unless the reader knows to hold Shift), a native
 // scroller cannot be dragged, and the design hides the scrollbar — so the row
 // reads as a stuck grid with its last tile clipped. Touch was always fine; this
 // is the pointer half.
-//
-// It does NOT touch the wheel. See the note where that handler used to be: a
-// row that converts deltaY into sideways travel also stops the page scrolling
-// past it, which is worse than the problem it solves.
 //
 // Opt in with `data-drag-scroll` on the scrolling element. Nothing else on the
 // page is touched, so any other row can adopt it by adding the attribute —
@@ -20,38 +18,49 @@
 ---
 
 <script>
-  // Runs on the first load AND after every client-side navigation
-  // (<ClientRouter /> in Layout.astro swaps the page in place, and a
-  // bundled script would otherwise run once for the whole session).
-  document.addEventListener('astro:page-load', () => {
-    // Bind every row now, and again whenever an island announces one it has
-    // just rendered (`atelier-drag-scroll`, fired by the product page's
-    // "Similar Products" row after its fetch). A bound row is marked so a
-    // second pass never double-binds it.
-    const bind = () => {
-      const rows = document.querySelectorAll('[data-drag-scroll]:not([data-drag-bound])')
-      rows.forEach((row) => row.setAttribute('data-drag-bound', ''))
-      return rows
-    }
-    const rows = bind()
-    document.addEventListener('atelier-drag-scroll', () => bindRows(bind()))
+  // How long the wheel must be quiet before the snap comes back on.
+  const WHEEL_SETTLE_MS = 150
 
-    const bindRows = (rows) => {
+  const bindRows = (rows) => {
     for (const row of rows) {
       const canScroll = () => row.scrollWidth - row.clientWidth > 1
 
       // --- Wheel ---------------------------------------------------------------
-      // **The vertical wheel is left alone, on purpose.** This used to map deltaY
-      // onto scrollLeft so an ordinary mouse could drive the row; the cost was
-      // that the row ate the page's own scroll for as long as the pointer was
-      // over it, and since the maisons row is a full-width band most of the way
-      // down the home page, that is most of the page — "when I scroll vertically
-      // on this section it does not allow me" (page feedback, 1920x968 #13).
+      // A trackpad sends deltaX for a sideways gesture and the row handles that
+      // natively; what needs mapping is the vertical wheel of an ordinary mouse.
+      // preventDefault ONLY when the row actually consumed the delta — at either
+      // end of the track the page must go on scrolling, or the row becomes a trap
+      // the reader cannot get out of.
       //
-      // A trackpad's sideways gesture sends deltaX and the row still handles that
-      // natively, Shift+wheel still works, and the drag below is the pointer
-      // affordance for a mouse. Trapping the page to save a mouse user one drag
-      // was the wrong trade.
+      // The snap must come off while the wheel drives the row, exactly as it does
+      // mid-drag: `scroll-snap-type: x proximity` re-snaps after every
+      // programmatic scrollLeft write, and a wheel notch is a few pixels — well
+      // inside the proximity band — so each step was pulled straight back to the
+      // tile edge it had just left and the row never moved (drag only worked
+      // because `.is-dragging` already switches the snap off). Inline, so neither
+      // stylesheet needs a class; the snap returns once the wheel has been quiet
+      // for a beat, which is also what settles the row onto a tile.
+      let wheelSettle
+      row.addEventListener(
+        'wheel',
+        (event) => {
+          if (!canScroll() || event.ctrlKey) return
+          if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+
+          const limit = row.scrollWidth - row.clientWidth
+          const next = Math.min(Math.max(row.scrollLeft + event.deltaY, 0), limit)
+          if (next === row.scrollLeft) return
+
+          row.style.scrollSnapType = 'none'
+          clearTimeout(wheelSettle)
+          wheelSettle = setTimeout(() => {
+            row.style.scrollSnapType = ''
+          }, WHEEL_SETTLE_MS)
+          row.scrollLeft = next
+          event.preventDefault()
+        },
+        { passive: false }
+      )
 
       // --- Drag ----------------------------------------------------------------
       // Mouse only: a touch pointer already pans the row natively, and taking it
@@ -119,7 +128,22 @@
         if (moved) event.preventDefault()
       })
     }
-    }
-    bindRows(rows)
-  })
+  }
+
+  // Bind every row that is not yet bound. A bound row is marked so a second
+  // pass never double-binds it.
+  const bind = () => {
+    const rows = document.querySelectorAll('[data-drag-scroll]:not([data-drag-bound])')
+    rows.forEach((row) => row.setAttribute('data-drag-bound', ''))
+    return rows
+  }
+
+  // Runs on the first load AND after every client-side navigation
+  // (<ClientRouter /> in Layout.astro swaps the page in place, and a
+  // bundled script would otherwise run once for the whole session).
+  document.addEventListener('astro:page-load', () => bindRows(bind()))
+
+  // An island announces a row it has just rendered (`atelier-drag-scroll`,
+  // fired by the product page's "Similar Products" row after its fetch).
+  document.addEventListener('atelier-drag-scroll', () => bindRows(bind()))
 </script>

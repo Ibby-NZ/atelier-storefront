@@ -1,9 +1,7 @@
 ---
 export const prerender = false // merges live EmDash CMS posts with markdown baseline
 import Layout from '../../layouts/Layout.astro'
-import { getCollection } from 'astro:content'
-import { listEmdashPosts } from '../../lib/emdash.js'
-import { excerptFromBody } from '../../lib/journal.js'
+import { listPosts } from '../../lib/posts.js'
 
 // Resources / journal index, Maison direction. Newsletters become posts (meeting
 // decision). Like the brands index, this page was left on the old generic
@@ -17,27 +15,12 @@ import { excerptFromBody } from '../../lib/journal.js'
 // three-across gallery. With a single post the gallery simply does not render,
 // which is the state the site ships in today.
 //
-// The list is the UNION of the markdown `post` collection (the shipped baseline)
-// and posts authored in the EmDash CMS (US-026). Markdown wins on slug
-// collisions so the baseline stays authoritative; EmDash is additive. Rendered
-// on demand so the CMS is queried live — `listEmdashPosts` never throws, so an
-// empty/absent CMS just yields the markdown posts.
-const markdownPosts = (await getCollection('post')).map((post) => ({
-  id: post.id,
-  title: post.data.title,
-  date: post.data.date,
-  hero: post.data.hero ?? null,
-  // Frontmatter wins; otherwise the post's own opening paragraph stands in, so
-  // the shipped baseline post reads properly without being edited.
-  excerpt: post.data.excerpt ?? excerptFromBody(post.body),
-}))
-
-const emdashPosts = await listEmdashPosts()
-
-const seen = new Set(markdownPosts.map((p) => p.id))
-const posts = [...markdownPosts, ...emdashPosts.filter((p) => !seen.has(p.id))].sort(
-  (a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0),
-)
+// The list is the UNION of posts published in the EmDash CMS (US-026) and the
+// markdown `post` collection (the shipped baseline). The CMS WINS on a slug
+// both have — it is the editor of record, see lib/posts.js — and markdown is
+// what remains when the CMS has nothing. Rendered on demand so the CMS is
+// queried live; an empty/absent CMS just yields the markdown posts.
+const posts = await listPosts()
 
 const [lead, ...rest] = posts
 
