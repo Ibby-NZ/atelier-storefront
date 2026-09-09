@@ -39,7 +39,15 @@ const current = Astro.url.pathname
 const isActive = (href) => current === href || current.startsWith(`${href}/`)
 ---
 
-<header class:list={['site-header', { 'site-header--overlay': overlay }]}>
+{/* `overlay="light"` floats the header over a LIGHT band (the shop and journal
+    banners on bg/subtle, Figma 9457:5255) and keeps its paper-theme type; plain
+    `overlay` reverses it for a photograph. */}
+<header
+  class:list={[
+    'site-header',
+    { 'site-header--overlay': overlay, 'site-header--overlay-light': overlay === 'light' },
+  ]}
+>
   <div class="container site-header-inner">
     <nav class="site-nav" aria-label="Primary">
       <ul>
@@ -63,52 +71,6 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
       <a class="site-util-link" href="/contact" aria-current={isActive('/contact') ? 'page' : undefined}>
         Contact
       </a>
-      {/* Dark / light theme toggle. Plain markup, not an island: the correct
-          icon is chosen purely by CSS off `:root[data-theme]` (set by the
-          no-flash script in Layout before paint), so there is no hydration flash
-          and no React needed. The button reads as one of the header's 24px
-          icons; `site-icon` gives it the same size and the overlay/paper theme
-          inheritance the others get. The click handler lives in the script
-          below. */}
-      <button
-        id="theme-toggle"
-        type="button"
-        class="site-icon theme-toggle"
-        aria-pressed="false"
-        aria-label="Dark mode"
-      >
-        {/* Moon — shown in light mode (tap to go dark). */}
-        <svg
-          class="theme-icon-moon"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-        {/* Sun — shown in dark mode (tap to go light). */}
-        <svg
-          class="theme-icon-sun"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-        </svg>
-      </button>
       {/* Search is the library itself: it opens with the search field the
           shopper is reaching for, and there is no separate search route to
           send them to. */}
@@ -131,56 +93,115 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
           list can still reach it from any page. */}
       <RequestIndicator client:load />
       <CartIndicator client:load />
+      {/* The burger, phones and tablets only (chrome.css hides it above
+          1024px). Two lines that fold into a cross when the menu is open. */}
+      <button
+        class="site-burger"
+        type="button"
+        aria-expanded="false"
+        aria-controls="site-menu"
+        aria-label="Menu"
+      >
+        <span class="site-burger-line"></span>
+        <span class="site-burger-line"></span>
+      </button>
     </div>
+  </div>
+
+  {/* The full-screen menu. Closed, it is clipped to nothing at the top edge;
+      opening unclips it downward, closing clips it back up. Dark ground, the
+      links in the display face, each arriving a beat after the last. */}
+  <div class="site-menu" id="site-menu" inert>
+    <nav class="site-menu-nav" aria-label="Menu">
+      <ul>
+        {
+          [...links, { href: '/contact', label: 'Contact' }].map((link, index) => (
+            <li style={`--i: ${index}`}>
+              <a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <p class="site-menu-foot" style={`--i: ${links.length + 1}`}>
+      <a href="/account">Account</a>
+      <a href="/cart">Cart</a>
+      <a href="/trade-application">Trade account</a>
+    </p>
   </div>
 </header>
 
 <script>
-  // Theme toggle. The no-flash script in Layout has already set
-  // document.documentElement.dataset.theme (and theme-color) from localStorage
-  // before this runs, so here we only reflect that state onto the button and
-  // flip it on click. Persisted under `atelier_theme`, alongside the cart /
-  // request-list keys.
-  const btn = document.getElementById('theme-toggle')
-  if (btn) {
-    const root = document.documentElement
-    const meta = document.querySelector('meta[name="theme-color"]')
-    const isDark = () => root.dataset.theme === 'dark'
+  // The menu. Re-armed on every page-load (client-side navigation swaps the
+  // header) and closed before a swap, so a page never arrives with the menu
+  // open. Scroll is locked on <html> while it is up; Escape and any link in it
+  // close it.
+  document.addEventListener('astro:page-load', () => {
+    const header = document.querySelector('.site-header')
+    const button = header && header.querySelector('.site-burger')
+    const menu = header && header.querySelector('.site-menu')
+    if (!header) return
 
-    // The label stays "Dark mode" (a name, not an action) and aria-pressed
-    // carries the on/off state — one convention, not two. theme-color mirrors
-    // the HEADER, which is dark only on a darkGround page, so an un-themed light
-    // page keeps its light browser-chrome tint even with dark mode on.
-    const sync = () => {
-      const dark = isDark()
-      btn.setAttribute('aria-pressed', String(dark))
-      if (meta) {
-        const darkChrome = dark && document.body.classList.contains('has-dark-ground')
-        meta.setAttribute('content', darkChrome ? '#19100C' : '#F7F2E9')
-      }
+    const set = (open) => {
+      header.classList.toggle('is-menu-open', open)
+      if (button) button.setAttribute('aria-expanded', String(open))
+      if (menu) menu.toggleAttribute('inert', !open)
+      document.documentElement.classList.toggle('menu-open', open)
     }
 
-    sync()
+    set(false)
 
-    btn.addEventListener('click', () => {
-      root.dataset.theme = isDark() ? 'light' : 'dark'
-      try {
-        localStorage.setItem('atelier_theme', root.dataset.theme)
-      } catch (e) {
-        // Private-mode / storage-disabled: the toggle still works for the
-        // session, it just will not be remembered on the next visit.
-      }
-      sync()
-    })
+    // Scroll behaviour: the bar leaves on the way down and comes back on the
+    // way up, on the page's own ground (dark on a dark page, cream on a light
+    // one), and is its natural self again at the top — transparent over a
+    // hero, plain on a contained page (page feedback, Sept 2026). A floating
+    // (overlay) header is `position: absolute` at rest and goes `fixed`
+    // (`is-pinned`) once the page has scrolled past it; a contained header is
+    // sticky by CSS and only needs hiding. Menu open = never hidden.
+    const overlay = header.classList.contains('site-header--overlay')
+    let lastY = window.scrollY
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(() => {
+        ticking = false
+        const y = window.scrollY
+        const height = header.offsetHeight
+        if (y <= 8) {
+          header.classList.remove('is-pinned', 'is-hidden')
+        } else {
+          if (overlay) header.classList.add('is-pinned')
+          if (header.classList.contains('is-menu-open')) {
+            header.classList.remove('is-hidden')
+          } else if (y > lastY + 4 && y > height) {
+            header.classList.add('is-hidden')
+          } else if (y < lastY - 4) {
+            header.classList.remove('is-hidden')
+          }
+        }
+        lastY = y
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
 
-    // Cross-tab sync — the same native `storage` event the cart and request-list
-    // indicators listen to. A theme change in another tab lands here so this
-    // tab's ground, footer, icon and aria stay consistent without a reload.
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'atelier_theme' && (event.newValue === 'dark' || event.newValue === 'light')) {
-        root.dataset.theme = event.newValue
-        sync()
-      }
-    })
-  }
+    if (button) button.addEventListener('click', () => set(!header.classList.contains('is-menu-open')))
+    if (menu) menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => set(false)))
+    const onKey = (event) => {
+      if (event.key === 'Escape') set(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        set(false)
+        document.removeEventListener('keydown', onKey)
+        window.removeEventListener('scroll', onScroll)
+      },
+      { once: true }
+    )
+  })
 </script>

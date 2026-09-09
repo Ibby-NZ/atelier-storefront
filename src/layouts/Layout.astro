@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from 'astro:transitions'
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import { Agentation } from 'agentation'
@@ -28,19 +29,6 @@ const {
   // of the same palette. The header takes the ground with it (see chrome.css)
   // and the footer stays the cream band it is on every page, /story included.
   dark = false,
-  // `darkGround` opts the page into DARK MODE's page ground — the header
-  // toggle's theme, which is a different thing from `dark` above: `dark` is one
-  // page choosing the umber half of the light palette, this one says "when the
-  // reader has asked for dark mode, this body may go dark too".
-  //
-  // It is a per-page opt-in because dark mode is a curated set of overrides
-  // (src/styles/dark-mode.css), not a token swap: only the 2026 marketing
-  // surfaces have been drawn dark. Without the gate, an un-redesigned Maison
-  // page (cart, checkout, account, the journal, the order flows, admin) would
-  // get a dark <main> under light content. Set on /products, /brands,
-  // /brands/[slug] and /products/[slug]; NOT on the home or /story, whose bands
-  // are full-bleed so <main> never shows.
-  darkGround = false,
 } = Astro.props
 
 // Staging is noindex by default; baked in at build time for prerendered pages.
@@ -88,6 +76,12 @@ const FONTS =
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* Client-side navigation with a View Transitions crossfade between pages
+        (the animation itself is set in chrome.css). Every bundled <script> on
+        the site now listens for `astro:page-load` rather than running at
+        module load, or it would fire once per session instead of once per
+        page — the rotator, the drag rows and the headline reveal below all do. */}
+    <ClientRouter />
     <meta name="description" content={description} />
     {/* The browser chrome above the page — the phone's own top bar. It has to
         follow the page's ground or it reads as the seam a mismatched header
@@ -115,34 +109,8 @@ const FONTS =
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href={FONTS} />
 
-    {/*
-      Dark mode, applied BEFORE first paint. The header's toggle only WRITES
-      `atelier_theme` and flips `data-theme` on click — it explicitly relies on
-      this script having restored the stored choice by the time it runs (see the
-      comment at the top of Header.astro's script), so without it dark mode was
-      forgotten on every navigation and the header button came up "off" on a page
-      the reader had already darkened.
-
-      `is:inline` is load-bearing: a plain <script> is bundled and deferred, which
-      would apply the theme after the cream ground had already painted — a white
-      flash on every page load, which is the whole thing this script exists to
-      avoid. It only sets `data-theme`; `theme-color` needs `document.body` to
-      know whether this page has a dark ground at all, so Header's own sync()
-      owns that once the body exists.
-    */}
-    <script is:inline>
-      try {
-        const stored = localStorage.getItem('atelier_theme')
-        if (stored === 'dark' || stored === 'light') {
-          document.documentElement.dataset.theme = stored
-        }
-      } catch (e) {
-        // Private mode / storage disabled: the site stays light, which is the
-        // default anyway.
-      }
-    </script>
   </head>
-  <body class:list={{ 'theme-dark': dark, 'has-dark-ground': darkGround }}>
+  <body class:list={{ 'theme-dark': dark }}>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header overlay={overlay} />
     <main id="main" class={bleed ? 'main-bleed' : undefined}>
@@ -157,6 +125,64 @@ const FONTS =
       }
     </main>
     <Footer />
+    {/* Headline reveal: marks every headline below the fold and reveals each
+        one, with a timed transition, as it enters the viewport. The CSS for
+        `[data-reveal]` is in direction-2026.css beside the note on why this is
+        a triggered transition and not a scroll-driven one. */}
+    <script>
+      const HEADS = 'h1, h2, h3, .photo-band-title, .tile-title'
+      const stillness = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+      // Re-armed on every page-load (first paint and each client-side
+      // navigation) and torn down before the swap, so an observer never
+      // outlives the document it was watching.
+      document.addEventListener('astro:page-load', () => {
+        if (stillness || !('IntersectionObserver' in window)) return
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue
+              entry.target.classList.add('is-revealed')
+              io.unobserve(entry.target)
+            }
+          },
+          // Fires once 15% of the headline is in; the transition then plays.
+          { threshold: 0.15 }
+        )
+        // Below the fold only: a headline already on screen must never flash
+        // from visible to hidden and back while the observer catches up.
+        const mark = (root) => {
+          const heads = root.matches && root.matches(HEADS) ? [root] : []
+          for (const el of root.querySelectorAll ? root.querySelectorAll(HEADS) : []) heads.push(el)
+          for (const el of heads) {
+            if (el.hasAttribute('data-reveal')) continue
+            if (el.getBoundingClientRect().top <= window.innerHeight) continue
+            el.setAttribute('data-reveal', '')
+            io.observe(el)
+          }
+        }
+        mark(document.body)
+        // Islands render their headings after hydration and fetches (the
+        // product grid, the account panels). Mark those the same way as they
+        // land, so "every headline" means the ones React adds too.
+        const mo = new MutationObserver((records) => {
+          for (const record of records) {
+            for (const node of record.addedNodes) {
+              if (node.nodeType === Node.ELEMENT_NODE) mark(node)
+            }
+          }
+        })
+        mo.observe(document.body, { childList: true, subtree: true })
+        document.addEventListener(
+          'astro:before-swap',
+          () => {
+            io.disconnect()
+            mo.disconnect()
+          },
+          { once: true }
+        )
+      })
+    </script>
     {/* client:only because the toolbar is a React portal into document.body
         with no server-renderable output. The flag is resolved in the
         frontmatter — see `showAgentation`. */}

@@ -7,163 +7,308 @@
  */
 
 :root {
-  /* --- Palette (handoff, verbatim) --- */
-  --paper: #f7f2e9; /* raw-silk ivory — primary background */
-  --surface: #efe8da; /* linen — cards / panels / nav */
-  --surface-deep: #e5dbc8; /* oat — table headers / recessed areas / chips */
-  --ink: #211c17; /* warm near-black — primary text & headlines */
-  --ink-soft: #4a4138; /* bark — secondary text */
-  --muted: #877c6b; /* stone — eyebrows / labels / meta / captions */
-  --muted-soft: #a99d8a; /* pale stone — facet counts, input placeholders */
-  --line: #d8cdb8; /* greige — ALL 1px hairline borders & dividers */
-  --accent: #7a2e2e; /* claret — SPARINGLY */
-  --accent-soft: #9c4a43; /* claret hover */
-  --brass: #a98b5d; /* metallic detail — fine strokes, never fills */
-  --brass-light: #cbb994; /* brass legible on espresso — dark bands only */
+  /* =========================================================================
+     THE FIGMA VARIABLES, VERBATIM
+     File "Atelier" 6iMAmsNk2HkmhfuqAimM5P → page Design System (3347:3314) →
+     frame Foundations (3355:2). Every value in this first block is copied from
+     `get_variable_defs` under its own Figma name and is the SOURCE OF TRUTH.
+     Nothing here is derived, rounded or invented.
+
+     The second block gives these primitives the semantic names the ~430 call
+     sites across src/styles already use. That indirection is the point: a
+     re-sync edits this block only, and every sheet follows without a rename.
+     Re-sync = diff this block against get_variable_defs on 3355:2.
+     ========================================================================= */
+
+  /* --- color/neutral — the paper ramp -------------------------------------- */
+  --color-neutral-100: #fcf9f6;
+  --color-neutral-200: #f9f4ed;
+  --color-neutral-300: #f5f0ea;
+  --color-neutral-400: #f2ebe3;
+  --color-neutral-500: #efe6dc;
+  --color-neutral-600: #ccc3b8;
+  --color-neutral-700: #a9a095;
+  --color-neutral-800: #867c71;
+  --color-neutral-900: #63594e;
+
+  /* --- color/pink — the file's own name for the tan → umber brand ramp.
+         It is not pink; the name is the designer's and is kept so a variable
+         search in Figma matches a search in this repo. ---------------------- */
+  --color-pink-300: #e7cdaf;
+  --color-pink-400: #b6906c;
+  --color-pink-500: #a57b55;
+  --color-pink-600: #8b6746;
+  --color-pink-700: #705236;
+
+  /* --- color/alpha ---------------------------------------------------------
+     NOTE: the file names one of these `alpha/black/45` but binds it to
+     #0000001a — 10%, not 45%. The VALUE is authoritative and is what the
+     components actually draw, so it is copied as-is rather than "corrected". */
+  --color-alpha-white-10: rgba(255, 255, 255, 0.1);
+  --color-alpha-white-20: rgba(255, 255, 255, 0.2);
+  --color-alpha-white-35: rgba(255, 255, 255, 0.35);
+  --color-alpha-white-50: rgba(255, 255, 255, 0.5);
+  --color-alpha-white-60: rgba(255, 255, 255, 0.6);
+  /* GAP — not in the file's variable ramp, which stops at 60, but the frames
+     themselves set reversed body copy at 0.8 (the home hero's own
+     `text/secondary`, 9379:2574), and the client confirmed 80% is the figure
+     (page feedback, 1920x968 #3). Carried under the ramp's own naming so the
+     day the file adds it nothing here needs renaming. */
+  --color-alpha-white-80: rgba(255, 255, 255, 0.8);
+  --color-alpha-black-45: rgba(0, 0, 0, 0.1);
+  --color-alpha-black-60: rgba(0, 0, 0, 0.6);
+
+  /* --- Semantic colour ----------------------------------------------------- */
+  --color-bg-canvas: #f9f4ed;
+  --color-bg-surface: #f5f0ea;
+  --color-bg-subtle: #efe6dc;
+  --color-bg-inverse: #211b14;
+  --color-text-primary: #211b14;
+  --color-text-secondary: #2c241b;
+  --color-text-muted: rgba(0, 0, 0, 0.35);
+  --color-text-on-inverse: #fcf9f6;
+  --color-border-subtle: rgba(0, 0, 0, 0.1);
+  --color-border-default: rgba(0, 0, 0, 0.35);
+  --color-border-strong: rgba(0, 0, 0, 0.5);
+  --color-brand-primary: #a57b55;
+  --color-brand-primary-hover: #705236;
+  --color-brand-primary-subtle: #b6906c;
+  --color-brand-on-primary: #ffffff;
+  --color-status-danger: #d8281f;
+  --color-status-danger-subtle: #ff7b74;
+
+  /* --- Spacing: space/0 … space/64, the whole scale, nothing between ------- */
+  --space-0: 0;
+  --space-2: 0.125rem;
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-20: 1.25rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-40: 2.5rem;
+  --space-48: 3rem;
+  --space-64: 4rem;
+
+  /* --- Radius. Defined in the file, and every component in it is SQUARE:
+         Button, Input, Badge, the product thumbnails and the image tiles all
+         draw a 0 corner. The scale is carried so a future component can reach
+         it; `--r-*` below stay 0 because that is what the components do. ---- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 42px;
+  --radius-pill: 9999px;
+
+  /* --- Elevation ----------------------------------------------------------- */
+  --elevation-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+  --elevation-card: 0 8px 24px -4px rgba(17, 27, 79, 0.13);
+  --elevation-lg: 0 16px 40px -8px rgba(17, 27, 79, 0.18);
+
+  /* --- Type families -------------------------------------------------------
+     The file sets display in Helvena and UI in Inter — TWO grotesques and no
+     serif anywhere (checked against the drawn frames, not just the variable:
+     the product page's "Atlas" headline is sans). Helvena is licensed and this
+     repo cannot fetch it, so it is named first and Inter carries it; dropping
+     the licensed file into the font pipeline is then the only change needed. */
+  --font-family-display: "Helvena", "Inter", -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-family-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* --- Type sizes: font-size/xs … font-size/6xl ---------------------------- */
+  --font-size-xs: 0.75rem; /* 12 */
+  --font-size-sm: 0.875rem; /* 14 */
+  --font-size-md: 1rem; /* 16 */
+  --font-size-lg: 1.125rem; /* 18 */
+  --font-size-xl: 1.25rem; /* 20 */
+  --font-size-2xl: 1.5rem; /* 24 */
+  --font-size-3xl: 1.875rem; /* 30 */
+  --font-size-4xl: 2.5rem; /* 40 */
+  --font-size-5xl: 3.125rem; /* 50 */
+  --font-size-6xl: 4.375rem; /* 70 */
+
+  /* Line-height and tracking travel with the size in the file's text styles:
+     display/* and heading/* are 1.1, body/* 1.5, caption/label 1.4; display
+     tracks -3, heading -1, body 0. */
+  --leading-display: 1.1;
+  --leading-body: 1.5;
+  --leading-caption: 1.4;
+  --tracking-display: -0.03em;
+  --tracking-heading: -0.01em;
+
+  /* =========================================================================
+     SEMANTIC ALIASES — the names the stylesheets call. Each one RESOLVES to a
+     Figma primitive above; none carries a literal unless it is marked GAP.
+     ========================================================================= */
+
+  /* --- Grounds and ink ----------------------------------------------------- */
+  --paper: var(--color-bg-canvas);
+  --surface: var(--color-bg-surface);
+  --surface-deep: var(--color-bg-subtle);
+  --ink: var(--color-text-primary);
+  --ink-soft: var(--color-text-secondary);
+  --muted: var(--color-text-muted);
+  --muted-soft: var(--color-neutral-700);
+  --line: var(--color-border-subtle);
+
+  /* Claret is gone: the file's single accent is the tan brand ramp, so every
+     `--accent` call site (37 of them) now draws brand/primary. */
+  --accent: var(--color-brand-primary);
+  --accent-soft: var(--color-brand-primary-hover);
+  --accent-wash: var(--color-neutral-400);
+  --brass: var(--color-pink-400);
+  --brass-light: var(--color-pink-300);
+
+  /* GAP — the file has status/danger but NO success or warning token, and the
+     storefront needs both (in stock / low stock). These two are the only
+     literals left in the palette; they are the Maison values, kept until the
+     design system names a pair. Everything else on this page is Figma's. */
   --sage: #6f7a5a; /* positive / in stock */
   --clay: #b06a4f; /* warning / low / out of stock */
-
-  /* Derived tints — hairlines and washes only, never new hues. */
-  --accent-wash: #f3eadf;
   --sage-line: #cbd3bc;
   --clay-line: #e2c9b8;
-  --scrim: rgba(33, 28, 23, 0.5);
-  --line-dark: rgba(216, 205, 184, 0.22); /* hairline on an espresso band */
 
-  /* --- 2026 direction (Figma "Atelier", file 6iMAmsNk2HkmhfuqAimM5P) --------
-     The client's Figma design system runs a second, cooler palette beside the
-     Maison one: a warm-cream page ground, an umber dark band, and ochre as the
-     single accent in place of claret. It now carries the SITE CHROME, the home,
-     the house pages and sign-in — so these are no longer home-only values.
-     Named here rather than hardcoded per sheet so nothing eyeballs them twice.
+  --scrim: var(--color-alpha-black-60);
+  --line-dark: var(--color-alpha-white-20);
 
-     Figma variable → token, verbatim (August 2026 redraw — the file rebound
-     its palette when the Brands/Products/Story frames landed; these are the
-     resolved values of the same variables, not a new family):
-       color/bg/canvas (light) #f9f4ed  --shell
-       color/bg/canvas (dark)  #18100c  --umber
-       color/text/secondary (light) #1f1713  --umber-soft
-       color/text/secondary (dark)  #f6eee5  --bone
-       color/bg/surface   #f6eee5  --shell-surface
-       color/bg/subtle    #f0e3d3  --shell-subtle
-       color/brand/primary #8b6746  --ochre                              */
-  --shell: #f9f4ed; /* ground of the direction's paper bands */
-  --umber: #18100c; /* dark bands AND primary text on shell */
-  --umber-soft: #1f1713; /* body copy and nav labels on shell */
-  --bone: #f6eee5; /* reversed onto umber or a photograph */
-  --shell-surface: #f6eee5; /* raised cream — product cards, badges on photos */
-  --shell-subtle: #f0e3d3; /* recessed cream — the footer band */
-  --ochre: #8b6746; /* badges and small labels */
-  --umber-raised: #2c241b; /* a panel lifted off the umber ground — the story
-                              page's copy half (Userback, 25 Aug 2026) */
-  --tan: #dcc8b1; /* color/neutral-300 — the filled button of the redraw */
-  --gold: #b5985b; /* the earlier wordmark's gold — link hovers on umber */
+  /* --- The 2026 family. These names are load-bearing across chrome, home,
+         houses and story; each is now a straight alias so the sheets did not
+         have to be rewritten to pick up the rebound palette. --------------- */
+  --shell: var(--color-bg-canvas);
+  --umber: var(--color-bg-inverse);
+  --umber-soft: var(--color-text-secondary);
+  --bone: var(--color-text-on-inverse);
+  --shell-surface: var(--color-bg-surface);
+  --shell-subtle: var(--color-bg-subtle);
+  --ochre: var(--color-brand-primary);
+  /* A panel lifted off the inverse ground. text/secondary #2c241b sits one
+     step above bg/inverse #211b14 and is what the file uses for it. */
+  --umber-raised: var(--color-text-secondary);
+  --tan: var(--color-pink-300); /* filled button on a dark band */
+  --gold: var(--color-pink-400); /* link hover on umber */
 
-  /* The wordmark. It is TWO-TONE, so unlike the single-tone mark it replaced it
-     cannot ride on `currentColor`; `Wordmark.astro` fills the ATELIER row from
-     `--wordmark-accent` and the TEXTILES row from `--wordmark-ink`. These are
-     the mark's OWN brand values, not palette colours — the logo does not
-     re-tint with the theme, it swaps between the two colourways the client
-     supplied. The light-ground pair is the default here; a dark surface
-     re-declares the pair from `-rev` (chrome.css / dark-mode.css), and because
-     custom properties inherit it is set on the header or footer element rather
-     than on the mark. */
-  --wordmark-accent: #a57b55;
-  --wordmark-ink: #63594c;
-  --wordmark-accent-rev: #cdb295;
-  --wordmark-ink-rev: #fff;
+  /* Hairlines and muted text, both grounds. */
+  --shell-line-soft: var(--color-border-subtle);
+  --shell-line: var(--color-border-default);
+  --shell-line-strong: var(--color-border-strong);
+  --shell-muted: var(--color-text-muted);
+  --umber-line: var(--color-alpha-white-20);
+  /* Secondary copy on a dark ground is 80% white, site-wide (feedback #3). */
+  --bone-soft: var(--color-alpha-white-80);
+  --bone-muted: var(--color-alpha-white-60);
 
-  /* Rules and muted text, both grounds. The Figma binds these as
-     color/border/{subtle,default,strong} and color/text/muted, and resolves
-     each against whichever ground it sits on — hence two families. */
-  --shell-line-soft: rgba(0, 0, 0, 0.1);
-  --shell-line: rgba(0, 0, 0, 0.35);
-  --shell-line-strong: rgba(0, 0, 0, 0.5);
-  --shell-muted: rgba(0, 0, 0, 0.35);
-  --umber-line: rgba(242, 240, 233, 0.2); /* hairline on an umber band */
-  --bone-soft: rgba(255, 255, 255, 0.8);
-  --bone-muted: rgba(255, 255, 255, 0.6);
+  /* The wordmark is TWO-TONE and does not re-tint with the theme — it swaps
+     between the two colourways the client supplied. The light pair resolves to
+     Figma primitives; the reversed accent is the mark's own ink and has no
+     variable in the file, so it stays a literal. */
+  --wordmark-accent: var(--color-pink-500);
+  --wordmark-ink: var(--color-neutral-900);
+  --wordmark-accent-rev: #cdb295; /* GAP — brand asset, not a palette value */
+  --wordmark-ink-rev: var(--color-brand-on-primary);
 
-  /* --- Type families (system fallbacks keep the site legible if Google
-         Fonts is blocked — staging sits behind Cloudflare + Basic Auth). --- */
-  --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino,
-    Georgia, "Times New Roman", serif;
-  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  /* --- Type families, project names --------------------------------------- */
+  --font-ui: var(--font-family-ui);
+  --font-grotesk: var(--font-family-display);
+  /* Fraunces is retired. The file carries no serif, so the display face IS the
+     grotesque; `--font-display` is kept as a name because ~40 rules call it. */
+  --font-display: var(--font-family-display);
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
     Consolas, "Liberation Mono", monospace;
-  /* Display face of the 2026 home. The Figma sets it in Helvena, a licensed
-     grotesque this repo does not ship and cannot fetch from Google Fonts; Inter
-     — already loaded for UI — is the nearest available face and is what the
-     mock's letterforms read as anyway. Named first in the stack so dropping the
-     licensed file into the font pipeline is the only change needed to switch. */
-  --font-grotesk: "Helvena", "Inter", -apple-system, BlinkMacSystemFont,
-    "Helvetica Neue", Arial, sans-serif;
 
-  /* --- Type scale (UI, Inter/mono) --- */
-  --t-micro: 0.625rem; /* 10px — sku captions under swatches */
-  --t-eyebrow: 0.6875rem; /* 11px — uppercase eyebrows */
-  --t-xs: 0.75rem; /* 12px — utilities, fine print */
-  --t-sm: 0.8125rem; /* 13px — labels, table cells, meta */
-  --t-base: 0.875rem; /* 14px — controls, UI body */
-  --t-body: 0.9375rem; /* 15px — lede and page copy */
-  --t-prose: 1.0625rem; /* 17px — long-form article body */
+  /* --- UI type scale, snapped onto font-size/*. The old scale ran 10/11/12/
+         13/14/15/17; the file has no 10, 11, 13, 15 or 17, so each lands on the
+         nearest rung UP — nothing gets smaller, and the scale is now the
+         file's. ------------------------------------------------------------ */
+  --t-micro: var(--font-size-xs); /* 10 → 12 */
+  --t-eyebrow: var(--font-size-xs); /* 11 → 12 */
+  --t-xs: var(--font-size-xs); /* 12 */
+  --t-sm: var(--font-size-sm); /* 13 → 14 */
+  --t-base: var(--font-size-sm); /* 14 */
+  --t-body: var(--font-size-md); /* 15 → 16 */
+  --t-prose: var(--font-size-lg); /* 17 → 18 */
 
-  /* --- Display scale (Fraunces) --- */
-  --d-xs: 1.0625rem; /* 17px */
-  --d-sm: 1.1875rem; /* 19px */
-  --d-md: 1.4375rem; /* 23px — product & design names */
-  --d-lg: 1.75rem; /* 28px — section headlines */
-  --d-xl: clamp(2rem, 1.4rem + 2.6vw, 2.875rem); /* 32→46 page headlines */
-  --d-2xl: clamp(2.5rem, 1.8rem + 3vw, 4rem); /* 40→64 band headlines */
-  /* Full-bleed image heroes. The Maison redesign sets these on top of a
-     photograph, so they run larger than any headline on paper: the home hero to
-     5.5rem, the brand banner to 5rem (handoff "Type patterns"). */
-  --d-hero: clamp(3rem, 2rem + 5vw, 5.5rem);
-  --d-hero-brand: clamp(3rem, 2rem + 4.5vw, 5rem);
+  /* --- Display scale. heading/sm…xl and display/lg…2xl. The three largest
+         keep a clamp so a 50 or 70px headline still lands on a phone; each
+         clamp TOPS OUT at the file's own figure. -------------------------- */
+  --d-xs: var(--font-size-lg); /* 18 — heading/xs-ish, smallest display use */
+  --d-sm: var(--font-size-xl); /* 20 — heading/sm */
+  --d-md: var(--font-size-2xl); /* 24 — heading/md, product & design names */
+  --d-lg: var(--font-size-3xl); /* 30 — heading/lg, section headlines */
+  --d-xl: clamp(1.875rem, 1.35rem + 2.2vw, 2.5rem); /* 30 → 40, heading/xl */
+  --d-2xl: clamp(2.25rem, 1.55rem + 2.9vw, 3.125rem); /* 36 → 50, display/xl */
+  --d-hero: clamp(2.75rem, 1.6rem + 4.8vw, 4.375rem); /* 44 → 70, display/2xl */
+  --d-hero-brand: clamp(2.5rem, 1.6rem + 3.8vw, 3.125rem); /* 40 → 50 */
+  /* The grotesk pair the direction's bands already call by name. */
+  --g-xl: var(--d-2xl); /* display/xl 50 */
+  --g-lg: clamp(1.875rem, 1.35rem + 2.2vw, 2.5rem); /* display/lg 40 */
 
-  /* --- Display scale, 2026 direction (grotesk) ---
-     The Figma's display/xl (50px) and display/lg (40px), each given a floor so
-     they still read on a phone. Every headline in the direction is one of the
-     two — there is no third size in the mocks. */
-  --g-xl: clamp(2.25rem, 1.5rem + 2.6vw, 3.125rem); /* 36 → 50px */
-  --g-lg: clamp(1.875rem, 1.3rem + 2vw, 2.5rem); /* 30 → 40px */
-
-  /* --- Spacing scale --- */
-  --s1: 0.25rem;
-  --s2: 0.5rem;
-  --s3: 0.75rem;
-  --s4: 1rem;
-  --s5: 1.5rem;
-  --s6: 2rem;
-  --s7: 2.75rem;
-  --s8: 3.5rem;
-  --s9: 4.5rem;
-  --s10: 6rem;
+  /* --- Spacing, project names. s1–s6 already sat exactly on the file's scale;
+         s7 (44) and s8 (56) were off it and snap to space/48 and space/64.
+         s9 and s10 are LAYOUT rhythm, not spacing: 72 is the file's page
+         margin and 96 its section top padding, and neither has a space/*
+         token, so they stay as figures with that provenance noted. -------- */
+  --s1: var(--space-4);
+  --s2: var(--space-8);
+  --s3: var(--space-12);
+  --s4: var(--space-16);
+  --s5: var(--space-24);
+  --s6: var(--space-32);
+  --s7: var(--space-48); /* was 44 — off-scale */
+  --s8: var(--space-64); /* was 56 — off-scale */
+  --s9: 4.5rem; /* 72 — the file's page margin */
+  --s10: 6rem; /* 96 — the file's section top padding */
 
   /* --- Layout ---
-     96rem / 3rem is the Maison redesign's section frame: every mock lays its
-     content out in `max-width:96rem; padding:0 3rem`, header and footer
-     included, so the shell has to match or nothing else lines up with it. */
+     The file draws every page on a 1280 frame with 72px side margins: each
+     Section puts its Header at x=72 with width 1136, and the Column Width
+     foundation (9340:1426) lays 12 columns across that same 1136 with a 12px
+     gutter. 72px is therefore the gutter here. The 96rem cap is the project's
+     own decision for what happens ABOVE 1280, which the file does not draw.
+     (It was lifted for a day in Sept 2026 chasing "a gap on the right" that
+     turned out to be the document scrollbar's track; the cap is the client's
+     choice and is back.) */
+  /* Every photo hero is the full viewport (page feedback, 1920x968 #2, then
+     "consistent across the entire website"): the home rotator, /brands, a
+     house banner, /story and the sign-in screen all read this one figure.
+     `svh` — the SMALL viewport, so on a phone the copy at the foot of the band
+     is never under the address bar. Change it here, never per page. */
+  --hero-height: 100svh;
   --container: 96rem; /* 1536px — section frame */
-  --container-narrow: 46rem; /* forms, summaries */
+  --container-narrow: 46rem; /* forms, summaries — no Figma equivalent */
   --container-prose: 41.25rem; /* ~660px — article measure */
-  --gutter: 3rem;
+  --gutter: 4.5rem; /* 72px — the file's page margin */
+  --grid-columns: 12;
+  --grid-gutter: var(--space-12); /* 12px between columns */
 
   /* --- Surface detail ---
-     Squared corners everywhere: the Maison direction replaces the earlier 3–4px
-     radii ("Border radius: 0 everywhere" in the handoff). The three names are
-     kept so the ~40 call sites stay readable, and so a future direction can put
-     a radius back in one place. */
+     Squared corners everywhere, and this is now confirmed by the components
+     themselves rather than inherited from the older handoff: every Button,
+     Input, Badge and image tile in the file draws a 0 corner. */
   --r-sm: 0;
   --r-md: 0;
   --r-chip: 0;
-  /* The one exception, and it is the Figma's own `radius/pill`: the cart count
-     in the header is a disc, not a square. */
-  --r-pill: 9999px;
+  /* The one exception, and it is the file's own `radius/pill`: the cart count
+     in the header is a disc, and so is every colour swatch on a product. */
+  --r-pill: var(--radius-pill);
+  /* EVERY button on the site, one figure (page feedback, Sept 2026: "all
+     buttons should be the same … white to beige"): white at rest, the beige
+     of the brand ramp swept in on hover, umber label throughout. Both are the
+     file's own values — brand/on-primary is its white, pink/300 its beige. */
+  --button-ground: var(--color-brand-on-primary);
+  --button-ground-hover: var(--color-pink-300);
+  --button-ink: var(--color-text-primary);
+  /* The PRIMARY action (add to cart / to quote, `.action-fill`, `.btn-primary`)
+     is more prominent: latte at rest, one step down the ramp on hover
+     (page feedback, Sept 2026). Secondary stays white with latte on hover. */
+  --button-primary-ground: var(--color-pink-300);
+  --button-primary-ground-hover: var(--color-pink-400);
   --hair: 1px solid var(--line);
-  --shadow-lift: 0 16px 36px rgba(33, 28, 23, 0.13);
-  --shadow-panel: 0 24px 60px rgba(33, 28, 23, 0.3);
+  --shadow-lift: var(--elevation-card);
+  --shadow-panel: var(--elevation-lg);
 
   /* --- Motion --- */
   --quick: 0.15s ease;
@@ -171,39 +316,36 @@
   --zoom: 0.5s ease;
 
   /* --- Weave placeholder tones (overridable per element) --- */
-  --weave-light: #c9b79b;
-  --weave-dark: #6e4a2e;
+  --weave-light: var(--color-pink-300);
+  --weave-dark: var(--color-pink-700);
 
   /* --- Dark mode (opt-in via [data-theme="dark"]; see dark-mode.css) ---------
-     The storefront ships LIGHT by default — the warm-paper brand identity — and
-     a header toggle flips the 2026 marketing surfaces to this warm near-black.
-     #19100c is the client's chosen ground (page feedback, Aug 2026): a hair off
-     --umber #18100c, so a flipped section and an existing umber band read as one
-     dark rather than two. --dark-raised lifts a card / input / detail band off
-     that ground. Text on dark reuses the direction's own reversed families
-     (--bone / --bone-soft / --bone-muted), accents reuse --tan, and hairlines
-     reuse --umber-line — dark mode introduces no new text or accent hues, only
-     the two grounds. */
-  --dark-bg: #19100c;
-  --dark-raised: #241813;
-  /* --clay (#b06a4f) drops to ~4.1:1 on --dark-raised — under the AA floor for
-     a 13px error message — so dark grounds use this lightened clay for the
-     `.field-error` / invalid-input state instead. */
+     The storefront ships LIGHT and a header toggle flips the marketing
+     surfaces to the file's own inverse ground. `--dark-bg` IS color/bg/inverse
+     now — the two used to differ by a few units and read as two darks at a
+     band edge. `--dark-raised` lifts a card off it. */
+  --dark-bg: var(--color-bg-inverse);
+  --dark-raised: var(--umber-raised);
+  /* GAP, and paired with --clay above: the lightened clay an error message
+     needs to clear AA on a dark ground. No Figma token. */
   --clay-bright: #d98e72;
 
   color-scheme: light;
   font-family: var(--font-ui);
 }
 
+/* The gutter steps down on the way to a phone. The file draws only the 1280
+   frame, so these two are the project's; they are held on the file's spacing
+   scale (space/48, space/24) rather than eyeballed. */
 @media (max-width: 1024px) {
   :root {
-    --gutter: 1.75rem;
+    --gutter: var(--space-48); /* 48 */
   }
 }
 
 @media (max-width: 640px) {
   :root {
-    --gutter: 1.25rem;
+    --gutter: var(--space-24); /* 24 */
   }
 }
 
@@ -216,6 +358,17 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* No visible document scrollbar. On a machine with classic (always-shown)
+     scrollbars the track is a ~15px column down the right edge that no
+     photograph can run under — the client saw it on every page as "a gap on
+     the right" (Sept 2026, screenshot). Scrolling is untouched: wheel,
+     trackpad, keys, touch all still work; only the bar is gone, the way the
+     rows' own bars already are. */
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 /* --- Dark pages -------------------------------------------------------------

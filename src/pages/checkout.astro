@@ -8,12 +8,22 @@ import Checkout from '../components/Checkout.jsx';
 // whole page is a client:load island.
 ---
 
-<Layout title="Checkout — Atelier Textiles" description="Choose a shipping zone and pay by card.">
-  <section class="page-intro">
-    <p class="page-eyebrow">Secure payment</p>
-    <h1><em>Checkout</em></h1>
-    <p>Choose your shipping zone, then pay securely by card.</p>
+<Layout title="Checkout — Atelier Textiles" description="Choose a shipping zone and pay by card." bleed overlay="light">
+  {/* The shop page's banner, exactly (page feedback, Sept 2026): the light
+      band with the header floating in it, badge + headline at its foot on
+      the left, one line of copy on the right; the page under it on the
+      shop's own air (`.library-shell`). */}
+  <section class="library-hero">
+    <div class="container library-hero-row">
+      <div class="library-hero-heading">
+        <p class="badge-ochre">Secure payment</p>
+        <h1>Checkout</h1>
+      </div>
+      <p class="library-hero-note">Choose your shipping zone, then pay securely by card.</p>
+    </div>
   </section>
 
-  <Checkout client:load />
+  <div class="container library-shell">
+    <Checkout client:load />
+  </div>
 </Layout>

@@ -69,11 +69,52 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     that opens on a full-bleed photograph. It only makes sense together with
     `bleed` (a contained page has paper under the header), and the page owns the
     consequence: its opening band has to be tall enough to hold the header plus
-    its own copy, which is why `.home-hero` is 88vh and `.house-banner` 78vh
-    rather than the 74/58vh they were when the header sat above them. Users:
-    `/` , `/login`, and `/brands/[slug]` **only when the house has banner
-    photography** — a house with none renders the umber band variant, which is
-    the page ground, so the header sits on it in the paper theme instead.
+    its own copy. **Every photo hero is the full viewport now** — `--hero-height`
+    (tokens.css, `100svh`), read by `.home-hero`, `.house-hero`,
+    `.house-banner`, `.story-hero`, `.bespoke-hero` and `.auth-screen` alike,
+    so no two heroes are sized differently (page feedback, Sept 2026:
+    "consistent across the entire website"). Change it there, never per page.
+    **On every width**: the phone/tablet caps the sheets used to carry (58vh,
+    28rem, 32rem, 44rem …) are gone (mobile feedback, Sept 2026), and the
+    journal's `.post-hero` drops its 4:5 ratio for the same figure under
+    640px. The phone also runs a DEEPER scrim — `.photo-band` / `.tile`
+    `--scrim-flat: 0.45` and `--scrim-deep: 0.4` under 640px in
+    direction-2026.css, `.house-banner` 0.35 in editorial.css (it declares its
+    own flat, so the shared rule cannot reach it) — because a 390px hero puts
+    the copy on far less photograph. The CMS scrim knobs still win: they set
+    the same properties with a class. Users:
+    `/` , `/login`, `/story`, `/brands`, `/bespoke` and `/brands/[slug]` —
+    every house now, since Sept 2026: a house with no banner photography of its
+    own opens on the client's brands photograph rather than the umber band it
+    used to get.
+  - **`overlay="light"`** (Sept 2026) — the header still floats over the first
+    band but keeps its paper-theme type, its light wordmark and takes no wash:
+    for a LIGHT opening band (the shop and journal banners on bg/subtle). Plain
+    `overlay` reverses everything for a photograph. `Header.astro` turns the
+    string into `.site-header--overlay-light`.
+  - **`<ClientRouter />` (Sept 2026)** — every same-site link is a client-side
+    navigation, and the View Transition between pages is a CURTAIN, not a
+    crossfade: the leaving page dims to the dark ground over 0.3s, the brown
+    holds alone on screen, the arriving page comes up out of it over 0.35s
+    (a 0.3s delay on the new snapshot is what keeps the two from ever sharing
+    a frame). The brown is `::view-transition`'s own background, bound to
+    `--color-bg-inverse`, never a literal. It replaced a crossfade with a 14px
+    rise, which the client read as a double exposure. The rules are at the
+    foot of `chrome.css`, `!important` because Astro injects its own default
+    onto the same root pseudo-elements. **The load-bearing consequence:
+    a bundled `<script>` runs ONCE per session, not once per page.** Every page
+    script therefore listens for `astro:page-load` and tears down on
+    `astro:before-swap` — the hero rotator (`CollectionHero.astro`), the drag
+    rows (`DragScroll.astro`) and the headline reveal in `Layout.astro` all do.
+    A new script that reads the DOM at module load will work on a hard refresh
+    and silently do nothing after the first navigation; that is the bug to look
+    for first.
+  - **`FeaturedBand.astro`** — the featured-collection band (photograph 12px off
+    one screen edge, copy on the container's column, the frame's 622 / 108 / 466
+    split, drift). ONE component for `/` and `/brands`, and for whatever
+    features a collection next; its rules live in `direction-2026.css` as
+    `.feature-band`, not in a page sheet. `image` takes an imported asset (gets
+    a srcset) or a plain URL string; `side` says which edge the picture runs to.
   - **Agentation** (dev always, deployment opt-in): the annotation toolbar
     renders just before `</body>` as
     `{(import.meta.env.DEV || import.meta.env.PUBLIC_AGENTATION === 'true') && <Agentation client:only="react" />}`.
@@ -139,9 +180,20 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     (9379:2647), `/story` (9436:3043) and `/login` (9350:361). Grotesk display
     type, `--shell` cream ground (#f9f4ed since the redraw), `--umber` dark
     bands (#18100c), `--ochre` accent (#8b6746), the underlined text action —
-    and, NEW with the product-detail frame, real buttons: the filled tan
-    `.action-fill` and hairline `.action-outline` (direction-2026.css). The
-    old "no button anywhere" rule described the pre-redraw frames only.
+    and, NEW with the product-detail frame, real buttons: `.action-fill` and
+    `.action-outline` (direction-2026.css) — drawn as a filled tan primary and
+    a hairline secondary, and since Sept 2026 ONE button: white at rest, the
+    ramp's beige swept in on hover, umber label (`--button-ground` /
+    `--button-ground-hover` / `--button-ink`, tokens.css; the client's "all
+    buttons should be the same … white to beige"). The old "no button
+    anywhere" rule described the pre-redraw frames only. **Every button family
+    shares one hover (Sept 2026)**: `.action-fill` /
+    `.action-outline` and the Maison `.btn` skins run a fill layer that sweeps
+    in from the left and collapses away to the right (`::before`, its
+    `transform-origin` flipping with the hover), and `.cta-underline`'s rule is
+    a pseudo-element that draws off to the right and back in from the left
+    (`cta-sweep`, 0.7s). `.btn-paper` is the one exception — it hovers to an
+    outline of itself and a wipe cannot un-fill.
   - **Maison redesign** (`~/Documents/atelier-platform-demo/Atelier-storefront redesign (1).zip`
     → `design_handoff_maison_redesign/`): now historical — the library, the
     product detail and the brands index moved to the 2026 frames above. Its
@@ -162,13 +214,17 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     the stack is the only change needed to switch.
   - **Maison globals, adopted in `tokens.css`/`primitives.css`** — these are the
     reason the whole site reads as one design rather than four redesigned pages:
-    `--container: 96rem` + `--gutter: 3rem` (the mocks' `max-width:96rem;
-    padding:0 3rem` section frame, header and footer included), radii `0`
+    `--container: 96rem` + `--gutter` (72px, the file's page margin; the
+    section frame, header and footer included — the cap was lifted for a day
+    in Sept 2026 chasing "a gap on the right" that was the scrollbar track,
+    and is back at the client's request), radii `0`
     (`--r-sm/--r-md/--r-chip` are kept as names but all resolve to 0 — squared
-    corners everywhere), and `.btn` = 48px (`.btn-lg` 50px), uppercase Inter 600
-    13px / .12em, outlined ink inverting to ink-on-paper on hover, or filled
-    claret. `.btn-paper` is the on-photograph variant; `.link-cta` /
-    `.link-cta-paper` the underlined uppercase text action beside it.
+    corners everywhere), and `.btn` — which since Sept 2026 is the SAME button
+    as `.action-*` (white, umber, 16px Inter medium on 16/20 padding, beige on
+    hover); the 48px tracked-uppercase outline it was, and the claret
+    `.btn-primary`, are gone, and `.btn-primary` / `.btn-paper` / `.btn-danger`
+    survive only as names for their call sites. `.link-cta` / `.link-cta-paper`
+    remain the underlined uppercase text action.
   - **Each direction has ONE vocabulary sheet, and they must not be mixed.**
     - **Maison → `primitives.css`**: `.brass-rule` (the 34px opener),
       `.eyebrow-brass` / `.eyebrow-wide` (.26em tracking), `.band-dark`
@@ -179,14 +235,18 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
       left it with no callers.)
     - **2026 → `direction-2026.css`**: `.cta-underline` (+`-lg` / `-light`),
       `.action-fill` / `.action-outline` (the August 2026 redraw's buttons —
-      filled `--tan`, hairline outline; 16px Inter medium on 16/20 padding),
+      one white-to-beige button since Sept 2026; 16px Inter medium on 16/20
+      padding),
       `.badge-ochre` / `.badge-light` (12px semibold
       label), `.photo-band` (+`-body/-row/-aside/-title/-title-sub`, a full-bleed
       background photograph with a bottom scrim and absolutely positioned copy)
-      and `.tile-wall` / `.tile` (+`-body/-title`, the 2-up 626×700 photo tiles
-      at 8px off the page edge with a 12px gutter — the home's two shop banners
-      AND the house page's collection grid, the same figure at the same size in
-      both frames).
+      and `.tile-wall` / `.tile` (+`-body/-title`, the 2-up photo tiles at 12px
+      off the page edge with a 12px gutter — the home's two shop banners AND
+      the house page's collection grid, the same figure at the same size in
+      both frames. The frames draw them 622×700; the client has them **30%
+      shorter**, then 15% back up on desktop and 20% on tablet — 622×563.5,
+      `aspect-ratio: 622 / 563.5`, `40 / 25.2` under 1024px — Sept 2026. One
+      rule; every two-up wall on the site reads it).
     - **Do not promote a figure across.** They share the shell (`.container`,
       the tokens file, the reset) and nothing else, so a figure moved into
       `primitives.css` restyles pages nobody redesigned.
@@ -202,12 +262,15 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     `--shell-line-soft/-line/-line-strong --shell-muted --umber-line
     --bone-soft --bone-muted`, each of which is the Figma's own
     `color/border/*` and `color/text/muted` resolved against its ground) — the
-    type scales (`--t-*` UI, `--d-*` Fraunces display, `--g-xl`/`--g-lg` the
-    2026 grotesk display), the spacing scale (`--s1`…`--s10`), container widths,
+    type scales (`--t-*` UI, `--d-*` display — the grotesk now, the serif is
+    retired — and `--g-xl`/`--g-lg`, the 2026 display pair), the spacing scale
+    (`--s1`…`--s10`), container widths,
     radii, shadows and durations. **Use the tokens; do not hardcode a hex.**
-  - Type: **Fraunces** display, **Inter** UI, **IBM Plex Mono** data (SKUs,
-    money, dates), loaded from Google Fonts in `Layout.astro` with system
-    fallbacks. Eyebrows are uppercase 10–11px `--muted` with wide tracking.
+  - Type: **Helvena → Inter** display (`--font-grotesk`; the Figma carries no
+    serif, and Fraunces went with the Sept 2026 token sync), **Inter** UI,
+    **IBM Plex Mono** data (SKUs, money, dates), loaded from Google Fonts in
+    `Layout.astro` with system fallbacks. Eyebrows are the `.badge-ochre`
+    figure — 12px semibold — not the old 10–11px tracked uppercase.
   - Discipline from the handoff, worth keeping: richness comes from photography,
     not chrome; **roughly one claret element per screen**; 1px `--line` hairlines
     instead of heavy cards; no zebra striping; shadows only as a whisper-soft
@@ -217,9 +280,16 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   - A missing photograph renders the duotone **weave placeholder**
     (`.product-image-placeholder`, tones from `weaveBackground()`), not an empty
     box — a grid of unphotographed designs still reads as a collection.
-  - Ships **light-only** by design (warm-paper brand identity). Breakpoints are
-    the CRM's two: `max-width: 1024px` and `max-width: 640px`.
-    `prefers-reduced-motion` disables every transform/zoom.
+  - **No reader-facing theme.** Which pages are dark is DRAWN, not chosen: `/`,
+    `/brands`, `/bespoke` and `/contact` set Layout's `dark` (the inverse
+    ground, `dark-surfaces.css`), `/story` paints its own, and everything else
+    is the cream canvas. Breakpoints are the CRM's two: `max-width: 1024px` and
+    `max-width: 640px`. `prefers-reduced-motion` disables every transform, zoom,
+    sweep, drift and reveal on the site. **The document scrollbar is hidden**
+    (`html { scrollbar-width: none }` + the WebKit twin, tokens.css): on a
+    machine with classic scrollbars its track was a 15px column no photograph
+    could run under, reported as a gap on the right of every page (Sept 2026).
+    Scrolling itself is untouched.
   - Keep markup semantic and class-driven: the CSS is the only thing styling the
     site, so a restyle must not require restructuring HTML. New markup needs its
     class added to the relevant stylesheet.
@@ -358,12 +428,17 @@ Where it surfaces:
 - **`/products` (US-017)** — `src/pages/products.astro` renders `ProductLibrary.jsx`
   as a single `client:load` island. **2026 direction since the August 2026
   redraw** (Figma "Products Page", 9379:2732): the page is `<Layout bleed
-  overlay>` opening on an umber hero band (the "Explore" badge, the
-  "Collections" display headline, the one line of copy on the right, the header
-  floating inside the band), then the browse area — boxed 44px search, "Refine"
-  row with an always-present "Clear all", facet lists under ochre 12px heads on
+  overlay="light">` opening on a LIGHT banner — `.library-hero`, bg/subtle
+  #efe6dc as the frame draws it (9457:5255), the ochre badge, the "Products"
+  display headline in text/primary, the one line of copy on the right, the
+  header floating inside the band in its PAPER theme (`overlay="light"`, Sept
+  2026; the band was umber with reversed type before). `/resources` opens on
+  the identical band and the identical 96px of air under it. Then the browse
+  area — boxed 44px search, facet lists under ochre 12px heads on
   hairlines ("Brands", "Category", "Price" — the labels are the frame's), boxed selects for
-  the rest (no "More filters" group heading any more), and surface-cream cards
+  the rest (no "More filters" group heading any more), the "Refine … Clear
+  all" row CLOSING the 267px sidebar as the frame does (9457:5273; it used to
+  open it), and surface-cream cards
   (photo, in-stock chip on the photograph, ochre house badge, 20px Inter-medium
   name, muted spec line, and a price line that doubles as the underlined
   "Sign in for trade pricing" ghost action when there is no visible figure).
@@ -378,13 +453,16 @@ Where it surfaces:
   to friendly labels, other fields are raw strings). Reuse the
   fetch-all-then-filter shape for any small filtered list; switch to the API's
   server-side `q`/`sort`/filter params (they all exist) only if the set ever
-  exceeds the API page cap. The colourway swatch strip and the sort/count row
-  are KEPT even though the mock's dummy cards do not draw them — working
-  merchandising is not dropped for a frame's placeholder content.
+  exceeds the API page cap. The sort/count row is KEPT even though the mock's
+  dummy cards do not draw it — working merchandising is not dropped for a
+  frame's placeholder content. The card's colourway dot strip and the
+  "Indicative" note are GONE (client, Sept 2026); cards arrive with a
+  staggered fade-and-rise (`card-in`, library.css).
   - **Cards are merchandising, not a spec table**: the list endpoint now carries
     `image_url`, `in_stock`, `colourway_count` and a capped `colourways`
-    strip, so each card shows a photograph (or the weave-gradient placeholder),
-    a stock pill and its colourway dots. `weaveBackground()` builds the
+    strip, so each card shows a photograph (or the weave-gradient placeholder)
+    and a stock pill; the colourway dots are no longer drawn (the strip still
+    feeds the placeholder). `weaveBackground()` builds the
     placeholder from the colourway's `hex_tones` — texture layer FIRST, it is
     semi-transparent and sits on top.
   - **Search** matches product name, house name, composition, application and
@@ -475,9 +553,10 @@ Where it surfaces:
     Maison base figures still underlie it in primitives.css and are overridden
     per property (`.product-stock`'s pill dot/border, `.product-brand`'s
     uppercase) — check both before restyling either base.
-  - **Deviations from the mock, deliberate:** the swatch strip and the
-    count/sort row stay (working merchandising over dummy-frame fidelity).
-    Width, which the mock drew as four values, is no longer a filter at all.
+  - **Deviations from the mock, deliberate:** the count/sort row stays (working
+    merchandising over dummy-frame fidelity). Width, which the mock drew as four
+    values, is no longer a filter at all. The trade-gate panel sits on
+    bg/subtle, a step darker than the cards.
 
 - **`/products/[slug]` (US-018)** — `src/pages/products/[slug].astro` is
   `prerender = false`. It had `getStaticPaths` enumerating website-visible
@@ -534,13 +613,31 @@ Where it surfaces:
     photograph left in a subtle hairline, and on the right the ochre
     `Fabric | House` badge (the house links to its page), the grotesk display
     name, the lede (the fabric flow's explainer, moved up from the old
-    purchase note), the 24px price with `/ m` for cloth, the Size/Colour
-    controls, hairline `.detail-specs` rows (last row unruled), the
-    `Flax | PF-ATL-02` selected line and the action buttons. Below the band, a
-    **"Similar" strip** — up to four same-house cards fetched by the island
-    (`?brand=<slug>&limit=5`, self filtered out), reusing the library's
-    `.product-card`, with "View all" into the house's grid. The old "The
-    range" swatch wall is gone with the thumbnails.
+    purchase note), the 24px price in text/muted with `/ m` for cloth, the
+    Size control and **Colour as 32px discs** (`.detail-swatches`, the chosen
+    one ringed, each painting its colourway's tones), hairline `.detail-specs`
+    rows on border/subtle (last row unruled), the `Flax | PF-ATL-02` selected
+    line and **equal-width actions** on a 12px gap — Add to quote / Add to
+    cart plus "Request a sample" (a link to /contact; there is no sample
+    endpoint on the storefront). Under the picture, a **thumbnail rail**
+    (`.detail-thumbs`, 93px squares): one per colourway, its photograph where
+    the CRM holds one and its weave otherwise — the seed holds no colourway
+    photography, so the rail is all weave today. Rail and discs both call
+    `chooseColourway`, so they never disagree. The band is the frame's
+    622 / 562 split, the picture 12px off the left edge (Sept 2026, frame
+    9422:4855) — and since Sept 2026 the band sits INSIDE the container on a
+    72px gap with the copy centred on the picture's height, the primary action
+    is latte (`--button-primary-ground`, pink/300, hovering pink/400) beside
+    a white secondary, and there is no hi-res download link and no
+    "Indicative" note. Below the band, **"Similar Products"** — the head
+    centred, no action — is the brands row's figure: up to twelve same-house
+    round cards (the shop's `.product-grid-round` card, `SIMILAR_LIMIT`,
+    self filtered out) in a row that runs off the right edge on the canvas
+    ground, dragged. DragScroll binds page rows on `astro:page-load`, before
+    the island has fetched, so the island fires `atelier-drag-scroll` once
+    the row exists and DragScroll binds any unbound `[data-drag-scroll]` on
+    that event (`data-drag-bound` marks the ones it has). The old "The range"
+    swatch wall stays gone; the rail is its replacement, per the frame.
   - **The hero crossfade needs no second `<img>`**: `previousHero` is a ref
     written in an effect (after paint), so during the render that changes the
     hero it still holds the outgoing image — painted as `.detail-hero-frame`'s
@@ -558,8 +655,8 @@ Where it surfaces:
   The fetch is anonymous, so **no trade pricing is ever on the homepage** —
   trade figures only appear on the live islands.
   - **Section order** (design: Figma "Atelier Home page", node 7307:617),
-    `<Layout bleed overlay>`: full-bleed 88vh collection hero **with the header
-    floating inside it** → two shop banners → latest-collections scroller →
+    `<Layout bleed overlay>`: full-viewport collection hero (`--hero-height`)
+    **with the header floating inside it** → two shop banners → Brands row →
     umber "Atelier" manifesto → featured collection → design-houses band. This
     REPLACED the earlier Maison home (tile wall / collection story / maisons
     index / journal), so the maisons band and the journal grid are gone from
@@ -647,11 +744,17 @@ Where it surfaces:
     finished good on white linen that disappears under a scrim and takes the copy
     with it. Committed art removes that gamble, and the band no longer changes
     when the catalogue does.
-  - The scrims run deeper than the mock's (`.photo-band::after` 0.62,
-    `.home-manifesto::after` 0.58 flat). Those values were set when the bands
-    took whatever the catalogue held; every band is art-directed now, so they can
-    be lifted per band if a chosen photograph reads as buried — which is exactly
-    what `/login` did, see its own entry.
+  - **The scrim is the file's hero scrim, and it is one figure site-wide.**
+    `.photo-band::after` defaults to Figma 9379:2566 exactly — a flat 30% wash
+    under a gradient clear to 53.83% and 20% at 84.76% — and every photo band
+    carries it: the home rotator's slides, `/brands`, a house banner, `/story`,
+    the manifesto and houses bands. The private overrides those bands used to
+    run (`.house-banner` 0.5/0.08 + flat 0.2, `.home-manifesto` flat 0.58) are
+    gone; a band that needs more or less asks through the CMS scrim knob
+    (`band-scrim-soft/deep/none`, whose ladder sits around this default), never
+    through a rule of its own. The site used to ship 0.62/0.12 — about twice
+    the file — which is what the feedback was reacting to. `/login` keeps its
+    own centred-form scrim (see its entry); it is not a `.photo-band`.
   - **There is no outage state on this page.** It used to render "The catalogue
     is unavailable right now" when both `products` and `collections` came back
     empty; that block is gone (with `.home-outage`). Every band the API feeds
@@ -847,18 +950,44 @@ Where it surfaces:
 - **Site chrome (2026)** — `Header.astro` / `Footer.astro` / `Wordmark.astro` /
   `chrome.css`, built from the Figma Header (3376:24, Theme=Light at 3376:4) and
   the footer at 7307:930, both drawn identically on all four frames.
-  - **Header**: one row — nav (Products / Brands / Story / Journal) left, the
-    wordmark absolutely centred, `Contact` + three 24px icons (search, account,
-    cart) right; 32px above the row, 18px below, 24px between every item. The
+  - **Header**: one row — nav (Shop / Our Brands / Bespoke / Our Story /
+    Journal) left, the wordmark absolutely centred, `Contact` + three 24px icons
+    (search, account, cart) right; 32px above the row, 18px below, 24px between
+    every item. **Below 1024px the nav and Contact leave the row for a
+    full-screen menu** (Sept 2026): a two-line burger in the utilities folds
+    into a cross; the menu is a fixed panel on the dark ground, CLIPPED not
+    faded — closed it is `clip-path: inset(0 0 100% 0)`, opening runs to
+    `inset(0)` so it is revealed downward, closing retracts it upward — with
+    the links in the display face arriving on a stagger (`--i`), Account /
+    Cart / Trade account under a hairline. Header.astro's script re-arms it on
+    `astro:page-load`, locks scroll on `<html>`, closes on Escape, on any link,
+    and before a page swap. **The burger is listed beside `.site-icon` in
+    EVERY colour rule** (paper, overlay, dark, pinned, light — chrome.css and
+    dark-surfaces.css), never `color: inherit`: the header element itself
+    carries no colour, so an inherit drew it umber on the dark heroes and it
+    vanished (mobile feedback, Sept 2026). **Under 1024px the row is two
+    ends**: the wordmark `position: static; order: -1` on the LEFT at
+    `--wordmark-width: 140px` (70% of the desktop 200), the icons and the
+    burger on the right — the absolutely-centred mark sat under the icons
+    once the nav had gone. The
     icons are inline SVG, not `<img>`, so `stroke="currentColor"` follows the
     theme. A **fourth** icon, `RequestIndicator.jsx` (scissors, the fabric
     request list), sits before the cart and **renders nothing while the list is
     empty** — the drawn header keeps its three icons in the state the mock was
     drawn in, and a shopper who has actually built a request list can still
     reach it from every page instead of having to remember the URL. Same
-    argument as the cart's count badge. Geometry is converted from the mock's 1280px frame to the site's own
-    `.container` (96rem / 3rem) so the wordmark, the page bands and the footer
-    stay on one column.
+    argument as the cart's count badge. Geometry is converted from the mock's
+    1280px frame to the site's own `.container` (96rem / 72px) so the
+    wordmark, the page bands and the footer stay on one column.
+  - **Scroll behaviour (Sept 2026).** The bar slides away on the way down and
+    slides back on the way up on the page's own ground — `--color-bg-inverse`
+    on a `theme-dark` page, `--shell` otherwise — and is its natural self again
+    at the top. A contained header is `position: sticky` and only needs the
+    slide (`is-hidden`); a floating one goes `fixed` (`is-pinned`) once the page
+    has scrolled past it, which also drops the wash and, on a light page,
+    un-reverses its type and wordmark. Header.astro's script drives it (rAF-
+    throttled scroll, 4px dead band, never hidden while the menu is open, torn
+    down on `astro:before-swap`).
   - **Two themes, one markup.** `.site-header--overlay` (from `Layout`'s
     `overlay` prop) makes the header `position: absolute` over the page's first
     band and reverses its type to `--bone`. `absolute`, NOT `fixed`: the mock's
@@ -874,13 +1003,21 @@ Where it surfaces:
   - **Nav labels are the design's**: Story → `/story`, Journal → `/resources`
     (Brands and Products match their routes). There is no Home item — the
     wordmark is the way home. The current section is marked with the
-    direction's underline, not a colour swap.
+    direction's underline, not a colour swap — and since Sept 2026 that rule
+    is a `::after` that DRAWS in from the left on hover (and off to the right
+    on leaving), the same sweep every action makes; the current item holds it
+    fully drawn. **There is no rule under the header** on any page (the
+    `border-bottom` went, Sept 2026).
   - **`Wordmark.astro` is the logo export, INLINED.** Since the client's Aug
     2026 supply it is the HORIZONTAL lockup — geometric ATELIER caps over
     spaced TEXTILES caps, 636 × 141 (4.51:1) where the stacked mark of the
     August 2026 redraw was 130 × 51.93 (2.50:1). Hence the widths moved with
     it: **200px in the header** (~44px tall, still centred on the row rather
-    than hanging from a fixed top) and **240px in the footer**.
+    than hanging from a fixed top) and **240px in the footer**. The `width`
+    prop lands as `width: var(--wordmark-width, <width>)`, so a breakpoint
+    resizes the mark by setting the property on the link around it (the
+    header's 140px and the footer's 168px under the phone breakpoints) —
+    an inline `style` cannot otherwise be overridden without `!important`.
     - **It is TWO-TONE, so it no longer rides on `currentColor`.** The ATELIER
       row fills from `--wordmark-accent` and the TEXTILES row from
       `--wordmark-ink`; tokens.css declares the light-ground pair on `:root`
@@ -915,14 +1052,17 @@ Where it surfaces:
     newsletter has no service behind it** (newsletters are journal posts), so
     the form lands on /contact rather than pretending to subscribe. The
     showroom addresses, phone and email are still in `src/lib/site.js` and
-    still render on `/contact`.
-  - **Privacy Policy and Terms & Conditions** are the mock's last two links and
-    the only two with no content behind them. `/privacy` and `/terms` exist and
-    render `page`-collection entries the way `/story` does, and the footer
-    renders each link **only when its markdown exists** (`getCollection('page')`,
-    not `getEntry` — a miss is the expected state here, and `getEntry` logs a
-    "not found" line on every page of every build). Writing placeholder legal
-    copy would be worse than shipping none.
+    still render on `/contact`. **Under 640px the footer is a two-column
+    grid** (mobile feedback, Sept 2026): the mark centred across both columns
+    at 168px (70%), the two link columns under it, the social icons in the
+    SECOND column under Terms & Conditions, the newsletter across the foot.
+    `.site-footer-brand-col` and `.site-footer-links` go `display: contents`
+    so the grid places their children directly — the markup is the desktop
+    markup, ordered with `order`.
+  - **Privacy Policy and Terms & Conditions** are the mock's last two links.
+    `/privacy` and `/terms` render `page`-collection entries (CMS first), on
+    the shop banner since Sept 2026 — see Resources + company pages. The
+    footer links them unconditionally; the markdown ships placeholder copy.
 
 - **`/admin/orders` (US-023)** — back-office order queue, a single `client:load`
   island `AdminOrders.jsx`. Because this is a static build with no server-side
@@ -1002,21 +1142,27 @@ layer is available at request time too, so these queries work on the on-demand
 brand pages below. Entry `id` is the filename slug.
 
 **`/brands` (`brands/index.astro`)** — 2026 direction since the August 2026
-redraw (Figma "Brands Page", 9379:3562), `<Layout bleed overlay>`: a 74vh
-photo hero (the SAME commissioned photograph and copy as the home's
-design-houses band — the mock reuses the art, so the page reuses
-`design-brands-banner-bg.jpg` AND the same CMS entry: `applySection` over the
-`home-houses` site section, so an image or copy the office sets there is the
+redraw (Figma "Brands Page", 9379:3562), `<Layout bleed overlay dark>` — a
+DARK page since Sept 2026: a full-viewport photo hero (`--hero-height`) on the
+client's own photograph, `src/assets/img/brands-hero-bg.jpg` (2560 × 1348,
+supplied Sept 2026 — it no longer shares the home's design-houses art), with
+the home's design-houses COPY and the same CMS hook: `applySection` over the
+`home-houses` site section, so copy or an image the office sets there is the
 /brands hero too, and an empty CMS renders the shipped art and copy; image,
 title and body only — the band's align/scrim knobs stay the home's), then the
-**wall of house tiles** (3-up
-371×497, photograph under a flat 0.38 scrim with the maison's mark centred —
-the brand's `logo_url` PNG as `img.house-card-logo` when the CRM has
-one, else the house NAME in the same class), then the **featured-collection band**
-(`--shell-subtle`, photograph left / "Featured collection" badge + name +
-description + "Explore collection" right — the first `featured_rank`
-collection that carries a catalogue photograph, omitted when none does; the
-link goes through `collectionHref`'s ladder). The wall renders **in the API's
+**wall of house tiles** under a CENTRED "Brands" head (the frame sets it at
+x=506.5 in the 1136 wrapper; `.house-wall-head` is centred, and `/bespoke`
+borrows the head so it is centred there too) — 3-up 371×497, photograph under a
+flat 0.38 scrim with the maison's mark centred — the brand's `logo_url` PNG as
+`img.house-card-logo` when the CRM has one, else the house NAME in the same
+class — then the **featured-collection band**, which is
+`components/FeaturedBand.astro`, THE SAME component the home closes on
+(photograph 12px off the left screen edge, copy on the container's column, the
+622 / 108 / 466 split, the drift): the first `featured_rank` collection that
+carries a catalogue photograph, omitted when none does; the link goes through
+`collectionHref`'s ladder. There is no `.house-feature` of its own any more —
+"exactly like the featured collection section of the homepage" is a shared
+component, not a copied figure. The wall renders **in the API's
 own order** — featured houses lead it; the old "in focus" strip and the
 alphabetical directory rows are gone, as are `houseMeta` on cards and the
 espresso sourcing band. Still `safeFetch('/catalogue/brands')` and
@@ -1042,18 +1188,25 @@ blurb falls back CMS → markdown → `brand.story`; slideshow/cards CMS → mar
 **2026 layout — ONE route renders BOTH of the Figma's house frames**, because
 they are the same page drawn twice:
 - **"Brand Page" (9350:479)** — the house HAS banner photography: a full-bleed
-  78vh `.photo-band` with the header floating inside it (`<Layout bleed
-  overlay>`), the country as a `.badge-light` above the name.
-- **"Product Page" (9350:788)** — the house has NONE: the banner is replaced by
-  an umber `.house-band`, and the header sits on it in its paper theme (no
-  `overlay`) because the band is the page ground. Everything from the intro down
+  full-viewport `.photo-band` (`--hero-height`) with the header floating inside
+  it (`<Layout bleed overlay>`), the country as a `.badge-light` above the name.
+- **"Product Page" (9350:788)** — the house has NONE. The frame draws an umber
+  `.house-band` here; since Sept 2026 the page does NOT — every house opens on
+  the same full-viewport hero, on the client's brands photograph
+  (`brands-hero-bg.jpg`) when it has none of its own (page feedback: "no hero
+  banner"). The hero is the Story page's, exactly: badge + name at the foot on
+  the left, the house's provenance (`houseMeta`) on the right, a flat 20%
+  scrim (the frame's) under the foot gradient. Everything from the intro down
   is identical. **It is not a product-detail screen** — the tiles below it are
   still collections and the copy is still a house blurb; the frame name misleads.
-  This is the variant most of the directory actually renders: fourteen of the
-  seeded houses are represented-only with no imagery at all.
+  Fourteen of the seeded houses are represented-only with no imagery at all,
+  so most of the directory renders on the fallback photograph.
 
-Then, in both: the intro (`466fr / 371fr`, the mock's two columns) with the
-blurb as **24px Inter medium** over the body copy and the actions below it,
+Then, in both: the intro (`466fr / 204fr / 466fr`, the mock's two text
+wrappers at either end of the column, the blurb pinned to track 1 and the body
+to track 3 — **released to `grid-column: auto` under 1024px**, or the body
+keeps forcing a third implicit column beside the blurb instead of stacking)
+with the blurb as **24px Inter medium** over the body copy and the actions below it,
 beside the facts rows → the full-bleed `.tile-wall` of collection tiles (2-up,
 name + `View collection`) → the related-reading band.
 - **Type note:** there is no Fraunces anywhere on these two frames. The blurb is
@@ -1115,8 +1268,12 @@ name + `View collection`) → the related-reading band.
   one banner). Nothing is lost on the seeded page: the collection cards carry the
   same three images as their `featuredImage`.
 - **The facts list is GONE** (August 2026 redraw, 9379:2647): the intro is two
-  TEXT columns now — the blurb on the left (16px Inter medium), the body copy
-  and the actions on the right. `foundedYear()` lost its caller here (the
+  TEXT columns now — the blurb on the left (heading/md: **24px** Inter medium,
+  1.1, -1% — the frame 9379:2657 says 24, an earlier note here said 16), the
+  body copy and the actions on the right, two 466px wrappers at either end of
+  the column as three tracks (466 / 204 / 466) with 102px above and below,
+  on the DARK ground (the page sets Layout `dark`, Sept 2026, and the intro
+  names no colour of its own). `foundedYear()` lost its caller here (the
   homepage's featured band still renders `.house-facts`, which is why the
   figure survives in editorial.css). The design-count fetch stays — it still
   decides the "View all products" fallback action.
@@ -1137,21 +1294,34 @@ when a CMS page exists, so a page is never a confusing hybrid of both sources.
 
 All static (content is build-time; no islands):
 
-- **`/resources` (`resources/index.astro`)** — lists the `post` collection
+- **`/resources` (`resources/index.astro`)** — opens on the shop page's banner
+  (`.library-hero`, `<Layout bleed overlay="light">`, no italics — Sept 2026),
+  then lists the `post` collection
   newest-first via `getCollection('post')` (grid of cards, hero + title + date;
   empty state when none). Cards link to `/resources/<post.id>`.
 - **`/resources/[slug]` (`resources/[slug].astro`)** — one route per post;
   `getStaticPaths` maps `post.id` → `params.slug`, renders the markdown body with
-  `render(post)` inside `.prose`, shows date and `brands` tags (each links to
-  `/brands/<slug>`). Slug = entry `.id` = filename (matches the `/resources/<id>`
-  links from brand pages).
+  `render(post)` inside `.prose`. **Rebuilt on the direction's figures, Sept
+  2026** (`<Layout bleed>`, the `.post-*` rules at the foot of editorial.css):
+  a 16:9 `.photo-band` on the container with the headline at its foot (so the
+  picture drifts like every other), a hairline meta row under it — back link,
+  mono date, the `brands` tags as `.badge-ochre` links to `/brands/<slug>` —
+  then the body on the 46rem narrow measure. `article.post` is two deep on
+  purpose: global.css still pins `.post` to the old 41.25rem article measure
+  and lands after every imported sheet. No serif, no drop cap, no brass rule.
+  Slug = entry `.id` = filename (matches the `/resources/<id>` links from brand
+  pages).
 - **`/story` is no longer one of these** — the August 2026 redraw (Figma
-  "Story Page", 9436:3043) made it the direction's one DARK page, fully
+  "Story Page", 9436:3043) made it a DARK page (the first; `/`, `/brands`,
+  `/bespoke` and `/contact` followed in Sept 2026 through Layout's `dark`), fully
   art-directed in `story.astro` + `story.css`: photo hero ("Our Story" + the
-  dictionary line), the "Why Atelier" split, the "Sourced from the World's
-  Design Capitals" band, a 4-up strip of house tiles (build-time fetch, the
-  brands wall's `.house-card` with its label reversed), the "Inside the
-  Atelier" split with the supply list, and the trade-showrooms band — whose
+  dictionary line), "Why Atelier" as the home's featured band
+  (`FeaturedBand.astro`, picture LEFT), the "Sourced from the World's Design
+  Capitals" band, the home's Brands row (`BrandsRow.astro`, the same sixteen
+  tiles), "Inside the Atelier" as the same band (picture RIGHT, the supply list
+  in its body slot), and the trade-showrooms band, the bands butted with no
+  gap between them (Sept 2026: the old 50/50 splits with their raised copy
+  panel, the 4-up strip and the 25 Aug gaps are all gone) — the showrooms'
   addresses and hours come from `src/lib/site.js`, never retyped. The copy is
   the frame's own and lives in the page (the home's precedent);
   `src/content/pages/story.md` remains as a baseline nothing renders. The five
@@ -1163,11 +1333,19 @@ All static (content is build-time; no islands):
   Text via `getEmdashPage` / `<PortableText>`), then the markdown
   `page`-collection entry (`getEntry('page', <id>)` + `render`), then the
   empty state. Page-level precedence like the brand pages — a CMS entry stops
-  the markdown loading entirely, never a hybrid. Seeded markdown:
-  `src/content/pages/story.md`, `contact.md`. **`privacy.md` and `terms.md` are
-  NOT seeded** — the footer only links them once they exist (see Site chrome),
-  and inventing legal copy would be worse than shipping none; the office can
-  now also supply either from the CMS instead.
+  the markdown loading entirely, never a hybrid. `/contact` opens on the
+  display headline alone — the "Contact" badge over it was removed on every
+  width (mobile feedback, Sept 2026) — then the details rows beside the
+  enquiry form on its surface panel, which under 640px pads 32/24 rather than
+  48 so the fields keep the container's own width. Seeded markdown:
+  `src/content/pages/story.md`, `contact.md`, and — since Sept 2026, at the
+  client's request — `privacy.md` and `terms.md` carrying LOREM IPSUM
+  placeholders under numbered headings until the client's copy lands (the
+  office can also supply either from the CMS, which wins). **`/terms` and
+  `/privacy` open on the shop page's banner** (`<Layout bleed
+  overlay="light">` + `.library-hero`, badge "Atelier Textiles") and set the
+  copy on the container's full width (`.legal-page`, library.css — `.prose`
+  released from the article measure, h2 in the display face).
 - **`/[slug]` (catch-all, `[slug].astro`)** — any OTHER published EmDash
   `pages` entry renders at `/<its slug>`, which is how the office ADDS a page
   without a deploy. Astro gives every real route priority over the catch-all,
@@ -1628,7 +1806,7 @@ screen filters and slices — it never re-derives a choice.
   anyone editing them; a featured collection with no entry is normal.
 - **The featured band shows the collection its portrait was shot for**
   (`pickFeature()`), not the top-ranked one — its frame is 40vw beside the copy,
-  not 88vh behind it, so it is genuinely art-directed. That is why reordering the
+  not a full viewport behind it, so it is genuinely art-directed. That is why reordering the
   hero does not move the band, and it is what keeps today's page identical: the
   portrait belongs to Larsen 2024, which the office has at rank 2. It falls back
   to the first featured collection with a photograph of its own, and the band is
@@ -1673,60 +1851,44 @@ screen filters and slices — it never re-derives a choice.
   without it, so — unlike the home's hero — no empty-band variant is needed. An
   API outage still renders the page's own error line.
 
-## Dark mode
+## Dark surfaces (there is no dark MODE)
 
-A header toggle flips the 2026 marketing surfaces to a warm near-black. It is a
-**curated set of overrides (`src/styles/dark-mode.css`, imported LAST in
-`global.css`), NOT a global token swap** — and that is forced, not a choice: the
-palette reuses one colour for two jobs (`--umber` is a dark BAND ground AND the
-primary TEXT colour on cream), so remapping the tokens would turn every heading
-invisible. Each surface the Aug-2026 page feedback named gets its ground flipped
-to `--dark-bg` (#19100c; `--dark-raised` #241813 lifts a card/input) and its type
-re-coloured onto the direction's own reversed families (`--bone`/`--bone-soft`/
-`--bone-muted`), accents onto `--tan`, hairlines onto `--umber-line`. Dark mode
-introduces no new text/accent hue — only the two grounds and one lightened error
-(`--clay-bright`, because `--clay` drops under AA on the dark band).
+**The reader-facing dark/light toggle is gone** (page feedback, 1920×968 #8), and
+with it `[data-theme]`, the `atelier_theme` key, the no-flash script in
+`Layout.astro` and the `darkGround` prop. Do not reintroduce any of them.
 
-- **The toggle is plain markup, not an island** (`Header.astro`): the sun/moon
-  glyph is chosen purely by CSS off `:root[data-theme]`, so there is no hydration
-  flash and no React. A no-flash `is:inline` script in `Layout.astro` applies the
-  saved theme (and the matching `theme-color`) to `<html>` BEFORE first paint;
-  persisted in `localStorage` under **`atelier_theme`**, and a `storage` listener
-  syncs other tabs the way `CartIndicator`/`RequestIndicator` do. Dark is
-  **explicit opt-in** (never `prefers-color-scheme`) — the warm-paper identity is
-  the default.
-- **`[data-theme="dark"]` is set on `<html>`; participation is gated by
-  `body.has-dark-ground`** (the Layout **`darkGround`** prop). This is the
-  load-bearing distinction:
-  - The **footer darkens on every page** (ungated) — a dark footer reads as
-    intentional under any body, and it means the toggle always does something
-    visible.
-  - The **non-overlay header and the `<main>` ground darken ONLY under
-    `has-dark-ground`**, so the un-redesigned Maison pages (cart, checkout,
-    account, contact, journal, order flows, admin, …) keep their light bodies and
-    are never left with a dark header/ground over light content. Overlay headers
-    (home/products/brands-banner/story/login float bone type on a photograph) are
-    never touched.
-  - `darkGround` is set on `products.astro`, `brands/index.astro`,
-    `brands/[slug].astro` and `products/[slug].astro` (the last two
-    `={!notFound}`, so a 404/gate body renders on the light ground). NOT on the
-    home (its bands are full-bleed, so `<main>` never shows) or story.
-- **THE cross-page gotcha: a section-class override is only safe ungated if that
-  class exists on NO un-themed page.** Several product-detail figures are
-  explicitly SHARED with un-themed islands — `.purchase-note` (CheckoutSuccess),
-  `.request-note`/`.metres-unit` (RequestList), `.detail-selected`/
-  `.detail-selected-sku` (Cart + RequestList), and `.indicative-note` (every
-  money page). Their dark rules are gated on `has-dark-ground` or they turn
-  near-white on the light cart/checkout/order-request ground. `.field-error` and
-  the invalid-input state are gated for the same reason. Before adding an ungated
-  `[data-theme="dark"] .foo` rule, grep `.foo` across `src/components` — if a
-  non-`darkGround` page uses it, gate it.
-- **`color-scheme: dark` is itself gated** on `has-dark-ground` — set on `:root`
-  alone it flipped native select popups / spinners / autofill dark on the light
-  un-themed pages too.
-- **Story is the inversion.** It is the direction's one dark-by-default page, so
-  in dark mode its `.story-split-body` and `.story-brands` flip the OTHER way —
-  to the cream `--shell` ground with umber type (the feedback's "light mode
-  here"). Its photo bands (hero, sourced, showrooms) stay as drawn.
-- Guarded by the three CI gates (lint/test/build); the visual layer has no unit
-  coverage (same as every island) and belongs in an end-to-end pass.
+What that toggle used to reveal is now simply how the site is drawn. The Figma
+home page (9379:2565) is dark end to end — hero, banner wall, Brands row,
+manifesto, featured collection — and the footer component is dark on every page
+frame in the file. So `src/styles/dark-surfaces.css` (was `dark-mode.css`,
+still imported LAST in `global.css`) has two scopes, deliberately different:
+
+- **`.site-footer` rules are UNCONDITIONAL.** One footer component in the file,
+  one dark treatment here, no page gate.
+- **Everything else hangs off `body.theme-dark`** — the Layout **`dark`** prop.
+  That is a page declaring itself drawn on the inverse ground. `/` and `/story`
+  set it; `/products`, `/products/[slug]`, `/brands` and `/brands/[slug]` are
+  cream in the Figma and do not.
+
+It is still a CURATED set of overrides, not a token swap, and that is forced
+rather than chosen: the palette reuses one value for two jobs (`color/bg/inverse`
+is a dark BAND ground AND the primary TEXT colour on cream), so remapping tokens
+would turn every heading invisible. Each surface gets its ground flipped to
+`--dark-bg` and its type re-coloured onto the reversed families (`--bone` /
+`--bone-soft` / `--bone-muted`), accents onto `--tan`, hairlines onto
+`--umber-line`. No new hues.
+
+- **THE cross-page gotcha survives the rename.** A section-class override is only
+  safe ungated if that class exists on NO light page. Several product-detail
+  figures are shared with un-themed islands — `.purchase-note`
+  (CheckoutSuccess), `.request-note` / `.metres-unit` (RequestList),
+  `.detail-selected` (Cart + RequestList), `.indicative-note` (every money
+  page). Their rules stay behind `body.theme-dark` or they turn near-white on
+  the light cart/checkout ground. Before adding an ungated rule, grep the class
+  across `src/components`.
+- **Some blocks are now DORMANT and are marked so in the sheet**: the
+  product-detail rules only ever matched a dark product page, and the current
+  Figma draws that page on cream. They are kept, not deleted — the classes are
+  shared and the rules are correct the day a dark product page returns.
+- **Story is no longer an inversion.** With no toggle there is nothing for it to
+  invert against; it is simply a dark page, as it is drawn.

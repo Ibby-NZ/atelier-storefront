@@ -17,9 +17,13 @@
 /* The header floats inside the band (`bleed overlay`), so the top padding is
    what holds the copy clear of it; the copy itself hugs the foot of the band —
    headline left, the one line of library copy right. */
+/* LIGHT, as the frame draws it (9457:5255): bg/subtle, the header floating in
+   it in its paper theme (`overlay="light"`), copy in text/primary. 175 above
+   the copy (the header's 74 + the section's own 101) and 48 below. The Journal
+   opens on this same band. */
 .library-hero {
-  background: var(--umber);
-  padding-block: 11rem var(--s7);
+  background: var(--shell-subtle);
+  padding-block: 10.9375rem var(--s7);
 }
 
 .library-hero-row {
@@ -42,7 +46,7 @@
   font-size: var(--g-xl);
   line-height: 1.1;
   letter-spacing: -0.03em;
-  color: #fff;
+  color: var(--umber);
 }
 
 .library-hero-note {
@@ -50,17 +54,38 @@
   flex: 0 1 17.1875rem; /* the mock's 275px column */
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--bone-soft);
+  color: var(--color-neutral-900); /* the frame's #5c5c5c, nearest token */
 }
 
 .library-shell {
   padding-block: var(--s10);
 }
 
+/* The legal pages (/terms, /privacy): the shop banner above, then the copy on
+   the container's FULL width — not the 41.25rem article measure `.prose`
+   normally sits in — with its headings in the display face. */
+.legal-page .prose {
+  max-width: none;
+}
+
+.legal-page .prose h2 {
+  margin: var(--s7) 0 var(--s4);
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--umber);
+}
+
+.legal-page .prose > :first-child {
+  margin-top: 0;
+}
+
 /* --- Browse layout -------------------------------------------------------- */
 .product-library {
   display: grid;
-  grid-template-columns: 16rem minmax(0, 1fr);
+  grid-template-columns: 16.6875rem minmax(0, 1fr); /* the frame's 267 */
   gap: var(--s5);
   align-items: start;
   min-width: 0;
@@ -319,7 +344,7 @@
    underlined actions are the direction's own. */
 .library-gate {
   padding: var(--s6);
-  background: var(--shell-surface);
+  background: var(--shell-subtle); /* one step darker than the cards (feedback) */
 }
 
 .library-gate-head {
@@ -400,7 +425,7 @@
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s5) var(--s3);
+  gap: var(--s8) var(--s6); /* more air between cards (feedback, Sept 2026) */
   margin: 0;
   padding: 0;
   list-style: none;
@@ -437,11 +462,19 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity var(--slow);
 }
 
-.product-card > a:hover .product-image {
-  opacity: 0.92;
+/* Hover: the photograph zooms inside its frame (the journal card's figure). */
+@media (prefers-reduced-motion: no-preference) {
+  .product-image,
+  .product-image-placeholder {
+    transition: transform 0.9s cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
+  .product-card > a:hover .product-image,
+  .product-card > a:hover .product-image-placeholder {
+    transform: scale(1.06);
+  }
 }
 
 /* Availability sits on the photograph, on a surface-cream chip. The base
@@ -780,5 +813,68 @@
 
   .product-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Cards arrive with a short fade-and-rise, staggered down the grid (page
+   feedback, Sept 2026). Runs once per render of the list. */
+@media (prefers-reduced-motion: no-preference) {
+  .product-grid > li {
+    animation: card-in 0.55s cubic-bezier(0.2, 0, 0.2, 1) both;
+  }
+
+  .product-grid > li:nth-child(2) {
+    animation-delay: 0.05s;
+  }
+
+  .product-grid > li:nth-child(3) {
+    animation-delay: 0.10s;
+  }
+
+  .product-grid > li:nth-child(4) {
+    animation-delay: 0.15s;
+  }
+
+  .product-grid > li:nth-child(5) {
+    animation-delay: 0.20s;
+  }
+
+  .product-grid > li:nth-child(6) {
+    animation-delay: 0.25s;
+  }
+
+  .product-grid > li:nth-child(7) {
+    animation-delay: 0.30s;
+  }
+
+  .product-grid > li:nth-child(8) {
+    animation-delay: 0.35s;
+  }
+
+  .product-grid > li:nth-child(9) {
+    animation-delay: 0.40s;
+  }
+
+  .product-grid > li:nth-child(10) {
+    animation-delay: 0.45s;
+  }
+
+  .product-grid > li:nth-child(11) {
+    animation-delay: 0.50s;
+  }
+
+  .product-grid > li:nth-child(12) {
+    animation-delay: 0.55s;
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

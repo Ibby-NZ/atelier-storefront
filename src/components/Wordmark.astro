@@ -35,7 +35,7 @@ const { width = '200px', class: className, label = 'Atelier Textiles' } = Astro.
   aria-label={label}
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
-  style={`width: ${width}`}
+  style={`width: var(--wordmark-width, ${width})`}
 >
   <path fill="var(--wordmark-accent)" d="M287.73 22.38h-50.87v12.9h47.07v10.63h-47.07v12.9h50.87v13.3h-70.99V9.08h70.99zM35.3 8.9h20.3L21.26 72.1H0z"/>
   <path fill="var(--wordmark-ink)" d="M261.75 91.08h14.02l-28.79 40.24h-14.67z"/>

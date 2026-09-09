@@ -433,13 +433,6 @@ export default function ProductLibrary() {
           </svg>
         </label>
 
-        <div className="library-refine-row">
-          <p className="library-refine-label">Refine</p>
-          <button type="button" className="library-clear" onClick={clearFilters}>
-            Clear all
-          </button>
-        </div>
-
         {facetLists.map(({ filter, options }) => (
           <div className="library-facet" key={filter.key}>
             <p className="library-facet-head" id={`facet-${filter.key}`}>
@@ -484,6 +477,14 @@ export default function ProductLibrary() {
             </label>
           </div>
         ))}
+
+        {/* The frame closes the sidebar with this row (9457:5273), not opens it. */}
+        <div className="library-refine-row">
+          <p className="library-refine-label">Refine</p>
+          <button type="button" className="library-clear" onClick={clearFilters}>
+            Clear all
+          </button>
+        </div>
       </aside>
 
       <div className="library-main">
@@ -533,8 +534,6 @@ export default function ProductLibrary() {
             {pageItems.map((product) => {
               const price = priceInfo(product, viewer)
               const weave = weaveBackground(product.colourways?.[0]?.hex_tones)
-              const shown = product.colourways || []
-              const extra = (product.colourway_count || 0) - shown.length
               return (
                 <li key={product.slug} className="product-card">
                   <a href={`/products/${product.slug}`}>
@@ -562,23 +561,6 @@ export default function ProductLibrary() {
                       <span className="product-brand">{product.brand?.name}</span>
                       <h2>{product.name}</h2>
 
-                      {shown.length > 0 && (
-                        <span className="product-swatches" aria-hidden="true">
-                          {shown.map((colourway) => (
-                            <span
-                              key={colourway.sku}
-                              className="product-swatch-dot"
-                              style={{
-                                background:
-                                  weaveBackground(colourway.hex_tones) || 'var(--surface-deep)',
-                              }}
-                              title={colourway.name}
-                            />
-                          ))}
-                          {extra > 0 && <span className="product-swatch-dot is-more">+{extra}</span>}
-                        </span>
-                      )}
-
                       <span className="sr-only">
                         {product.colourway_count} colourway
                         {product.colourway_count === 1 ? '' : 's'}
@@ -593,7 +575,6 @@ export default function ProductLibrary() {
                       <span className={price.muted ? 'product-price muted' : 'product-price'}>
                         {price.label && <span className="detail-price-label">{price.label} </span>}
                         {price.text}
-                        {price.indicative && <span className="indicative-note">Indicative</span>}
                       </span>
                     </span>
                   </a>

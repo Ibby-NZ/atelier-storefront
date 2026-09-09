@@ -52,13 +52,14 @@ import { Image } from 'astro:assets'
  * }} HeroSlide
  */
 
-const { slides = [], rotateMs = 7000, title } = Astro.props
+const { slides = [], rotateMs = 8000, title } = Astro.props
 ---
 
 <section
   class:list={['photo-band', 'home-hero', { 'is-empty': slides.length === 0 }]}
   data-hero
   data-rotate={String(rotateMs)}
+  style={`--hero-period: ${rotateMs}ms`}
   aria-roledescription="carousel"
   aria-label="Featured collections"
 >
@@ -157,76 +158,109 @@ const { slides = [], rotateMs = 7000, title } = Astro.props
 </section>
 
 <script>
-  // Crossfade rotator. Deliberately vanilla and self-contained: the hero holds
-  // no state the server needs and nothing else on the page reads it, so hydrating
-  // a React island for it would ship a framework to fade a photograph.
-  const rotators = document.querySelectorAll('[data-hero]')
+  // Runs on the first load AND after every client-side navigation
+  // (<ClientRouter /> in Layout.astro swaps the page in place, and a
+  // bundled script would otherwise run once for the whole session).
+  document.addEventListener('astro:page-load', () => {
+    // Crossfade rotator. Deliberately vanilla and self-contained: the hero holds
+    // no state the server needs and nothing else on the page reads it, so hydrating
+    // a React island for it would ship a framework to fade a photograph.
+    const rotators = document.querySelectorAll('[data-hero]')
 
-  rotators.forEach((hero) => {
-    const slides = Array.from(hero.querySelectorAll('[data-hero-slide]'))
-    const dots = Array.from(hero.querySelectorAll('[data-hero-dot]'))
-    if (slides.length < 2) return
+    rotators.forEach((hero) => {
+      const slides = Array.from(hero.querySelectorAll('[data-hero-slide]'))
+      const dots = Array.from(hero.querySelectorAll('[data-hero-dot]'))
+      if (slides.length < 2) return
 
-    const period = Number(hero.dataset.rotate) || 7000
-    // Auto-advance is motion nobody asked for, so reduced-motion gets a static
-    // hero — the dots still work, which keeps every collection reachable.
-    const stillness = window.matchMedia('(prefers-reduced-motion: reduce)')
+      const period = Number(hero.dataset.rotate) || 8000
+      // Auto-advance is motion nobody asked for, so reduced-motion gets a static
+      // hero — the dots still work, which keeps every collection reachable.
+      const stillness = window.matchMedia('(prefers-reduced-motion: reduce)')
 
-    let current = 0
-    let timer = null
+      let current = 0
+      let timer = null
+      let leaving = null
 
-    const show = (next) => {
-      if (next === current) return
-      slides.forEach((slide, index) => {
-        const active = index === next
-        slide.classList.toggle('is-active', active)
-        // `inert` keeps the off-screen slide's link out of the tab order; the
-        // aria-hidden pair keeps it out of the accessibility tree.
-        slide.toggleAttribute('inert', !active)
-        if (active) slide.removeAttribute('aria-hidden')
-        else slide.setAttribute('aria-hidden', 'true')
-      })
+      // The crossfade length, read from the same custom property the CSS uses, so
+      // `is-leaving` comes off at the exact moment the outgoing slide hides.
+      const fadeMs = parseFloat(getComputedStyle(hero).getPropertyValue('--hero-fade')) * 1000 || 900
+
+      const show = (next) => {
+        if (next === current) return
+        // The outgoing slide keeps `is-leaving` for the length of the fade. The
+        // zoom rule matches that class as well as `is-active`, so the animation
+        // is not torn off the slide the instant it stops being current — it runs
+        // on, under the fade, until the slide is hidden. Without this the picture
+        // snapped to its resting scale on every turn (page feedback).
+        if (leaving !== null) window.clearTimeout(leaving.timer)
+        const outgoing = slides[current]
+        outgoing.classList.add('is-leaving')
+        leaving = {
+          slide: outgoing,
+          timer: window.setTimeout(() => {
+            outgoing.classList.remove('is-leaving')
+            leaving = null
+          }, fadeMs),
+        }
+        slides.forEach((slide, index) => {
+          const active = index === next
+          slide.classList.toggle('is-active', active)
+          if (active) slide.classList.remove('is-leaving')
+          // `inert` keeps the off-screen slide's link out of the tab order; the
+          // aria-hidden pair keeps it out of the accessibility tree.
+          slide.toggleAttribute('inert', !active)
+          if (active) slide.removeAttribute('aria-hidden')
+          else slide.setAttribute('aria-hidden', 'true')
+        })
+        dots.forEach((dot, index) => {
+          const active = index === next
+          dot.classList.toggle('is-active', active)
+          if (active) dot.setAttribute('aria-current', 'true')
+          else dot.removeAttribute('aria-current')
+        })
+        current = next
+      }
+
+      const stop = () => {
+        if (timer === null) return
+        window.clearInterval(timer)
+        timer = null
+      }
+
+      const start = () => {
+        if (timer !== null || stillness.matches || document.hidden) return
+        timer = window.setInterval(() => show((current + 1) % slides.length), period)
+      }
+
       dots.forEach((dot, index) => {
-        const active = index === next
-        dot.classList.toggle('is-active', active)
-        if (active) dot.setAttribute('aria-current', 'true')
-        else dot.removeAttribute('aria-current')
+        dot.addEventListener('click', () => {
+          // Restart the clock on a manual pick, or the chosen slide can be
+          // replaced a moment later by a timer that was already most of the way
+          // through its period.
+          stop()
+          show(index)
+          start()
+        })
       })
-      current = next
-    }
 
-    const stop = () => {
-      if (timer === null) return
-      window.clearInterval(timer)
-      timer = null
-    }
+      // Hold still while someone is TABBING through the copy — a keyboard user
+      // needs the link they have focused to stay put — and stop the timer
+      // entirely on a hidden tab rather than queueing transitions nobody is
+      // watching.
+      //
+      // It no longer pauses on hover. A mouse resting on the hero (which, on a
+      // 1920 screen, is most of the viewport) stopped the rotation dead, and the
+      // zoom ran out at eight seconds and froze — read as "a pause between
+      // slides" (page feedback). The client wants it to cycle regardless.
+      hero.addEventListener('focusin', stop)
+      hero.addEventListener('focusout', start)
+      document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()))
+      stillness.addEventListener('change', () => (stillness.matches ? stop() : start()))
 
-    const start = () => {
-      if (timer !== null || stillness.matches || document.hidden) return
-      timer = window.setInterval(() => show((current + 1) % slides.length), period)
-    }
-
-    dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        // Restart the clock on a manual pick, or the chosen slide can be
-        // replaced a moment later by a timer that was already most of the way
-        // through its period.
-        stop()
-        show(index)
-        start()
-      })
+      start()
+      // Leaving by client-side navigation: stop the clock, or it keeps
+      // advancing slides in a document that is no longer on screen.
+      document.addEventListener('astro:before-swap', stop, { once: true })
     })
-
-    // Hold still while someone is reading or tabbing through the copy, and stop
-    // the timer entirely on a hidden tab rather than queueing transitions
-    // nobody is watching.
-    hero.addEventListener('pointerenter', stop)
-    hero.addEventListener('pointerleave', start)
-    hero.addEventListener('focusin', stop)
-    hero.addEventListener('focusout', start)
-    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()))
-    stillness.addEventListener('change', () => (stillness.matches ? stop() : start()))
-
-    start()
   })
 </script>

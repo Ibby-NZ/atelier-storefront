@@ -79,7 +79,7 @@
 
 .cart-line-unit {
   margin: var(--s2) 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--t-xs);
   color: var(--muted);
 }
@@ -100,7 +100,7 @@
   border: var(--hair);
   border-radius: var(--r-sm);
   background: var(--paper);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--t-sm);
   text-align: center;
 }
@@ -109,7 +109,7 @@
   flex: none;
   min-width: 6.5rem;
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--t-base);
   color: var(--ink);
   text-align: right;
@@ -319,7 +319,7 @@
 }
 
 .request-summary .cart-subtotal strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--d-sm);
 }
 
@@ -344,8 +344,10 @@
 }
 
 /* --- Checkout ------------------------------------------------------------- */
+/* Centred under the banner (feedback, Sept 2026). */
 .checkout {
   max-width: var(--container-narrow);
+  margin-inline: auto;
 }
 
 .checkout-lines {
@@ -367,7 +369,7 @@
 }
 
 .checkout-line > span:last-child {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   color: var(--ink);
   white-space: nowrap;
 }
@@ -400,7 +402,7 @@
 
 .checkout-totals dd {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--t-sm);
   color: var(--ink);
 }
@@ -473,7 +475,7 @@
 .success-order strong {
   display: block;
   margin-top: var(--s2);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-weight: 500;
   font-size: var(--d-sm);
   color: var(--ink);
@@ -482,7 +484,7 @@
 
 .success-total {
   margin: 0 0 var(--s6);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--t-base);
   color: var(--ink);
 }
@@ -1261,7 +1263,7 @@
 .order-line-qty,
 .order-line-total {
   flex: none;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--t-sm);
   color: var(--ink-soft);
   text-align: right;
@@ -1304,7 +1306,7 @@
 
 .order-totals dd {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   font-size: var(--t-sm);
   color: var(--ink);
 }
@@ -1403,4 +1405,19 @@
   .order-line-total {
     margin-left: auto;
   }
+}
+
+/* The empty and loading states of the cart and checkout sit centred under the
+   banner too, on the same narrow measure as the checkout itself. */
+.library-shell .cart-empty,
+.library-shell .products-empty,
+.library-shell .products-status {
+  max-width: var(--container-narrow);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.library-shell .cart-empty .cta-underline,
+.library-shell .cart-empty .btn {
+  align-self: center;
 }

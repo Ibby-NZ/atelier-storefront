@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: var(--hero-height); /* the figure every full-bleed screen shares */
   padding: 9rem var(--gutter) var(--s9); /* clears the floating header */
   overflow: hidden;
   background-color: var(--umber-soft);
@@ -220,13 +220,6 @@
 
 .auth-screen-alt a:hover {
   color: #fff;
-}
-
-@media (max-width: 1024px) {
-  .auth-screen {
-    min-height: 44rem;
-    padding-top: 11rem; /* the header stacks to three rows below 1024px */
-  }
 }
 
 @media (max-width: 640px) {

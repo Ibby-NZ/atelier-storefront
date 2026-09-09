@@ -5,10 +5,42 @@
  * bespoke is quoted.
  */
 
+/* The opening band: the Brands page's `.house-hero`, by the same figure. */
+.bespoke-hero {
+  min-height: var(--hero-height);
+  display: flex;
+  align-items: flex-end;
+}
+
+/* "Made to measure" on its own line above the name, as the home hero sets its
+   house line (page feedback, Sept 2026). */
+.bespoke-hero .photo-band-title-sub {
+  display: block;
+}
+
+/* Wall on top, then the chosen house and its enquiry side by side — the same
+   two-column split the featured band draws, so the page reads in the Brands
+   page's rhythm rather than as a form under a grid. */
 .bespoke-explorer {
   display: grid;
-  gap: var(--s6);
-  padding-bottom: var(--s6);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s9) var(--s8);
+  align-items: start;
+}
+
+.bespoke-wall {
+  grid-column: 1 / -1;
+}
+
+.bespoke-house h2,
+.bespoke-enquiry h2 {
+  margin: 0 0 var(--s4);
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
 }
 
 /* --- The wall ---------------------------------------------------------------
@@ -23,6 +55,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* The house's mark on its tile: the Brands wall's own figure (grotesk, not the
+   serif the card used to set), so a maison reads the same on both walls. */
+.bespoke-card-logo {
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 .bespoke-card {
@@ -101,9 +141,7 @@
   color: var(--accent);
 }
 
-.bespoke-house h2 {
-  margin: 0 0 var(--s2);
-}
+/* (heading rule is above, shared with the enquiry panel) */
 
 .bespoke-categories {
   font-size: var(--t-eyebrow);
@@ -139,10 +177,17 @@
   object-fit: cover;
 }
 
+/* A raised panel, the way a form sits on the dark ground elsewhere (the
+   Story page's copy panel, the contact page's form): lifted, squared, no rule. */
 .bespoke-enquiry {
-  max-width: 30rem;
-  border-top: 1px solid var(--hair);
-  padding-top: var(--s5);
+  padding: var(--s7);
+  background: var(--surface);
+}
+
+@media (max-width: 1024px) {
+  .bespoke-explorer {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .bespoke-enquiry h2 {

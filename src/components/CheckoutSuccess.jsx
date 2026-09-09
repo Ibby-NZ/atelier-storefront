@@ -83,7 +83,7 @@ export default function CheckoutSuccess() {
               will follow by email — please do not pay again. Contact us if one
               does not arrive.
             </p>
-            <a className="btn btn-primary" href="/products">
+            <a className="cta-underline" href="/products">
               Continue shopping
             </a>
           </>
@@ -117,7 +117,7 @@ export default function CheckoutSuccess() {
       {summary?.email && (
         <p className="purchase-note">A receipt has been sent to {summary.email}.</p>
       )}
-      <a className="btn btn-primary" href="/products">
+      <a className="cta-underline" href="/products">
         Continue shopping
       </a>
     </div>

@@ -1,0 +1,805 @@
+/*
+ * Dark surfaces — the design's OWN dark half, not a dark mode.
+ *
+ * The reader-facing dark/light toggle is gone (page feedback, 1920×968 #8) and
+ * with it `[data-theme]`. What that toggle used to reveal is now simply how the
+ * site is drawn: the Figma home page (9379:2565) is dark end to end — hero,
+ * banner wall, Brands row, manifesto, featured collection — and the footer
+ * component is dark on every page frame in the file.
+ *
+ * So this sheet has two scopes and they are deliberately different:
+ *   - `.site-footer` rules are UNCONDITIONAL. One footer component, dark
+ *     everywhere, exactly as the file draws it.
+ *   - everything else hangs off `body.theme-dark`, the Layout `dark` prop. That
+ *     is the page saying "I am drawn on the inverse ground"; /story and the
+ *     home set it, the Maison pages (cart, checkout, account) do not.
+ *
+ * A global token swap is still impossible on purpose: the palette reuses one
+ * value for two jobs (bg/inverse is a dark BAND ground AND the primary TEXT
+ * colour on cream), so remapping tokens would turn every heading invisible.
+ * Each surface gets its ground flipped to --dark-bg and its type re-coloured
+ * onto the reversed families (--bone / --bone-soft / --bone-muted), accents
+ * onto --tan, hairlines onto --umber-line. No new hues.
+ *
+ * Imported LAST in global.css so these rules sit at the end of the cascade and
+ * win over the sheet that first defined each surface.
+ */
+
+/* ==========================================================================
+   Shared chrome
+   ========================================================================== */
+
+/* Native form-control chrome (select popups, number spinners, date/colour
+   pickers, autofill) follows the theme — but ONLY on a page whose ground is
+   actually dark. On `:root` it flipped the controls dark on the light pages
+   too (checkout, contact, …), contradicting their bodies. On the dark-page
+   class it tracks the ground the way everything else here does. */
+body.theme-dark {
+  color-scheme: dark;
+  /* <main> carries the ground, but a page shorter than the viewport (a 404, a
+     gated grid, an island that failed to load) leaves the body's own cream
+     showing under the footer. Same colour, so nothing else changes. */
+  background: var(--dark-bg);
+}
+
+/* --- Footer: dark on EVERY page. One component in the file, one treatment
+       here, no page gate. ------------------------------------------------- */
+.site-footer {
+  background: var(--dark-bg);
+  color: var(--bone-soft);
+}
+
+/* The wordmark takes its reversed colourway on the dark footer band — "adjust
+   the logo in the footer accordingly" (feedback). Set on the FOOTER, not on
+   the brand link: the pair inherits down to the mark. */
+.site-footer {
+  --wordmark-accent: var(--wordmark-accent-rev);
+  --wordmark-ink: var(--wordmark-ink-rev);
+}
+
+.site-footer-socials a {
+  color: var(--bone-soft);
+}
+
+.site-footer-socials a:hover {
+  color: var(--tan);
+}
+
+.site-footer-nav a {
+  color: var(--bone-muted);
+}
+
+.site-footer-nav a:hover {
+  color: var(--bone);
+}
+
+.site-footer-newsletter-head {
+  color: var(--bone);
+}
+
+.site-footer-newsletter input {
+  border-color: var(--umber-line);
+  color: var(--bone);
+}
+
+.site-footer-newsletter input::placeholder {
+  color: var(--bone-muted);
+}
+
+.site-footer-join {
+  color: var(--bone);
+}
+
+.site-footer-join:hover {
+  color: var(--tan);
+}
+
+/* --- Header, on a dark page only — page feedback / loro-piana #3 ----------
+   Only the NON-overlay header darkens: an overlay header already floats bone
+   type over a photograph and must not gain a ground. The page gate is what
+   stops cart/checkout/… getting a dark bar over a light body. */
+body.theme-dark .site-header:not(.site-header--overlay) {
+  background: var(--dark-bg);
+  border-bottom-color: var(--umber-line);
+}
+
+body.theme-dark .site-header:not(.site-header--overlay) .site-nav a,
+body.theme-dark .site-header:not(.site-header--overlay) .site-util-link,
+body.theme-dark .site-header:not(.site-header--overlay) .site-icon,
+body.theme-dark .site-header:not(.site-header--overlay) .site-burger {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .site-header:not(.site-header--overlay) .site-nav a:hover,
+body.theme-dark .site-header:not(.site-header--overlay) .site-util-link:hover,
+body.theme-dark .site-header:not(.site-header--overlay) .site-icon:hover,
+body.theme-dark .site-header:not(.site-header--overlay) .site-burger:hover,
+body.theme-dark .site-header:not(.site-header--overlay) .site-nav a[aria-current="page"],
+body.theme-dark .site-header:not(.site-header--overlay) .site-util-link[aria-current="page"] {
+  color: var(--bone);
+}
+
+body.theme-dark .site-header:not(.site-header--overlay) {
+  --wordmark-accent: var(--wordmark-accent-rev);
+  --wordmark-ink: var(--wordmark-ink-rev);
+}
+
+/* --- Page ground (themed pages only) -------------------------------------
+   Darkens <main> so any container gutter beyond 96rem, or a gap between bands,
+   shows the dark ground rather than the light paper peeking through on a wide
+   monitor. */
+body.theme-dark main {
+  background: var(--dark-bg);
+}
+
+/* Transient island states (loading / error / empty / gate) render on that dark
+   ground before the themed markup mounts — keep their copy legible. */
+body.theme-dark .products-status,
+body.theme-dark .products-empty,
+body.theme-dark .error-state,
+body.theme-dark .empty-state {
+  color: var(--bone-soft);
+}
+
+/* `.error-state` / `.form-error` are not bare copy like the three above — they
+   are a BOXED notice on `--surface` with clay rules, so re-colouring the text
+   alone put bone-soft on a light cream box and made the message harder to read
+   than it was before dark mode reached this page. Give the box the raised dark
+   ground and lift the clay rule to the AA-safe `--clay-bright`. Gated with the
+   rest: both classes are shared with the un-themed light pages (checkout, the
+   trade application, order lookup), which must keep the light notice. */
+body.theme-dark .error-state,
+body.theme-dark .form-error {
+  background: var(--dark-raised);
+  border-color: var(--umber-line);
+  border-left-color: var(--clay-bright);
+  color: var(--clay-bright);
+}
+
+/* ==========================================================================
+   Home — page feedback / home #2, #3, #4
+   ========================================================================== */
+
+/* #3 — latest collections */
+body.theme-dark .brands-band {
+  background: var(--dark-bg);
+}
+
+body.theme-dark .brands-band-head h2 {
+  color: var(--bone);
+}
+
+/* The image-backing surface only — `:not(.weave)` so a placeholder collection
+   keeps its duotone weave texture rather than a flat dark tile. */
+body.theme-dark .home-collection-row img,
+body.theme-dark .home-collection-media:not(.weave) {
+  background: var(--dark-raised);
+}
+
+body.theme-dark .home-collection-name {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .home-collection-row a:hover .home-collection-name {
+  color: var(--tan);
+}
+
+body.theme-dark .brands-band .badge-ochre {
+  color: var(--tan);
+}
+
+body.theme-dark .brands-band-head .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .brands-band-head a.cta-underline:hover {
+  color: var(--tan);
+}
+
+/* #2 — featured collection */
+body.theme-dark .feature-band {
+  background: var(--dark-bg);
+}
+
+body.theme-dark .feature-band-body h2 {
+  color: var(--bone);
+}
+
+body.theme-dark .feature-band-copy {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .feature-band .badge-ochre {
+  color: var(--tan);
+}
+
+body.theme-dark .feature-band-media {
+  border-color: var(--umber-line);
+  background: var(--dark-raised);
+}
+
+body.theme-dark .feature-band .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .feature-band a.cta-underline:hover {
+  color: var(--tan);
+}
+
+/* The featured band reuses the house fact-list figure. */
+body.theme-dark .feature-band .house-fact {
+  border-bottom-color: var(--umber-line);
+}
+
+body.theme-dark .feature-band .house-fact dt {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .feature-band .house-fact dd {
+  color: var(--bone);
+}
+
+/* #4 — the two shop banners' ground/border (also the house page's collection
+   wall — one figure, one rule). The photo tiles keep their own scrim. */
+body.theme-dark .tile-wall {
+  background: var(--dark-bg);
+}
+
+/* ==========================================================================
+   Brands index — page feedback / brands #1, #2
+   ========================================================================== */
+
+/* #1 — the wall of house tiles (#main > .container) */
+body.theme-dark .house-wall {
+  background: var(--dark-bg);
+}
+
+body.theme-dark .house-wall-head h2 {
+  color: var(--bone);
+}
+
+body.theme-dark .house-wall-head .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .house-wall-head a.cta-underline:hover {
+  color: var(--tan);
+}
+
+body.theme-dark .house-card-name {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .house-card:hover .house-card-name {
+  color: var(--bone);
+}
+
+/* #2 — featured-collection band */
+body.theme-dark .house-feature {
+  background: var(--dark-bg);
+}
+
+body.theme-dark .house-feature-body h2 {
+  color: var(--bone);
+}
+
+body.theme-dark .house-feature-copy {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .house-feature .badge-ochre {
+  color: var(--tan);
+}
+
+body.theme-dark .house-feature .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .house-feature a.cta-underline:hover {
+  color: var(--tan);
+}
+
+/* ==========================================================================
+   Brand detail — page feedback / loro-piana #1, #2 (#3 header is above)
+   ========================================================================== */
+
+/* #1 — the intro (#main > .house-intro > .container). The band opening is the
+   umber `.house-band` (already dark) or a photographic banner; only the intro's
+   cream ground flips. */
+body.theme-dark .house-intro {
+  background: var(--dark-bg);
+}
+
+body.theme-dark .house-lede {
+  color: var(--bone);
+}
+
+body.theme-dark .house-copy {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .house-actions .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .house-actions a.cta-underline:hover {
+  color: var(--tan);
+}
+
+body.theme-dark .house-trade {
+  border-top-color: var(--umber-line);
+}
+
+body.theme-dark .house-trade-head {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .house-trade-body {
+  color: var(--bone-soft);
+}
+
+/* #2 — the collection tile wall is covered by the shared `.tile-wall` rule. */
+
+/* ==========================================================================
+   Products library — page feedback / products #1
+   ========================================================================== */
+
+/* #1 — the browse area (#main > .container = .library-shell). The umber hero
+   above it is unchanged. */
+body.theme-dark .library-shell {
+  background: var(--dark-bg);
+}
+
+/* Refine sidebar --------------------------------------------------------- */
+body.theme-dark .library-search {
+  border-color: var(--umber-line);
+  color: var(--bone-muted);
+}
+
+body.theme-dark .library-search:focus-within {
+  border-color: var(--bone);
+}
+
+body.theme-dark .product-library .library-search input {
+  color: var(--bone);
+}
+
+body.theme-dark .product-library .library-search input::placeholder {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .library-refine-label,
+body.theme-dark .library-facet-count,
+body.theme-dark .library-count,
+body.theme-dark .library-sort > span {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .library-clear {
+  color: var(--bone-soft);
+  border-bottom-color: var(--bone-soft);
+}
+
+body.theme-dark .library-clear:hover {
+  color: var(--tan);
+  border-bottom-color: var(--tan);
+}
+
+body.theme-dark .library-facet-head {
+  color: var(--tan);
+  border-bottom-color: var(--umber-line);
+}
+
+body.theme-dark .library-facet-row {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .library-facet-row:hover,
+body.theme-dark .library-facet-row.is-active {
+  color: var(--tan);
+}
+
+/* Boxed selects — the ink chevron data-uri is invisible on dark, so swap it for
+   a tan one and lift the hairline. */
+body.theme-dark .product-library .filter select,
+body.theme-dark .product-library .library-sort select {
+  border-color: var(--umber-line);
+  color: var(--bone);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23dcc8b1' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+body.theme-dark .product-library .filter select:hover,
+body.theme-dark .product-library .filter select:focus,
+body.theme-dark .product-library .library-sort select:hover,
+body.theme-dark .product-library .library-sort select:focus {
+  border-color: var(--bone);
+}
+
+body.theme-dark .library-filters-toggle {
+  border-color: var(--bone-muted);
+  color: var(--bone);
+}
+
+body.theme-dark .library-filters-toggle:hover {
+  background: var(--bone);
+  color: var(--dark-bg);
+}
+
+body.theme-dark .library-filters-badge {
+  color: var(--tan);
+}
+
+body.theme-dark .library-filters-toggle:hover .library-filters-badge {
+  color: var(--dark-bg);
+}
+
+/* Trade-gate notice */
+body.theme-dark .library-gate {
+  background: var(--dark-raised);
+}
+
+body.theme-dark .library-gate-head {
+  color: var(--bone);
+}
+
+body.theme-dark .library-gate-body {
+  color: var(--bone-soft);
+}
+
+/* The gate's badge and its two underlined actions sit on the raised panel — the
+   base ochre badge and umber action would both go dark-on-dark. */
+body.theme-dark .library-gate .badge-ochre {
+  color: var(--tan);
+}
+
+body.theme-dark .library-gate .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .library-gate a.cta-underline:hover {
+  color: var(--tan);
+}
+
+body.theme-dark .library-empty {
+  color: var(--bone-muted);
+}
+
+/* Product cards (library grid AND the detail "Similar" strip — one figure) -- */
+body.theme-dark .product-card {
+  background: var(--dark-raised);
+}
+
+body.theme-dark .product-media {
+  background: var(--dark-bg);
+}
+
+body.theme-dark .product-card h2,
+body.theme-dark .product-card h3 {
+  color: var(--bone);
+}
+
+body.theme-dark .product-card .product-brand {
+  color: var(--tan);
+}
+
+body.theme-dark .product-specs {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .product-price {
+  color: var(--bone);
+}
+
+body.theme-dark .product-price.muted {
+  color: var(--bone-soft);
+  border-bottom-color: var(--bone-soft);
+}
+
+body.theme-dark .product-card > a:hover .product-price.muted {
+  color: var(--tan);
+  border-bottom-color: var(--tan);
+}
+
+body.theme-dark .product-swatch-dot {
+  border-color: var(--umber-line);
+  background: var(--dark-bg);
+}
+
+body.theme-dark .product-swatch-dot.is-more {
+  color: var(--bone-muted);
+}
+
+/* Pagination */
+body.theme-dark .library-page,
+body.theme-dark .library-page-gap {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .library-page:hover,
+body.theme-dark .library-page.is-current {
+  color: var(--bone);
+}
+
+body.theme-dark .library-pages > * + * {
+  border-left-color: var(--umber-line);
+}
+
+body.theme-dark .library-page-arrow {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .library-page-arrow:hover:not(:disabled) {
+  color: var(--tan);
+}
+
+body.theme-dark .library-page-arrow:disabled {
+  color: var(--umber-line);
+}
+
+/* ==========================================================================
+   Product detail — page feedback / atlas #1, #2
+   ========================================================================== */
+
+/* #1 — the detail band */
+body.theme-dark .detail-band {
+  background: var(--dark-raised);
+}
+
+body.theme-dark .detail-hero-frame {
+  border-color: var(--umber-line);
+  background: var(--dark-bg);
+}
+
+body.theme-dark .detail-hires {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .detail-hires:hover {
+  color: var(--tan);
+}
+
+body.theme-dark .detail-eyebrow {
+  color: var(--tan);
+}
+
+body.theme-dark .detail-name {
+  color: var(--bone);
+}
+
+body.theme-dark .detail-lede {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .detail-price {
+  color: var(--bone);
+}
+
+body.theme-dark .detail-price.muted {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .detail-price-label {
+  color: var(--tan);
+}
+
+body.theme-dark .detail-price-retail {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .detail-control {
+  color: var(--bone-soft);
+}
+
+/* The metres field + unit (product.css sets the field's ground to --paper).
+   GATED: `.metres-unit` and `.detail-selected*` / `.purchase-note` /
+   `.request-note` below are SHARED with RequestList, Cart and CheckoutSuccess —
+   the un-themed /order-request, /cart and /checkout/success pages, whose bodies
+   stay light. Un-gated, the reversed colours would render them near-invisible
+   on that light paper (a real bug the review caught). The page gate confines
+   them to a page that actually declares itself dark.
+
+   DORMANT: product detail is drawn on the cream ground in the current Figma and
+   no longer sets `dark`, so nothing matches this today. Kept because the class
+   is shared with the request list and the rule is the correct one the day a
+   dark product page returns. */
+body.theme-dark .metres-field {
+  border-color: var(--umber-line);
+  background: var(--dark-bg);
+}
+
+body.theme-dark .metres-field:focus-within {
+  border-color: var(--bone);
+  box-shadow: none;
+}
+
+body.theme-dark .metres-field:hover:not(:focus-within) {
+  border-color: var(--bone-muted);
+}
+
+body.theme-dark .metres-field input {
+  color: var(--bone);
+}
+
+body.theme-dark .metres-unit {
+  color: var(--bone-muted);
+}
+
+/* Colour select — swap the ink chevron for a tan one. */
+body.theme-dark .detail-colour-select select {
+  border-color: var(--umber-line);
+  color: var(--bone);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23dcc8b1' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+body.theme-dark .detail-colour-select select:hover,
+body.theme-dark .detail-colour-select select:focus {
+  border-color: var(--bone);
+}
+
+/* Spec rows */
+body.theme-dark .detail-specs > div {
+  border-bottom-color: var(--umber-line);
+}
+
+body.theme-dark .detail-specs dt {
+  color: var(--bone-muted);
+}
+
+body.theme-dark .detail-specs dd {
+  color: var(--bone);
+}
+
+/* Selected colourway line — SHARED with Cart + RequestList, so gated (see the
+   metres note above). */
+body.theme-dark .detail-selected {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .detail-selected .detail-eyebrow-sep,
+body.theme-dark .detail-selected-sku {
+  color: var(--bone-muted);
+}
+
+/* Actions. `.action-fill` is tan-on-umber and reads on the dark ground already;
+   only the outline (transparent + dark hairline + umber text) needs reversing. */
+body.theme-dark .action-outline {
+  border-color: var(--bone-muted);
+  color: var(--bone);
+}
+
+body.theme-dark .action-outline:hover:not(:disabled) {
+  border-color: var(--bone);
+}
+
+/* `.purchase-note` (also CheckoutSuccess) and `.request-note` (also RequestList)
+   are shared with un-themed pages — gated. `.purchase-added` is product-detail
+   only, but gated alongside for one consistent rule. */
+body.theme-dark .purchase-note,
+body.theme-dark .request-note {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .purchase-added,
+body.theme-dark .purchase-added a {
+  color: var(--bone);
+}
+
+/* Validation / purchase errors: --clay is ~4.1:1 on the dark band, under AA.
+   Gated because `.field-error` and the invalid-input state are also on the
+   un-themed forms, where --clay reads fine on light paper. */
+body.theme-dark .product-detail .field-error,
+body.theme-dark .metres-field input[aria-invalid="true"] {
+  color: var(--clay-bright);
+}
+
+/* The muted italic "Indicative" money annotation keeps its Maison --muted on a
+   dark ground (~4.2:1, under AA). It is shared with the un-themed money pages
+   (cart, checkout, orders), so gate it and align it with the other muted labels
+   — this covers both the library/similar cards and the detail price. */
+body.theme-dark .indicative-note {
+  color: var(--bone-muted);
+}
+
+/* #2 — the "Similar" strip */
+body.theme-dark .detail-similar {
+  background: var(--dark-bg);
+}
+
+body.theme-dark .detail-similar-head h2 {
+  color: var(--bone);
+}
+
+body.theme-dark .detail-similar-head .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .detail-similar-head a.cta-underline:hover {
+  color: var(--tan);
+}
+
+/* The gated panel (status === 'gated' in ProductDetail) renders directly on the
+   dark <main>, not on the detail band — its heading, body, badge and actions all
+   need reversing or they sit dark-on-dark. Gated on the page being dark,
+   because that is the only state in which this panel meets a dark ground; the
+   notFound twin renders on the light one. Dormant for the same reason as the
+   metres field above. */
+body.theme-dark .trade-gate h1 {
+  color: var(--bone);
+}
+
+body.theme-dark .trade-gate p {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .trade-gate .badge-ochre {
+  color: var(--tan);
+}
+
+body.theme-dark .trade-gate .breadcrumb a {
+  color: var(--bone-soft);
+}
+
+body.theme-dark .trade-gate .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .trade-gate a.cta-underline:hover {
+  color: var(--tan);
+}
+
+/* ==========================================================================
+   Story — page feedback / story #1, #2, #3
+   The one dark page, so here the toggle does the REVERSE: the two split bodies
+   and the brands strip flip from umber to the cream ground. The photo bands
+   (hero, sourced, showrooms) stay as drawn.
+   ========================================================================== */
+
+/* #1 & #3 — the split copy panels ("Why Atelier", "Inside the Atelier") */
+body.theme-dark .story-split-body {
+  background: var(--shell);
+}
+
+body.theme-dark .story-split-body h2 {
+  color: var(--umber);
+}
+
+body.theme-dark .story-split-body p {
+  color: var(--umber-soft);
+}
+
+body.theme-dark .story-split-body .story-pron {
+  color: var(--shell-muted);
+}
+
+body.theme-dark .story-split-body .story-badge {
+  color: var(--ochre);
+}
+
+body.theme-dark .story-split-body .story-list {
+  color: var(--umber-soft);
+}
+
+/* #2 — the brands strip */
+body.theme-dark .story-brands {
+  background: var(--shell);
+}
+
+body.theme-dark .story-brands-head h2 {
+  color: var(--umber);
+}
+
+body.theme-dark .story-brands-head .cta-underline-light {
+  color: var(--umber);
+}
+
+body.theme-dark .story-brands-head a.cta-underline-light:hover {
+  color: var(--ochre);
+}
+
+body.theme-dark .story-brands .house-card-name {
+  color: var(--umber-soft);
+}
+
+body.theme-dark .story-brands .house-card:hover .house-card-name {
+  color: var(--umber);
+}

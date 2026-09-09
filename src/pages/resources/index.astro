@@ -51,14 +51,21 @@ const formatDate = (date) => (date ? dateFormat.format(date) : '')
   description="Collection stories, house notes and news from the maisons we represent."
   image={lead?.hero ?? undefined}
   bleed
+  overlay="light"
 >
-  <section class="container journal-head">
-    <div class="brass-rule"></div>
-    <p class="eyebrow-wide">The Atelier Journal</p>
-    <h1>Notes &amp; <em>stories</em></h1>
-    <p class="journal-lede">
-      Collection stories, house notes and news from the maisons we represent.
-    </p>
+  {/* The shop page's banner, exactly (page feedback, Sept 2026): the umber band
+      with the header floating in it, badge + headline at its foot on the left,
+      the one line of copy on the right. `.library-hero` IS that figure. */}
+  <section class="library-hero">
+    <div class="container library-hero-row">
+      <div class="library-hero-heading">
+        <p class="badge-ochre">The Atelier Journal</p>
+        <h1>Notes &amp; stories</h1>
+      </div>
+      <p class="library-hero-note">
+        Collection stories, house notes and news from the maisons we represent.
+      </p>
+    </div>
   </section>
 
   {
@@ -81,11 +88,10 @@ const formatDate = (date) => (date ? dateFormat.format(date) : '')
             )}
           </span>
           <span class="journal-lead-body">
-            <span class="eyebrow-brass">Latest</span>
-            <span class="journal-lead-title">{lead.title}</span>
             {lead.date && <span class="post-date">{formatDate(lead.date)}</span>}
+            <span class="journal-lead-title">{lead.title}</span>
             {lead.excerpt && <span class="journal-lead-excerpt">{lead.excerpt}</span>}
-            <span class="link-cta journal-lead-cta">Read the story</span>
+            <span class="cta-underline journal-lead-cta">Read the story</span>
           </span>
         </a>
       </section>
@@ -96,7 +102,7 @@ const formatDate = (date) => (date ? dateFormat.format(date) : '')
     rest.length > 0 && (
       <section class="container journal-more">
         <div class="section-head">
-          <h2>More from <em>the journal</em></h2>
+          <h2>More from the journal</h2>
           <a href="/brands">The houses</a>
         </div>
         <ul class="journal-grid">

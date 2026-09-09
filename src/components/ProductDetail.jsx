@@ -94,7 +94,7 @@ const MAX_QTY = 99
 const REQUEST_PATH = '/order-request'
 
 // How many cards the Similar strip shows (the mock's row).
-const SIMILAR_LIMIT = 4
+const SIMILAR_LIMIT = 12 // the row runs off the right edge; twelve is the cap (Sept 2026)
 
 // The colourway a shopper should land on: the first one in stock, else the
 // first one at all. Returns null for a product with no colourways.
@@ -130,6 +130,11 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   // The Similar strip: other designs from the same house, fetched once the
   // product (and its house) is known. Empty renders no section.
   const [similar, setSimilar] = useState([])
+  // Tell DragScroll the row exists (it binds rows on page-load, before this
+  // island has fetched anything).
+  useEffect(() => {
+    if (similar.length > 0) document.dispatchEvent(new CustomEvent('atelier-drag-scroll'))
+  }, [similar])
 
   const seeded = Boolean(initialProduct)
 
@@ -388,11 +393,34 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
             )}
           </div>
 
-          {product.hi_res_asset_url && (
-            <a className="detail-hires" href={product.hi_res_asset_url} download>
-              Download hi-res image
-            </a>
+          {/* The thumbnail rail (frame 9503:4576): one square per colourway
+              that has a photograph, the selected one framed. It selects the
+              colourway exactly as the swatches do — the same `chooseColourway`. */}
+          {colourways.length > 1 && (
+            <ul className="detail-thumbs" aria-label="Colourways">
+              {colourways.map((colourway) => {
+                const tones = weaveBackground(colourway.hex_tones)
+                return (
+                  <li key={colourway.sku}>
+                    <button
+                      type="button"
+                      className={colourway.sku === selectedSku ? 'detail-thumb is-selected' : 'detail-thumb'}
+                      aria-pressed={colourway.sku === selectedSku}
+                      aria-label={colourway.name}
+                      style={!colourway.image_url && tones ? { background: tones } : undefined}
+                      onClick={() => chooseColourway(colourway.sku)}
+                    >
+                      {/* Its own photograph where the CRM holds one; the
+                          colourway's weave otherwise — the same fallback the
+                          library's cards make, never an empty square. */}
+                      {colourway.image_url && <img src={colourway.image_url} alt="" loading="lazy" />}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
           )}
+
         </div>
 
         <div className="detail-info">
@@ -427,7 +455,6 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
             {price.text}
             {!price.muted && fabric && <span className="detail-price-unit">/ m</span>}
             {price.retail && <s className="detail-price-retail">{price.retail}</s>}
-            {price.indicative && <span className="indicative-note">Indicative</span>}
           </p>
 
           <div className="detail-controls">
@@ -477,23 +504,34 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
               </label>
             )}
 
+            {/* Colour as the frame draws it (9503:5416): 32px discs, the chosen
+                one ringed. Each disc paints the colourway's own tones through
+                `weaveBackground`, so a colourway with none falls back to the
+                surface. Out of stock is in the name, not hidden. */}
             {colourways.length > 0 && (
-              <label className="detail-control">
-                <span className="detail-control-label">Colour</span>
-                <span className="detail-colour-select">
-                  <select
-                    value={selectedSku ?? ''}
-                    onChange={(event) => chooseColourway(event.target.value)}
-                  >
-                    {colourways.map((colourway) => (
-                      <option key={colourway.sku} value={colourway.sku}>
-                        {colourway.name}
-                        {colourway.in_stock ? '' : ' — out of stock'}
-                      </option>
-                    ))}
-                  </select>
+              <div className="detail-control detail-colour" role="group" aria-labelledby="detail-colour-label">
+                <span className="detail-control-label" id="detail-colour-label">
+                  Colour
                 </span>
-              </label>
+                <span className="detail-swatches">
+                  {colourways.map((colourway) => {
+                    const tones = weaveBackground(colourway.hex_tones)
+                    return (
+                      <button
+                        key={colourway.sku}
+                        type="button"
+                        className={colourway.sku === selectedSku ? 'detail-swatch is-selected' : 'detail-swatch'}
+                        aria-pressed={colourway.sku === selectedSku}
+                        aria-label={`${colourway.name}${colourway.in_stock ? '' : ' — out of stock'}`}
+                        title={`${colourway.name}${colourway.in_stock ? '' : ' — out of stock'}`}
+                        style={tones ? { background: tones } : undefined}
+                        onClick={() => chooseColourway(colourway.sku)}
+                      />
+                    )
+                  })}
+                </span>
+                {selected && <span className="detail-swatch-name">{selected.name}</span>}
+              </div>
             )}
           </div>
 
@@ -534,14 +572,19 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                 </a>
               </>
             ) : (
-              <button
-                type="button"
-                className="action-fill"
-                onClick={onAddToCart}
-                disabled={!canAddToCart}
-              >
-                Add to cart
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="action-fill"
+                  onClick={onAddToCart}
+                  disabled={!canAddToCart}
+                >
+                  Add to cart
+                </button>
+                <a className="action-outline" href="/contact">
+                  Request a sample
+                </a>
+              </>
             )}
           </div>
 
@@ -591,14 +634,13 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
       {similar.length > 0 && (
         <section className="container detail-similar" aria-label="Similar designs">
           <div className="detail-similar-head">
-            <h2>Similar</h2>
-            {brandSlug && (
-              <a className="cta-underline cta-underline-lg" href={`/products?brand=${encodeURIComponent(brandSlug)}`}>
-                View all
-              </a>
-            )}
+            <h2>Similar Products</h2>
           </div>
-          <ul className="product-grid detail-similar-grid">
+          {/* The brands row's figure: three tiles in the container, the rest
+              running off the right edge, dragged (DragScroll binds on the
+              `atelier-drag-scroll` event the effect fires once these have
+              rendered). Same round card as the shop grid. */}
+          <ul className="product-grid product-grid-round detail-similar-row" data-drag-scroll>
             {similar.map((row) => {
               const rowPrice = priceInfo(row, viewer)
               const weave = weaveBackground(row.colourways?.[0]?.hex_tones)

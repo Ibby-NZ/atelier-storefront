@@ -8,6 +8,8 @@ import { listEmdashBrandPages } from '../lib/emdash.js'
 import { houseArtwork } from '../lib/houses.js'
 import { SHOWROOMS, SHOWROOM_HOURS } from '../lib/site.js'
 import DragScroll from '../components/DragScroll.astro'
+import FeaturedBand from '../components/FeaturedBand.astro'
+import BrandsRow from '../components/BrandsRow.astro'
 import heroBg from '../assets/img/story-hero-bg.jpg'
 import whyAtelier from '../assets/img/story-why-atelier.jpg'
 import sourcedBg from '../assets/img/story-sourced-bg.jpg'
@@ -82,11 +84,9 @@ const houses = brands.map((brand) => ({
   ),
 }))
 
-const [hero, why, sourced, workspace, showrooms] = await Promise.all([
+const [hero, sourced, showrooms] = await Promise.all([
   getImage({ src: heroBg, format: 'webp', width: 2200 }),
-  getImage({ src: whyAtelier, format: 'webp', width: 1400 }),
   getImage({ src: sourcedBg, format: 'webp', width: 2200 }),
-  getImage({ src: workspaceImg, format: 'webp', width: 1400 }),
   getImage({ src: showroomsBg, format: 'webp', width: 2200 }),
 ])
 ---
@@ -96,6 +96,7 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
   description="Atelier — n. 1640, from French: 'workshop'. A boutique importer and distributor bringing the world's finest furnishing houses to Aotearoa."
   bleed
   overlay
+  dark
 >
   <div class="story-page">
     <section class="photo-band photo-band--parallax story-hero">
@@ -110,26 +111,21 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
       </div>
     </section>
 
-    <section class="story-split">
-      <div
-        class="story-split-media"
-        style={`background-image: url(${why.src});`}
-        role="img"
-        aria-label="An armchair upholstered in a geometric weave"
-      >
-      </div>
-      <div class="story-split-body">
-        <p class="story-badge">Why Atelier</p>
-        <h2>Atelier <span class="story-pron">[ at–l–yey ]</span></h2>
-        <p>
-          As our name suggests, Atelier is the ultimate setting for design. We
-          are more than just a boutique importer and distributor; we are a
-          dedicated workspace created specifically to inspire and elevate your
-          creative vision.
-        </p>
-      </div>
-    </section>
-
+    {/* The home's featured band, exactly — spacing, height, sizing, drift —
+        with the photograph on the LEFT, as the frame draws this one (page
+        feedback, Sept 2026: "reflect exactly like the homepage section
+        Featured Collection … the only difference should be left or right"). */}
+    <FeaturedBand
+      badge="Why Atelier"
+      image={whyAtelier}
+      alt="An armchair upholstered in a geometric weave"
+      side="left"
+      description="As our name suggests, Atelier is the ultimate setting for design. We are more than just a boutique importer and distributor; we are a dedicated workspace created specifically to inspire and elevate your creative vision."
+    >
+      <Fragment slot="title">
+        Atelier <span class="story-pron">[ at–l–yey ]</span>
+      </Fragment>
+    </FeaturedBand>
     <section class="photo-band photo-band--parallax story-sourced">
       <span class="photo-band-art" style={`background-image: url(${sourced.src});`}></span>
       <div class="container photo-band-body">
@@ -151,68 +147,27 @@ const [hero, why, sourced, workspace, showrooms] = await Promise.all([
       </div>
     </section>
 
-    {
-      houses.length > 0 && (
-        <section class="story-brands">
-          <div class="container">
-            <div class="story-brands-head">
-              <h2>Brands</h2>
-              <a class="cta-underline cta-underline-light" href="/brands">View all</a>
-            </div>
-          </div>
-          {/* Outside the container on purpose: the row runs PAST the frame's
-              right edge rather than wrapping, which is what makes it read as a
-              gallery instead of a short grid. Its own gutter padding keeps the
-              first tile aligned with the heading above it. Same figure as the
-              home's "Latest collections" row. */}
-          <ul class="story-brands-row" data-drag-scroll>
-            {houses.map((house) => (
-              <li>
-                <a class="house-card" href={`/brands/${house.slug}`}>
-                  <span class:list={['house-card-media', { weave: !house.image }]}>
-                    {house.image && <img src={house.image} alt="" loading="lazy" />}
-                    {house.logo_url ? (
-                      <img class="house-card-logo" src={house.logo_url} alt={house.name} loading="lazy" />
-                    ) : (
-                      <span class="house-card-logo">{house.name}</span>
-                    )}
-                  </span>
-                  <span class="house-card-name">{house.name}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
-
-    <section class="story-split story-split-reverse">
-      <div class="story-split-body">
-        <p class="story-badge">The Workspace</p>
-        <h2>Inside the Atelier</h2>
-        <p>
-          Step inside our doors and discover a true creative workshop. Our
-          spaces house thousands of exquisite materials designed to help you
-          craft unique, bespoke interiors. We proudly supply:
-        </p>
-        <ul class="story-list">
-          <li>Beautiful fabrics and drapery</li>
-          <li>Luxury wall coverings</li>
-          <li>Bespoke trims</li>
-          <li>Premium towels and bed linen</li>
-          <li>Artisan rugs</li>
-          <li>Exclusive furniture pieces</li>
-        </ul>
-      </div>
-      <div
-        class="story-split-media"
-        style={`background-image: url(${workspace.src});`}
-        role="img"
-        aria-label="The Atelier workroom behind a patterned sheer"
-      >
-      </div>
-    </section>
-
+    {/* The home's Brands row, exactly — head, tile, cap of sixteen, drag. */}
+    {houses.length > 0 && <BrandsRow houses={houses} />}
+    {/* The same band, photograph on the RIGHT. The supply list rides in the
+        band's body slot, under the copy. */}
+    <FeaturedBand
+      badge="The Workspace"
+      title="Inside the Atelier"
+      image={workspaceImg}
+      alt="The Atelier workroom behind a patterned sheer"
+      side="right"
+      description="Step inside our doors and discover a true creative workshop. Our spaces house thousands of exquisite materials designed to help you craft unique, bespoke interiors. We proudly supply:"
+    >
+      <ul class="story-list">
+        <li>Beautiful fabrics and drapery</li>
+        <li>Luxury wall coverings</li>
+        <li>Bespoke trims</li>
+        <li>Premium towels and bed linen</li>
+        <li>Artisan rugs</li>
+        <li>Exclusive furniture pieces</li>
+      </ul>
+    </FeaturedBand>
     <section class="photo-band photo-band--parallax story-showrooms">
       <span class="photo-band-art" style={`background-image: url(${showrooms.src});`}></span>
       <div class="container photo-band-body">
