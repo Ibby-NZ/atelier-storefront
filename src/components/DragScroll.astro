@@ -19,6 +19,8 @@
 
 <script>
   const rows = document.querySelectorAll('[data-drag-scroll]')
+  // How long the wheel must be quiet before the snap comes back on.
+  const WHEEL_SETTLE_MS = 150
 
   for (const row of rows) {
     const canScroll = () => row.scrollWidth - row.clientWidth > 1
@@ -29,6 +31,16 @@
     // preventDefault ONLY when the row actually consumed the delta — at either
     // end of the track the page must go on scrolling, or the row becomes a trap
     // the reader cannot get out of.
+    //
+    // The snap must come off while the wheel drives the row, exactly as it does
+    // mid-drag: `scroll-snap-type: x proximity` re-snaps after every
+    // programmatic scrollLeft write, and a wheel notch is a few pixels — well
+    // inside the proximity band — so each step was pulled straight back to the
+    // tile edge it had just left and the row never moved (drag only worked
+    // because `.is-dragging` already switches the snap off). Inline, so neither
+    // stylesheet needs a class; the snap returns once the wheel has been quiet
+    // for a beat, which is also what settles the row onto a tile.
+    let wheelSettle
     row.addEventListener(
       'wheel',
       (event) => {
@@ -39,6 +51,11 @@
         const next = Math.min(Math.max(row.scrollLeft + event.deltaY, 0), limit)
         if (next === row.scrollLeft) return
 
+        row.style.scrollSnapType = 'none'
+        clearTimeout(wheelSettle)
+        wheelSettle = setTimeout(() => {
+          row.style.scrollSnapType = ''
+        }, WHEEL_SETTLE_MS)
         row.scrollLeft = next
         event.preventDefault()
       },
