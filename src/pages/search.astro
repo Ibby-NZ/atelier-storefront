@@ -1,0 +1,141 @@
+---
+// Site search (September 2026). The header's magnifier lands here; the field
+// is a plain GET form, so a search is a URL (/search?q=linen) a shopper can
+// share or re-run, and it needs no script. On demand: the journal and the
+// office's CMS pages are queried live, and the query is in the URL.
+//
+// Two halves. This file renders what the CMS holds (journal posts and pages)
+// plus the fixed page index (lib/search.js); the SearchResults island renders
+// designs and houses off the API, credentialed, because WHICH designs depends
+// on who is asking (lib/tradeGate.js) and a server fetch carries no cookie.
+// Opens on the shop page's banner, exactly as /resources does.
+export const prerender = false
+import Layout from '../layouts/Layout.astro'
+import SearchResults from '../components/SearchResults.jsx'
+import { listEmdashPages } from '../lib/emdash.js'
+import { truncateWords } from '../lib/journal.js'
+import { listPosts } from '../lib/posts.js'
+import {
+  SITE_PAGES,
+  cmsPageHit,
+  normaliseQuery,
+  pageText,
+  postText,
+  searchIndex,
+} from '../lib/search.js'
+
+const q = normaliseQuery(Astro.url.searchParams.get('q'))
+
+// Nothing is fetched for an empty query — the page is just the field.
+const [posts, cmsPages] = q ? await Promise.all([listPosts(), listEmdashPages()]) : [[], []]
+const journal = searchIndex(posts, q, postText)
+const pages = searchIndex(
+  [...SITE_PAGES, ...cmsPages.map(cmsPageHit).filter(Boolean)],
+  q,
+  pageText
+)
+
+const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'long' })
+const title = q ? `“${q}” — Search — Atelier Textiles` : 'Search — Atelier Textiles'
+---
+
+<Layout
+  title={title}
+  description="Search designs, houses, the journal and pages across Atelier Textiles."
+  bleed
+  overlay="light"
+>
+  <section class="library-hero">
+    <div class="container library-hero-row">
+      <div class="library-hero-heading">
+        <p class="badge-ochre">Search</p>
+        <h1>{q ? `Results for “${q}”` : 'Search the site'}</h1>
+      </div>
+      <p class="library-hero-note">Designs, houses, the journal and our pages, in one place.</p>
+    </div>
+  </section>
+
+  <div class="container search-body">
+    <form class="search-form" role="search" action="/search" method="get">
+      <div class="field">
+        <label class="sr-only" for="search-q">Search</label>
+        <input
+          id="search-q"
+          type="search"
+          name="q"
+          value={q}
+          placeholder="Search designs, houses, journal, pages…"
+          autocomplete="off"
+          autofocus
+        />
+      </div>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    {q && <SearchResults client:load query={q} />}
+
+    {
+      q && (
+        <section class="search-section" aria-labelledby="search-journal">
+          <div class="section-head">
+            <h2 id="search-journal">
+              Journal <span class="search-count">{journal.length}</span>
+            </h2>
+          </div>
+          {journal.length === 0 ? (
+            <p class="search-empty">No journal posts match “{q}”.</p>
+          ) : (
+            <ul class="index-list">
+              {journal.map((post) => (
+                <li>
+                  <a href={`/resources/${post.id}`}>
+                    <span class="index-name">{post.title}</span>
+                    {post.date && <span class="index-meta">{dateFormat.format(post.date)}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )
+    }
+
+    {
+      q && (
+        <section class="search-section" aria-labelledby="search-pages">
+          <div class="section-head">
+            <h2 id="search-pages">
+              Pages <span class="search-count">{pages.length}</span>
+            </h2>
+          </div>
+          {pages.length === 0 ? (
+            <p class="search-empty">No pages match “{q}”.</p>
+          ) : (
+            <ul class="search-pages">
+              {pages.map((page) => (
+                <li>
+                  <a href={page.href}>
+                    <span class="search-page-title">{page.title}</span>
+                    {page.description && (
+                      <span class="search-page-blurb">{truncateWords(page.description, 140)}</span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )
+    }
+  </div>
+</Layout>
+
+<script>
+  // ClientRouter: `autofocus` only takes on a full load, so focus the empty
+  // field on every arrival here. Runs once per session (see Layout.astro) and
+  // finds nothing on any other page.
+  document.addEventListener('astro:page-load', () => {
+    const field = document.getElementById('search-q')
+    if (field instanceof HTMLInputElement && !field.value) field.focus()
+  })
+</script>

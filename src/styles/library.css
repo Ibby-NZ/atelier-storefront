@@ -197,11 +197,15 @@
   border-bottom-color: var(--ochre);
 }
 
-/* --- Facet sections ------------------------------------------------------- */
-/* Each section is an ochre 12px head over a hairline, then its rows or its
-   boxed select. */
+/* --- Facet dropdowns ------------------------------------------------------ */
+/* Each facet is a native <details>: the ochre 12px head over a hairline is its
+   <summary> (with a chevron and, once something is ticked, the count), and the
+   checkbox rows open in flow beneath it. */
 .library-facet-head {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
   margin: 0;
   padding-block: 1.25rem;
   border-bottom: 1px solid var(--shell-line);
@@ -210,6 +214,38 @@
   font-weight: 600;
   line-height: 1.4;
   color: var(--ochre);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.library-facet-head::-webkit-details-marker {
+  display: none;
+}
+
+.library-facet-head:hover {
+  color: var(--umber);
+}
+
+.library-facet-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+/* How many of this facet's values are ticked — shown closed or open, so a
+   deep-linked shopper can see where the filtering is without opening each. */
+.library-facet-chosen {
+  color: var(--shell-muted);
+}
+
+.library-facet-chevron {
+  flex: none;
+  transition: transform var(--quick);
+}
+
+.library-facet[open] > .library-facet-head .library-facet-chevron {
+  transform: rotate(180deg);
 }
 
 .library-facet-list {
@@ -221,16 +257,12 @@
   list-style: none;
 }
 
+/* A checkbox row: native box in the direction's ochre, the label, the live
+   count pushed to the right. */
 .library-facet-row {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s4);
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
+  align-items: center;
+  gap: var(--s3);
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: var(--t-base);
@@ -239,11 +271,17 @@
   transition: color var(--quick);
 }
 
-.library-facet-row:hover {
-  color: var(--ochre);
+.library-facet-row input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--ochre);
+  cursor: pointer;
 }
 
-.library-facet-row.is-active {
+.library-facet-row:hover,
+.library-facet-row:has(:checked) {
   color: var(--ochre);
 }
 
@@ -254,21 +292,14 @@
 }
 
 .library-facet-count {
+  margin-left: auto;
   font-family: var(--font-ui);
   font-size: var(--t-xs);
   font-weight: 600;
   color: var(--shell-muted);
 }
 
-/* --- Boxed selects -------------------------------------------------------- */
-.product-library .filter {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-width: 0;
-}
-
-.product-library .filter select,
+/* --- Boxed select (the sort control) -------------------------------------- */
 .product-library .library-sort select {
   width: 100%;
   min-height: 44px;
@@ -288,21 +319,13 @@
   cursor: pointer;
 }
 
-.product-library .filter select:hover,
 .product-library .library-sort select:hover {
   border-color: var(--umber);
 }
 
-.product-library .filter select:focus,
 .product-library .library-sort select:focus {
   border-color: var(--umber);
   box-shadow: none;
-}
-
-/* The select sections keep their heads' hairline from .library-facet-head; the
-   select itself sits under it. */
-.product-library .filter .library-facet-head {
-  width: 100%;
 }
 
 /* --- Sidebar toggle (narrow viewports only) ------------------------------- */

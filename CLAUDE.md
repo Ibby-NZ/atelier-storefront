@@ -162,6 +162,23 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
         CSS bundle **regardless of the condition around it**, so a bundled rule
         would also lift the launcher on a build that has no Agentation under it.
         `!important` because Userback's own sheet sets the `bottom`.
+  - **Both widgets must be carried across a ClientRouter swap** (Sept 2026,
+    the "toolbar in flow below the footer" report): each styles itself by
+    appending `<style>`/`<link>` to `<head>` at runtime, Userback builds its
+    launcher into `<body>`, and the swap keeps only what the incoming
+    document also carries — so the FIRST client-side navigation stripped both
+    sheets and the launcher, Agentation remounted as raw buttons under the
+    footer and the Userback bubble vanished. A hard refresh never shows it,
+    which is why it could not be reproduced on the old branch. The
+    `astro:before-swap` inline script in `Layout.astro` moves the sheets into
+    `event.newDocument.head` and the launcher into its body; Agentation's
+    island remounts on its own. Any new third-party widget needs the same.
+  - **Favicon** (September 2026): `public/favicon.svg` (+ `favicon.png` 96px
+    for Safari, which still ignores svg icons, and `apple-touch-icon.png`
+    180px), linked from the layout head. The mark is the Didot Bold "A"
+    outline on the shell cream; the CRM ships the same glyph reversed so the
+    two tabs tell apart. `public/` did not exist before this — Astro copies it
+    to `dist/client/` and `server.mjs` serves it with the rest.
   - **Do not verify the toolbar's absence by filename.** The old note claimed
     `ls dist/client/_astro | grep -i agent` came back empty; it does, but only
     because Astro names the chunk after the package entry (`index.mjs` →
@@ -434,9 +451,10 @@ Where it surfaces:
   header floating inside the band in its PAPER theme (`overlay="light"`, Sept
   2026; the band was umber with reversed type before). `/resources` opens on
   the identical band and the identical 96px of air under it. Then the browse
-  area — boxed 44px search, facet lists under ochre 12px heads on
-  hairlines ("Brands", "Category", "Price" — the labels are the frame's), boxed selects for
-  the rest (no "More filters" group heading any more), the "Refine … Clear
+  area — boxed 44px search, one closed **multi-select dropdown per facet**
+  under the ochre 12px heads on hairlines ("Brands", "Category", "Price" — the
+  labels are the frame's; Application, Composition, Size and Lead time render
+  the same way, no boxed selects any more), the "Refine … Clear
   all" row CLOSING the 267px sidebar as the frame does (9457:5273; it used to
   open it), and surface-cream cards
   (photo, in-stock chip on the photograph, ochre house badge, 20px Inter-medium
@@ -482,10 +500,22 @@ Where it surfaces:
   - **Layout**: the island is the two-column grid — `16rem` sticky refine
     sidebar + results column — because the facets and the grid share every
     piece of state.
-    - `FILTERS` carries a **`control`** field: `list` renders as a
-      click-to-toggle facet row with a live count (Brands, Collections,
-      Category, Price), `select` as a boxed dropdown with its own ochre head
-      (Application, Composition, Size, Lead time).
+    - **Every facet is a MULTI-select dropdown** (September 2026, Userback: the
+      office wanted "Stroheim, Trend and Vervain", not one house at a time).
+      One native `<details>` per filter — closed on arrival, the `<summary>` is
+      the ochre head with a chevron and the number ticked, the checkbox rows
+      open IN FLOW under it (the aside scrolls its own overflow, so an overlaid
+      panel would be clipped; no open/close state is held). The selection is
+      an **array per key**: OR within a facet, AND across facets, and
+      `facetOptions` measures counts against the OTHER facets so a second house
+      stays tickable. **Querystring = one repeated key per value**
+      (`?brand=dedar&brand=zimmer`), never a delimiter — composition strings
+      carry commas — so a single-value hand-off (`?brand=dedar` from the home
+      and house pages) is just the one-element case. The shape lives in
+      `src/lib/libraryFilters.js` (`readSelection` / `selectionParams` /
+      `toggleValue`, tested); the island holds no string selections anywhere.
+      The former `control: 'list' | 'select'` split is gone — one control, one
+      options builder (`facetOptions`) for all eight.
     - **There is no Type facet and no Width select** (September 2026, the
       office's call): one question about what a thing is, not two, and width
       stays on the card's spec line. `?product_type=` and `?width=` deep links
@@ -500,12 +530,10 @@ Where it surfaces:
       visible price has no band, so the facet disappears where every price is
       hidden. `products.price_band` ("NZ$486 / m", one string per product) was
       a select that offered one row per product; it is no longer read here.
-    - **Both builders drop a control with no options.** `facetLists` always did;
-      `selectSets` did not, which is why Size shipped as a dropdown offering
-      only "All" while no product carried one. Options come from the whole
-      catalogue, so an empty set means the field is unused across it and the
-      control could never do anything. A selection arriving by deep link
-      survives the drop — it still filters, and "Clear all" is its exit.
+    - **A facet with no options is dropped**, so Size does not ship as a
+      dropdown of nothing while no product carries one. A selection arriving
+      by deep link survives the drop — it still filters, and "Clear all" is
+      its exit.
     - **`labels` belongs to the FILTER, not to the `enum` kind.** While Type was
       the only enum facet, `optionsFor` reached straight for
       `PRODUCT_TYPE_LABELS`; a second enum would have been labelled with the
@@ -1298,6 +1326,26 @@ page exists, so a page is never a confusing hybrid of both sources.
 No islands; the journal pages render on demand (`prerender = false`) because
 the CMS is queried live:
 
+- **`/search` (`search.astro`, September 2026)** — site search; the header's
+  magnifier lands here (it used to open `/products`, which searched designs
+  only). Opens on the shop banner like `/resources`, then a plain GET form —
+  a search is a URL (`/search?q=linen`) and needs no script; the field is
+  focused on every arrival (an `astro:page-load` listener, because `autofocus`
+  only takes on a full load under ClientRouter). **Two halves by necessity**:
+  the page is `prerender = false` and server-renders the CMS-backed hits —
+  journal posts (`listPosts()`) and the office's pages (`listEmdashPages()`
+  mapped through `cmsPageHit`, which skips `/contact`/`/privacy`/`/terms`
+  because they already sit in the fixed index) — while `SearchResults.jsx`
+  fetches designs and houses off the API **credentialed**, because which
+  designs come back depends on who is asking and a server fetch carries no
+  cookie. Designs use the API's own `q` (24, then "See all in the library"
+  hands off to `/products?q=`); houses are the brand list matched
+  client-side; the trade gate is named with `TRADE_GATE_COPY.library` exactly
+  as the library names it. `src/lib/search.js` (tested) owns the fixed page
+  index (`SITE_PAGES`, with the words a shopper might reach each page by) and
+  the one matching rule — **every word must appear** (AND): on an index this
+  small OR reads as noise. Page sheet `search.css`; `robots.txt` disallows
+  `/search` at launch — one URL per query, nothing to index.
 - **`/resources` (`resources/index.astro`)** — opens on the shop page's banner
   (`.library-hero`, `<Layout bleed overlay="light">`, no italics — Sept 2026),
   then `listPosts()` from `src/lib/posts.js`: published EmDash `posts` UNION

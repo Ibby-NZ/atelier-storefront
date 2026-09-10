@@ -90,6 +90,12 @@ const FONTS =
     {!allowIndexing && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
     <link rel="canonical" href={canonical} />
+    {/* The favicon is the Didot "A" tile in public/ (svg first, png for Safari,
+        which still ignores svg icons; the 180px apple-touch-icon covers the
+        home-screen bookmark). Same mark as the CRM, reversed there. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="96x96" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -187,6 +193,40 @@ const FONTS =
         with no server-renderable output. The flag is resolved in the
         frontmatter — see `showAgentation`. */}
     {showAgentation && <Agentation client:only="react" />}
+
+    {/* ClientRouter swaps <head> and <body> on every navigation, and BOTH
+        widgets style themselves by appending <style>/<link> to <head> at
+        runtime — Agentation once, at module load; Userback as its CDN script
+        boots — while Userback also builds its launcher straight into <body>.
+        The swap keeps only what the incoming document also carries, so the
+        first client-side navigation stripped both sheets and the launcher:
+        Agentation's island remounted and rendered as raw buttons in flow
+        under the footer, and the Userback bubble simply vanished (page
+        feedback, Sept 2026). Carry them across — the sheets into the incoming
+        head, the launcher into the incoming body; Agentation's island remounts
+        by itself and needs only its sheets back. Userback's second sheet is an
+        anonymous <style>, told apart by content. `is:inline` so it is emitted
+        only with a widget to protect; ClientRouter runs an identical inline
+        script once per session, so the listener is never stacked. */}
+    {
+      (showAgentation || userbackToken) && (
+        <script is:inline>
+          document.addEventListener('astro:before-swap', (event) => {
+            const next = event.newDocument
+            const sheets = document.head.querySelectorAll(
+              'style[id^="feedback-tool-"], style#agentation-color-tokens, link.userback-css'
+            )
+            for (const el of sheets) next.head.append(el)
+            for (const el of document.head.querySelectorAll('style:not([id]):not([data-vite-dev-id])')) {
+              if (el.textContent.includes('.userback')) next.head.append(el)
+            }
+            for (const el of document.body.querySelectorAll('.userback-button-container')) {
+              next.body.append(el)
+            }
+          })
+        </script>
+      )
+    }
 
     {/* Userback feedback widget — Userback's own async loader snippet, verbatim
         apart from the token and the placement line: put the config on
