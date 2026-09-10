@@ -382,22 +382,27 @@ body.theme-dark .library-facet-row {
   color: var(--bone-soft);
 }
 
+body.theme-dark .library-facet-head:hover {
+  color: var(--bone);
+}
+
 body.theme-dark .library-facet-row:hover,
-body.theme-dark .library-facet-row.is-active {
+body.theme-dark .library-facet-row:has(:checked) {
   color: var(--tan);
 }
 
-/* Boxed selects — the ink chevron data-uri is invisible on dark, so swap it for
-   a tan one and lift the hairline. */
-body.theme-dark .product-library .filter select,
+body.theme-dark .library-facet-row input {
+  accent-color: var(--tan);
+}
+
+/* Boxed sort select — the ink chevron data-uri is invisible on dark, so swap
+   it for a tan one and lift the hairline. */
 body.theme-dark .product-library .library-sort select {
   border-color: var(--umber-line);
   color: var(--bone);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23dcc8b1' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
-body.theme-dark .product-library .filter select:hover,
-body.theme-dark .product-library .filter select:focus,
 body.theme-dark .product-library .library-sort select:hover,
 body.theme-dark .product-library .library-sort select:focus {
   border-color: var(--bone);

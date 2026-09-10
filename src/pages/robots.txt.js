@@ -18,6 +18,8 @@ const PUBLIC_POLICY = [
   '',
   '# CMS admin + API',
   'Disallow: /_emdash/',
+  '# Search result pages: one URL per query, nothing to index',
+  'Disallow: /search',
   '',
 ].join('\n')
 

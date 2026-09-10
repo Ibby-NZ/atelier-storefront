@@ -15,6 +15,13 @@ import {
   TRADE_APPLICATION_PATH,
   TRADE_GATE_COPY,
 } from '../lib/tradeGate.js'
+import {
+  emptySelection,
+  readSelection,
+  selectedCount,
+  selectionParams,
+  toggleValue,
+} from '../lib/libraryFilters.js'
 
 // Product library island (US-017), 2026 direction (design: Figma "Products
 // Page", node 9379:2732).
@@ -39,11 +46,10 @@ import {
 // represents are the part they cannot see. The banner is the invitation, and it
 // is never shown to an entitled viewer — meta.trade_gated is false for them.
 //
-// Layout: a sticky refine sidebar (search, House / Type facet lists, the
-// remaining filters as underline selects) beside the results column. Sidebar
-// and grid share every piece of state, so they are one island — and one
-// component only: the store ESLint has no React plugin, so a JSX-only
-// sub-component reference would trip no-unused-vars.
+// Layout: a sticky refine sidebar (search, then one closed dropdown per facet)
+// beside the results column. Sidebar and grid share every piece of state, so
+// they are one island — and one component only: the store ESLint has no React
+// plugin, so a JSX-only sub-component reference would trip no-unused-vars.
 const PAGE_LIMIT = 100
 
 // The mock's grid is three across and four deep, with a pagination row under
@@ -52,20 +58,23 @@ const PAGE_LIMIT = 100
 // fetch boundary.
 const CARDS_PER_PAGE = 12
 
-// Filter definitions. `type` picks how a product maps to an option; `control`
-// picks how it renders — `list` is a click-to-toggle facet list with live
-// counts in the sidebar, `select` is an underline dropdown under "More
-// filters". Order here is the order controls render in.
+// Filter definitions. `type` picks how a product maps to an option. Every
+// facet renders the same way — a native <details> dropdown of checkboxes with
+// live counts, MULTI-select (September 2026, the office's call: a shopper
+// picks three houses, not one) — so the selection holds an ARRAY of values per
+// key and a product matches a facet when its value is any of them
+// (lib/libraryFilters.js owns that shape). Order here is the order the
+// dropdowns render in.
 const FILTERS = [
   // "Brands", not "House": the 2026 frame names the facet the way the nav does.
-  { key: 'brand', label: 'Brands', type: 'brand', control: 'list' },
+  { key: 'brand', label: 'Brands', type: 'brand' },
   // Value is the collection SLUG (the brand-page tiles deep-link with it).
   // Slugs are unique per brand, not globally — matching on the slug alone
   // mirrors the API's `collection` filter, whose documented posture is "pair
   // it with brand"; the tiles always do. Most products carry no collection
   // (membership is staff-assigned in the CRM), and facetLists drops an empty
   // facet, so this list simply doesn't render until collections are in use.
-  { key: 'collection', label: 'Collections', type: 'collection', control: 'list' },
+  { key: 'collection', label: 'Collections', type: 'collection' },
   // The merchandising axis. There is no Type (fabric / finished good) facet
   // beside it any more: the office asked for one question, not two, and
   // "finished good" is a stock-unit fact rather than something a shopper
@@ -74,25 +83,24 @@ const FILTERS = [
   // catalogue is uncategorised and facetLists DROPS AN EMPTY FACET, so this list
   // does not render until the office has filled some in — like Collections.
   // `labels` belongs to the FILTER, not to the enum kind.
-  { key: 'category', label: 'Category', type: 'enum', control: 'list', labels: CATEGORY_LABELS },
+  { key: 'category', label: 'Category', type: 'enum', labels: CATEGORY_LABELS },
   // $100 bands over the price the card shows (priceBandFor). Derived, not a
   // column: `products.price_band` is a per-product string like "NZ$486 / m",
   // which as a facet was one row per product. A product with no visible price
   // has no band, so a guest browsing hidden-retail houses sees no Price facet.
-  { key: 'price', label: 'Price', type: 'price', control: 'list' },
-  { key: 'application', label: 'Application', type: 'text', control: 'select' },
-  { key: 'composition', label: 'Composition', type: 'text', control: 'select' },
+  { key: 'price', label: 'Price', type: 'price' },
+  { key: 'application', label: 'Application', type: 'text' },
+  { key: 'composition', label: 'Composition', type: 'text' },
   // Width was a select here and is not any more, at the office's request; it is
   // still on every card's spec line.
   // One product per size, so this is how a shopper picks the bath towels out of
   // the towels. Nothing in the seeded catalogue carries one yet — see
-  // selectSets, which drops a dropdown with no options for exactly that reason.
-  { key: 'size', label: 'Size', type: 'text', control: 'select' },
-  { key: 'lead_time', label: 'Lead time', type: 'text', control: 'select' },
+  // facetLists, which drops a dropdown with no options for exactly that reason.
+  { key: 'size', label: 'Size', type: 'text' },
+  { key: 'lead_time', label: 'Lead time', type: 'text' },
 ]
 
-const LIST_FILTERS = FILTERS.filter((filter) => filter.control === 'list')
-const SELECT_FILTERS = FILTERS.filter((filter) => filter.control === 'select')
+const FILTER_KEYS = FILTERS.map((filter) => filter.key)
 
 const SORTS = [
   { value: 'name', label: 'Name (A–Z)' },
@@ -101,28 +109,22 @@ const SORTS = [
   { value: 'in_stock', label: 'In stock first' },
 ]
 
-const EMPTY_SELECTION = Object.freeze(
-  FILTERS.reduce((acc, f) => ({ ...acc, [f.key]: '' }), {})
-)
+const EMPTY_SELECTION = emptySelection(FILTER_KEYS)
 
 const SORT_VALUES = SORTS.map((option) => option.value)
 
-// The grid is deep-linkable: /products?brand=dedar&product_type=fabric&q=velvet
-// is a shareable, bookmarkable view, and it is how the homepage and brand pages
-// hand off into the library. Islands are server-rendered before hydration, so
-// every window access is guarded.
+// The grid is deep-linkable: /products?brand=dedar&brand=zimmer&q=velvet is a
+// shareable, bookmarkable view (a repeated key per chosen value), and it is
+// how the homepage and brand pages hand off into the library. Islands are
+// server-rendered before hydration, so every window access is guarded.
 function readUrlState() {
   const empty = { selection: EMPTY_SELECTION, query: '', sort: 'name' }
   if (typeof window === 'undefined') return empty
 
   const params = new URLSearchParams(window.location.search)
-  const selection = FILTERS.reduce(
-    (acc, filter) => ({ ...acc, [filter.key]: params.get(filter.key) || '' }),
-    {}
-  )
   const sort = params.get('sort')
   return {
-    selection,
+    selection: readSelection(params, FILTER_KEYS),
     query: params.get('q') || '',
     sort: SORT_VALUES.includes(sort) ? sort : 'name',
   }
@@ -133,10 +135,7 @@ function readUrlState() {
 // entry the back button has to walk through.
 function writeUrlState(selection, query, sort) {
   if (typeof window === 'undefined') return
-  const params = new URLSearchParams()
-  for (const filter of FILTERS) {
-    if (selection[filter.key]) params.set(filter.key, selection[filter.key])
-  }
+  const params = selectionParams(selection)
   if (query.trim()) params.set('q', query.trim())
   if (sort !== 'name') params.set('sort', sort)
   const search = params.toString()
@@ -186,12 +185,13 @@ function optionsFor(products, filter) {
 // The lower bound of a band token: "201-300" → 201, "under-100" → 0.
 const bandFrom = (value) => Number.parseInt(value, 10) || 0
 
+// A facet with nothing chosen is open; one with choices matches ANY of them
+// (OR within a facet, AND across facets).
+const matchesFacet = (product, key, chosen) =>
+  chosen.length === 0 || chosen.includes(productValue(product, key))
+
 function matchesFilters(product, selection) {
-  return FILTERS.every((filter) => {
-    const chosen = selection[filter.key]
-    if (!chosen) return true
-    return productValue(product, filter.key) === chosen
-  })
+  return FILTERS.every((filter) => matchesFacet(product, filter.key, selection[filter.key]))
 }
 
 // Free-text search over the fields a shopper would actually type: the product
@@ -212,22 +212,19 @@ function matchesQuery(product, needle) {
   )
 }
 
-// Options + live counts for one sidebar facet list. The count is measured
-// against the search term and every OTHER filter, never the facet's own
-// selection — so picking "Pierre Frey" does not collapse the House list to a
-// single row, while the counts still track what is actually on screen.
-// An option that can no longer yield a result is dropped unless it is the one
-// currently selected (which must stay clickable to switch it off).
+// Options + live counts for one facet dropdown. The count is measured against
+// the search term and every OTHER filter, never the facet's own selection — so
+// ticking "Pierre Frey" does not collapse the Brands list to a single row (a
+// second house must stay tickable), while the counts still track what is
+// actually on screen. An option that can no longer yield a result is dropped
+// unless it is currently ticked (it must stay clickable to untick).
 function facetOptions(products, filter, selection, needle) {
   const others = FILTERS.filter((other) => other.key !== filter.key)
   const counts = new Map()
   for (const product of products) {
     const matches =
-      others.every(
-        (other) =>
-          !selection[other.key] ||
-          productValue(product, other.key) === selection[other.key]
-      ) && matchesQuery(product, needle)
+      others.every((other) => matchesFacet(product, other.key, selection[other.key])) &&
+      matchesQuery(product, needle)
     if (!matches) continue
     const value = productValue(product, filter.key)
     if (!value) continue
@@ -235,7 +232,7 @@ function facetOptions(products, filter, selection, needle) {
   }
   return optionsFor(products, filter)
     .map((option) => ({ ...option, count: counts.get(option.value) || 0 }))
-    .filter((option) => option.count > 0 || option.value === selection[filter.key])
+    .filter((option) => option.count > 0 || selection[filter.key].includes(option.value))
 }
 
 // The price a shopper may actually see, for sorting. A hidden or absent price
@@ -315,30 +312,19 @@ export default function ProductLibrary() {
 
   const needle = query.trim().toLowerCase()
 
-  // Facet lists recompute with the search term and the other selections; the
-  // dropdown options stay drawn from the whole catalogue so a shopper can
-  // always widen a choice from any state. A group with nothing left to offer is
-  // dropped entirely rather than rendering a heading over an empty rule.
+  // Facet dropdowns recompute with the search term and the other selections. A
+  // facet with nothing left to offer is dropped entirely rather than rendering
+  // a head over an empty list — most of the catalogue carries no category or
+  // collection yet, so those two simply do not appear until the office fills
+  // them in. A choice made from a deep link survives that: it still filters,
+  // and "Clear all" is its exit.
   const facetLists = useMemo(
     () =>
-      LIST_FILTERS.map((filter) => ({
+      FILTERS.map((filter) => ({
         filter,
         options: facetOptions(products, filter, selection, needle),
       })).filter(({ options }) => options.length > 0),
     [products, selection, needle]
-  )
-
-  // Dropped when it has nothing to offer, like the facet lists above: options
-  // come from the whole catalogue, so an empty set means NO product carries the
-  // field and the control could only ever say "All". A selection made from a
-  // deep link survives that — it still filters, and "Clear all" is its exit.
-  const selectSets = useMemo(
-    () =>
-      SELECT_FILTERS.map((filter) => ({
-        filter,
-        options: optionsFor(products, filter),
-      })).filter(({ options }) => options.length > 0),
-    [products]
   )
 
   const visible = useMemo(() => {
@@ -349,8 +335,7 @@ export default function ProductLibrary() {
     return [...matched].sort((a, b) => compareProducts(a, b, sort))
   }, [products, selection, needle, sort])
 
-  const activeCount =
-    FILTERS.filter((filter) => selection[filter.key]).length + (needle ? 1 : 0)
+  const activeCount = selectedCount(selection) + (needle ? 1 : 0)
   const hasActiveFilters = activeCount > 0
 
   const totalPages = Math.max(1, Math.ceil(visible.length / CARDS_PER_PAGE))
@@ -381,12 +366,10 @@ export default function ProductLibrary() {
     }
   }
 
-  const onFilterChange = (key, value) =>
-    setSelection((prev) => ({ ...prev, [key]: value }))
-
-  // Facet rows are toggles: clicking the active one clears it.
+  // Each row is a checkbox: ticking adds the value to that facet's list,
+  // unticking removes it.
   const onFacetToggle = (key, value) =>
-    setSelection((prev) => ({ ...prev, [key]: prev[key] === value ? '' : value }))
+    setSelection((prev) => ({ ...prev, [key]: toggleValue(prev[key], value) }))
 
   const clearFilters = () => {
     setSelection(EMPTY_SELECTION)
@@ -433,50 +416,56 @@ export default function ProductLibrary() {
           </svg>
         </label>
 
-        {facetLists.map(({ filter, options }) => (
-          <div className="library-facet" key={filter.key}>
-            <p className="library-facet-head" id={`facet-${filter.key}`}>
-              {filter.label}
-            </p>
-            <ul className="library-facet-list" aria-labelledby={`facet-${filter.key}`}>
-              {options.map((option) => {
-                const active = selection[filter.key] === option.value
-                return (
+        {/* One native <details> per facet: closed on arrival, the head shows
+            how many values are ticked, and the panel opens IN FLOW under it
+            (the aside scrolls its own overflow, so an overlaid panel would be
+            clipped). No open/close state to hold — the browser owns it. */}
+        {facetLists.map(({ filter, options }) => {
+          const chosen = selection[filter.key]
+          return (
+            <details className="library-facet" key={filter.key}>
+              <summary className="library-facet-head">
+                <span className="library-facet-title">
+                  {filter.label}
+                  {chosen.length > 0 && (
+                    <span className="library-facet-chosen">{chosen.length}</span>
+                  )}
+                </span>
+                <svg
+                  className="library-facet-chevron"
+                  width="10"
+                  height="6"
+                  viewBox="0 0 10 6"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M1 1l4 4 4-4"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </summary>
+              <ul className="library-facet-list">
+                {options.map((option) => (
                   <li key={option.value}>
-                    <button
-                      type="button"
-                      className={active ? 'library-facet-row is-active' : 'library-facet-row'}
-                      aria-pressed={active}
-                      onClick={() => onFacetToggle(filter.key, option.value)}
-                    >
+                    <label className="library-facet-row">
+                      <input
+                        type="checkbox"
+                        checked={chosen.includes(option.value)}
+                        onChange={() => onFacetToggle(filter.key, option.value)}
+                      />
                       <span className="library-facet-text">{option.label}</span>
                       <span className="library-facet-count">{option.count}</span>
-                    </button>
+                    </label>
                   </li>
-                )
-              })}
-            </ul>
-          </div>
-        ))}
-
-        {selectSets.map(({ filter, options }) => (
-          <div className="library-facet" key={filter.key}>
-            <label className="filter">
-              <span className="library-facet-head">{filter.label}</span>
-              <select
-                value={selection[filter.key]}
-                onChange={(event) => onFilterChange(filter.key, event.target.value)}
-              >
-                <option value="">All</option>
-                {options.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
                 ))}
-              </select>
-            </label>
-          </div>
-        ))}
+              </ul>
+            </details>
+          )
+        })}
 
         {/* The frame closes the sidebar with this row (9457:5273), not opens it. */}
         <div className="library-refine-row">

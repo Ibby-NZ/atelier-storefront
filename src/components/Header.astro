@@ -71,10 +71,11 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
       <a class="site-util-link" href="/contact" aria-current={isActive('/contact') ? 'page' : undefined}>
         Contact
       </a>
-      {/* Search is the library itself: it opens with the search field the
-          shopper is reaching for, and there is no separate search route to
-          send them to. */}
-      <a class="site-icon" href="/products" aria-label="Search the collection">
+      {/* Site search (September 2026): the magnifier lands on /search, whose
+          field is focused on arrival and whose results cover designs, houses,
+          the journal and pages. It used to open the library, which only
+          searched designs. */}
+      <a class="site-icon" href="/search" aria-label="Search the site">
         <svg
           width="24"
           height="24"

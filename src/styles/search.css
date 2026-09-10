@@ -1,0 +1,96 @@
+/* --- Site search (/search) ------------------------------------------------ */
+/* Opens on the shop banner (.library-hero, library.css); below it the field
+   and the result sections reuse .field/.btn (primitives), .section-head,
+   .index-list and the library's own product cards. */
+.search-body {
+  padding-block: var(--s8) var(--s10);
+}
+
+.search-form {
+  display: flex;
+  gap: var(--s3);
+  max-width: 40rem;
+}
+
+.search-form .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-section {
+  margin-top: var(--s9);
+}
+
+.search-count {
+  margin-left: var(--s3);
+  font-family: var(--font-ui);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.search-empty,
+.search-more,
+.search-gate {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.search-gate {
+  margin-bottom: var(--s6);
+}
+
+.search-gate a + a {
+  margin-left: var(--s4);
+}
+
+.search-more {
+  margin-top: var(--s6);
+}
+
+/* Page hits: title over its blurb, hairline rows like .index-list. */
+.search-pages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--hair);
+}
+
+.search-pages li {
+  border-bottom: var(--hair);
+}
+
+.search-pages a {
+  display: block;
+  padding: 1.4rem 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.search-page-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  transition: color var(--quick);
+}
+
+.search-pages a:hover .search-page-title {
+  color: var(--accent);
+}
+
+.search-page-blurb {
+  display: block;
+  margin-top: var(--s2);
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+@media (max-width: 640px) {
+  .search-body {
+    padding-block: var(--s7) var(--s8);
+  }
+
+  .search-form {
+    flex-direction: column;
+  }
+}

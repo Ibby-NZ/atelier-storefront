@@ -281,3 +281,14 @@ export async function getEmdashPage(slug) {
     return null
   }
 }
+
+// Every published CMS page, for site search (pages/search.astro). Same
+// soft-failure rule: no CMS, no office pages in the results.
+export async function listEmdashPages() {
+  try {
+    const { entries } = await getEmDashCollection('pages')
+    return entries.map(normalisePage)
+  } catch {
+    return []
+  }
+}
