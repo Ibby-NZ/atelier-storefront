@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { honeypotField } from './honeypotField.jsx'
 import { fetchCurrentUser } from '../lib/auth.js'
 import { PRICE_VALIDITY_NOTE, blankEnquiryState, bespokeEnquiryPayload } from '../lib/bespoke.js'
 
@@ -19,6 +20,7 @@ import { PRICE_VALIDITY_NOTE, blankEnquiryState, bespokeEnquiryPayload } from '.
 // JSX-only sub-component reference would trip no-unused-vars.
 
 export default function BespokeEnquiry({ house }) {
+  const [website, setWebsite] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -74,7 +76,10 @@ export default function BespokeEnquiry({ house }) {
       await apiFetch('/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bespokeEnquiryPayload({ house, category, name, email, phone, message })),
+        body: JSON.stringify({
+          website: website || undefined,
+          ...bespokeEnquiryPayload({ house, category, name, email, phone, message }),
+        }),
       })
       updateEnquiry({ submitting: false, sent: true })
     } catch (err) {
@@ -110,6 +115,7 @@ export default function BespokeEnquiry({ house }) {
         </div>
       ) : (
         <form className="contact-form" onSubmit={onSubmit} noValidate>
+          {honeypotField(website, setWebsite)}
           <h2>Made to measure</h2>
           <p className="bespoke-form-lede">
             {house.name} makes pieces entirely to order. Every piece is quoted individually:

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { honeypotField } from './honeypotField.jsx'
 import { fetchCurrentUser } from '../lib/auth.js'
 
 // Contact form island. Posts to POST /contact, which stores the enquiry and
@@ -13,6 +14,7 @@ import { fetchCurrentUser } from '../lib/auth.js'
 // would trip no-unused-vars (same constraint as the other islands).
 
 export default function ContactForm() {
+  const [website, setWebsite] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -87,6 +89,7 @@ export default function ContactForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          website: website || undefined,
           name: name.trim(),
           email: email.trim(),
           phone: phone.trim() || undefined,
@@ -111,6 +114,7 @@ export default function ContactForm() {
 
   return (
     <form className="contact-form" onSubmit={onSubmit} noValidate>
+      {honeypotField(website, setWebsite)}
       <label className="field">
         <span>Name</span>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
