@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { honeypotField } from './honeypotField.jsx'
 import { fetchCurrentUser } from '../lib/auth.js'
 import {
   REQUEST_EVENT,
@@ -78,6 +79,7 @@ export default function RequestList() {
   const [items, setItems] = useState(null) // null until hydrated (avoids SSR flash)
   const [drafts, setDrafts] = useState({}) // sku -> in-progress metres text
 
+  const [website, setWebsite] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -324,6 +326,7 @@ export default function RequestList() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          website: website || undefined,
           lines: toRequestPayloadLines(items),
           contact: {
             name: name.trim() || null,
@@ -359,6 +362,7 @@ export default function RequestList() {
 
   return (
     <form className="request-list" onSubmit={onSubmit} noValidate>
+      {honeypotField(website, setWebsite)}
       <div className="request-list-lines">
         {deepLinkFailed && (
           <p className="error-state">

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { honeypotField } from './honeypotField.jsx'
 
 // Forgot password. One field, one POST. The API answers 202 with the same
 // sentence whether or not the address is registered, so the "sent" state
 // repeats that sentence rather than claiming an email is on its way.
 export default function ForgotPasswordForm() {
+  const [website, setWebsite] = useState('')
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -22,7 +24,7 @@ export default function ForgotPasswordForm() {
       const body = await apiFetch('/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ website: website || undefined, email: email.trim() }),
       })
       setSent(body?.message || 'If an account exists for that address, a reset link has been emailed to it.')
     } catch (err) {
@@ -45,6 +47,7 @@ export default function ForgotPasswordForm() {
 
   return (
     <form className="auth-screen-form" onSubmit={handleSubmit} noValidate>
+      {honeypotField(website, setWebsite)}
       {error && (
         <p className="auth-screen-error" role="alert">{error}</p>
       )}

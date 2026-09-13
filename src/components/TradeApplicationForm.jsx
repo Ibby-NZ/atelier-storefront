@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
+import { honeypotField } from './honeypotField.jsx'
 
 // Trade-application island (US-021, FR-3). Carries the full atelier.co.nz
 // trade-account-application form — customer details, accounts + design
@@ -131,6 +132,7 @@ const APPLICATION_TEXT_KEYS = [
 
 export default function TradeApplicationForm() {
   const [form, setForm] = useState(INITIAL_FORM)
+  const [website, setWebsite] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -192,6 +194,7 @@ export default function TradeApplicationForm() {
     application.terms_accepted = form.terms_accepted
 
     const payload = { email: form.email.trim(), password: form.password, application }
+    if (website) payload.website = website
     if (form.name.trim()) payload.name = form.name.trim()
     return payload
   }
@@ -313,6 +316,7 @@ export default function TradeApplicationForm() {
 
   return (
     <form className="auth-form trade-form" onSubmit={handleSubmit} noValidate>
+      {honeypotField(website, setWebsite)}
       {error && (
         <p className="form-error" role="alert">
           {error}
