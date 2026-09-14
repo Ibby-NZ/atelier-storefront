@@ -234,3 +234,54 @@ export function clearRequestList() {
 export function requestListCount() {
   return requestLineCount(readRequestList())
 }
+
+// ---- Delivery address on a request (Userback 8373461) ----------------------
+//
+// The same shape the Stripe webhook writes for a card checkout, so the CRM's
+// Delivery block and the packing slip read a request and a checkout alike.
+// `state` is not asked for — NZ addresses have none — and is sent null.
+
+export const ADDRESS_FIELDS = Object.freeze([
+  { key: 'line1', label: 'Street address', autoComplete: 'address-line1' },
+  { key: 'line2', label: 'Apartment, suite, etc.', autoComplete: 'address-line2' },
+  { key: 'city', label: 'City', autoComplete: 'address-level2' },
+  { key: 'postal_code', label: 'Postcode', autoComplete: 'postal-code' },
+  { key: 'country', label: 'Country', autoComplete: 'country-name' },
+])
+
+export const EMPTY_ADDRESS = Object.freeze({
+  line1: '',
+  line2: '',
+  city: '',
+  postal_code: '',
+  country: 'New Zealand',
+})
+
+const trimmedOrNull = (value) => {
+  const text = String(value ?? '').trim()
+  return text === '' ? null : text
+}
+
+/**
+ * The `shipping_address` body for POST /orders/request, or undefined when the
+ * form names nowhere — a country alone (the prefilled default) is not an
+ * address, and sending one would make every collected order look shipped.
+ *
+ * @param {object} address  the form's address state
+ * @param {string} [name]   the contact name, carried as the addressee
+ * @returns {object|undefined}
+ */
+export function requestAddressPayload(address = {}, name = '') {
+  const line1 = trimmedOrNull(address.line1)
+  const city = trimmedOrNull(address.city)
+  if (!line1 && !city) return undefined
+  return {
+    name: trimmedOrNull(name),
+    line1,
+    line2: trimmedOrNull(address.line2),
+    city,
+    state: null,
+    postal_code: trimmedOrNull(address.postal_code),
+    country: trimmedOrNull(address.country),
+  }
+}

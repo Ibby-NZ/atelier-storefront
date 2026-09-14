@@ -26,6 +26,10 @@ import { honeypotField } from './honeypotField.jsx'
 // OrderRequestForm.jsx) and is what `.trade-form .field > span + .field-checkbox`
 // keys off. A bare class is what made "Yes" sit flush against its radio.
 
+// The signed terms the office holds applicants to — the same PDF atelier.co.nz
+// publishes. Linked, not copied: the office updates the document, not this form.
+const TERMS_OF_TRADE_URL =
+  'https://www.atelier.co.nz/wp-content/uploads/2025/10/Atelier-Terms-of-Trade-September-2025.pdf'
 const MIN_PASSWORD_LENGTH = 8
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
@@ -418,7 +422,16 @@ export default function TradeApplicationForm() {
             {checkbox(
               'terms_accepted',
               <>
-                I agree to the <strong>Terms of Trade</strong>.
+                I agree to the{' '}
+                <a
+                  href={TERMS_OF_TRADE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Terms of Trade
+                </a>
+                .
               </>
             )}
             {fieldErrors.terms_accepted && (
