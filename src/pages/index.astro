@@ -6,7 +6,6 @@
 // (safeFetch and the lib/emdash.js readers never throw), so an API or CMS
 // outage renders the shipped page, never a 500.
 export const prerender = false
-import { Image, getImage } from 'astro:assets'
 import Layout from '../layouts/Layout.astro'
 import CollectionHero from '../components/CollectionHero.astro'
 import FeaturedBand from '../components/FeaturedBand.astro'
@@ -236,13 +235,12 @@ const houses = brands.map((brand) => ({
 // scrim. The hero and the featured band are the two that follow a collection,
 // so they follow the art chain above instead.
 //
-// Art-directed bands paint their photograph as a background, so they go through
-// getImage() rather than <Image>: same webp derivative, no <img> to place.
-const [typeArt, applicationArt, housesArt, manifestoImage] = await Promise.all(
-  [exploreTypeArt, exploreApplicationArt, designHousesArt, manifestoArt].map((src) =>
-    getImage({ src, format: 'webp' })
-  )
-)
+// Art-directed bands paint their photograph as a CSS background, so they take
+// the imported asset's own `.src` — no <img> to place, and NOT getImage():
+// this page is `prerender = false`, and under `output: "server"` getImage()
+// hands back a URL on the RUNTIME `/_image` endpoint, which is not resolved on
+// staging (it is what blanked the bespoke and house heroes, Userback,
+// 14 Sep 2026). An imported asset is emitted to `/_astro/` at build time.
 
 // Each band's shipped copy + art, with the CMS section (matched by the fixed
 // slug in .emdash/seed.json) merged over it: a field the editor filled wins, a
@@ -251,15 +249,15 @@ const [typeArt, applicationArt, housesArt, manifestoImage] = await Promise.all(
 // A hidden section (the `hidden` knob) drops out of the page entirely — the
 // entry keeps its content in the admin for when it comes back.
 const banners = [
-  applySection({ ...BANNERS[0], image: typeArt.src }, sections['shop-by-type']),
-  applySection({ ...BANNERS[1], image: applicationArt.src }, sections['shop-by-application']),
+  applySection({ ...BANNERS[0], image: exploreTypeArt.src }, sections['shop-by-type']),
+  applySection({ ...BANNERS[1], image: exploreApplicationArt.src }, sections['shop-by-application']),
 ].filter((banner) => !banner.hidden)
 const latestHead = applySection(
   { title: 'Brands', cta: 'View all', href: '/brands', image: null },
   sections['latest-collections']
 )
-const manifesto = applySection({ ...MANIFESTO, image: manifestoImage.src }, sections['home-manifesto'])
-const housesBand = applySection({ ...HOUSES, image: housesArt.src }, sections['home-houses'])
+const manifesto = applySection({ ...MANIFESTO, image: manifestoArt.src }, sections['home-manifesto'])
+const housesBand = applySection({ ...HOUSES, image: designHousesArt.src }, sections['home-houses'])
 
 const bandStyle = (image) => (image ? `background-image: url(${image})` : undefined)
 ---

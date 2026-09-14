@@ -396,22 +396,30 @@
   margin-top: var(--s6);
 }
 
+/* The actions sit in THIS column since Sept 2026, and it is a plain grid cell,
+   not the flex stack `.house-intro-body` is — so the gap goes on the child. */
+.house-intro-blurb .house-actions {
+  margin-top: var(--s6);
+}
+
 .house-intro-body {
   display: flex;
   flex-direction: column;
   gap: var(--s6); /* 32px */
 }
 
-/* The house blurb IS the frame's heading/md: 24px Inter medium, 1.1, -1%,
-   text/primary. (An earlier note here said 16px; the frame says 24.) Token
-   colours so the dark page's remap reaches it. */
+/* The house blurb. It was the frame's heading/md (24px, 1.1) and the client
+   read a five-line paragraph set at that size as a mistake, not an opening
+   line (Userback, 14 Sep 2026, Loro Piana: "Make this normal text"). It is now
+   the BODY size `.house-copy` sets, and keeps weight 500 and the primary ink
+   so it still leads the column. Token colours so the dark page's remap reaches
+   it. */
 .house-lede {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: var(--font-size-2xl);
+  font-size: 1rem;
   font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  line-height: 1.5;
   color: var(--ink);
   text-wrap: pretty;
 }

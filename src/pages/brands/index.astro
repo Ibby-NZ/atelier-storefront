@@ -1,7 +1,6 @@
 ---
 export const prerender = false // on-demand so a newly created brand appears without a rebuild
 import { getCollection } from 'astro:content'
-import { getImage } from 'astro:assets'
 import Layout from '../../layouts/Layout.astro'
 import { safeFetch } from '../../lib/api.js'
 import { applySection, getSiteSections, listEmdashBrandPages } from '../../lib/emdash.js'
@@ -98,13 +97,15 @@ const houses = brands.map((brand) => ({
 // site_sections): an image or copy the office changes there changes here too,
 // and the shipped art and copy below are what an empty CMS renders. Image,
 // title and body only; the band's layout knobs belong to the home's figure.
-const heroImage = await getImage({ src: brandsBanner, format: 'webp', width: 2200 })
 const sections = await getSiteSections()
 const hero = applySection(
   {
     title: "The World's Finest Design Houses",
     body: "From the legendary textile mills of Europe to innovative global creators, we are a boutique importer and distributor of the world's most luxurious furnishing brands.",
-    image: heroImage.src,
+    // The asset's own build-time `/_astro/` URL — this page is
+    // `prerender = false` and getImage() would route it through the runtime
+    // `/_image` endpoint, which is not resolved on staging.
+    image: brandsBanner.src,
   },
   sections['home-houses']
 )

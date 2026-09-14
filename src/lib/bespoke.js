@@ -148,6 +148,11 @@ export const bespokeCards = (brands) => {
         name: brand.name,
         href: `/brands/${encodeURIComponent(brand.slug)}`,
         image: editorial?.images[0]?.src ?? brand.image_url ?? null,
+        // The maison's own mark, set over the tile in place of the typeset
+        // name — the same field and the same fallback `/brands` and the home's
+        // brands row use (Userback, 14 Sep 2026: "brand logo on top"). The
+        // editorial fallback list has no logos, so it keeps the name.
+        logo_url: brand.logo_url ?? null,
       })
     })
   )

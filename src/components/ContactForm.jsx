@@ -12,14 +12,30 @@ import { fetchCurrentUser } from '../lib/auth.js'
 // guests just start with blank fields). Everything renders in one component —
 // the store's ESLint has no React plugin, so a JSX-only sub-component reference
 // would trip no-unused-vars (same constraint as the other islands).
+//
+// Subject and message are also seeded from `?subject=&message=`: the product
+// page's "Request a sample" links here with the colourway already named
+// (ProductDetail.jsx `sampleHref`), so the enquiry arrives written rather than
+// blank. Both are trimmed to the API's own limits so a long name — or a hand-made
+// link — cannot turn the send into a 400.
+
+const SUBJECT_MAX = 200
+const MESSAGE_MAX = 5000
+
+// Islands are server-rendered before hydration, so every window access is
+// guarded (same rule as ProductLibrary.jsx).
+function queryParam(name, maxLength) {
+  if (typeof window === 'undefined') return ''
+  return (new URLSearchParams(window.location.search).get(name) ?? '').slice(0, maxLength)
+}
 
 export default function ContactForm() {
   const [website, setWebsite] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [subject, setSubject] = useState('')
-  const [message, setMessage] = useState('')
+  const [subject, setSubject] = useState(() => queryParam('subject', SUBJECT_MAX))
+  const [message, setMessage] = useState(() => queryParam('message', MESSAGE_MAX))
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -134,13 +150,19 @@ export default function ContactForm() {
 
       <label className="field">
         <span>Subject (optional)</span>
-        <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <input
+          type="text"
+          maxLength={SUBJECT_MAX}
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+        />
       </label>
 
       <label className="field">
         <span>Message</span>
         <textarea
           rows={6}
+          maxLength={MESSAGE_MAX}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Tell us about your project, the fabrics you're interested in, or a stock enquiry…"
