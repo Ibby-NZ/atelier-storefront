@@ -1289,6 +1289,26 @@
   line-height: 1.5;
 }
 
+.order-line-brand {
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.order-line-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.order-line-name a:hover {
+  text-decoration: underline;
+}
+
+.order-discount-row dd {
+  color: var(--accent, var(--ink-soft));
+}
+
 .order-line-qty,
 .order-line-total {
   flex: none;

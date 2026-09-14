@@ -474,8 +474,8 @@ export default function RequestList() {
           </strong>
         </p>
         <p className="cart-note">
-          Cut to order and priced on confirmation — nothing is charged here. We verify stock and
-          batch shading, then invoice.
+          Priced on confirmation — nothing is charged here. We confirm stock and pricing, then
+          send your quote.
         </p>
 
         <fieldset className="field-group">

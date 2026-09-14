@@ -1685,6 +1685,13 @@ and read helpers `cartCount(items?)` / `cartSubtotalCents(items?)` (US-019). Any
 island that mutates the cart MUST go through these so the header stays live. The
 cart only ever holds finished goods (fabrics use the request list below).
 
+## Order cards, the request-list copy and the Terms of Trade link (Userback 15 Sep 2026)
+
+- **`orderCard` (`src/lib/orderView.jsx`) names a line as the catalogue does** — brand eyebrow, `Design — Colour` linked to `/products/<slug>`, SKU + unit price (`per metre` / `each`) underneath — because the bare product name (`04620 ×5.6 —`) meant nothing to the client who ordered it (8367797). Fabric quantities print as metres, goods as `×n`.
+- **The discount row is derived from `order.discount_pct` and `subtotal_cents`** (`discountCents`, goods only, same rounding as the API's `discountedTotalCents`) so a $700 subtotal above a $665 total no longer reads as an arithmetic error (8367809). The API exposes the percentage only; the reason stays in the back office.
+- **`/order-request` no longer leads with "Cut to order"** (8367783): the eyebrow is "Fabric request" and the copy says nothing is charged and a quote follows — the per-line "Cut requirements" field keeps its name because it IS the cut instruction and the CRM labels it the same.
+- **The trade application's "Terms of Trade" is a link to the office's PDF on atelier.co.nz** (`TERMS_OF_TRADE_URL`, 8367835), opened in a new tab with `stopPropagation` so the click does not also toggle the consent checkbox it sits inside. Not copied into the site: the office updates the document, not this form. `/[slug].astro` + an EmDash page would serve a web version with no code.
+
 ## Request list (cut-to-order fabric)
 
 The cart's sibling, in `localStorage` under `atelier_request_list`, written only

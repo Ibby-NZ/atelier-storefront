@@ -50,6 +50,28 @@ function formatDate(value) {
 // Full order card: header (number, date, kind, status), line table, and totals.
 // Shipping/total rows are omitted when their cents are null (fabric requests are
 // priced later by the back office, so their totals are 0/absent until confirmed).
+// "Brand · Design — Colour" is how the office and the catalogue name a cloth;
+// the bare product name ("04620") that used to print here meant nothing to the
+// client who ordered it (Userback 8367797).
+const lineTitle = (line) => {
+  const name = line.product_name || line.sku
+  return line.colourway_name && line.colourway_name !== name
+    ? `${name} — ${line.colourway_name}`
+    : name
+}
+
+const unitLabel = (line) => (line.product_type === 'fabric' ? 'per metre' : 'each')
+
+// The office's discount comes off the GOODS only, never freight — the same
+// formula the API uses (discountedTotalCents in atelier-api). Shown as its own
+// row so a $700 subtotal and a $665 total no longer look like an arithmetic
+// error (Userback 8367809).
+export const discountCents = (order) => {
+  const pct = Number(order.discount_pct) || 0
+  const subtotal = Number(order.subtotal_cents) || 0
+  return pct > 0 && subtotal > 0 ? Math.round(subtotal * (pct / 100)) : 0
+}
+
 export function orderCard(order) {
   const currency = 'NZD'
   const lines = order.lines ?? []
@@ -77,14 +99,27 @@ export function orderCard(order) {
             return (
               <li key={`${line.sku}-${index}`} className="order-line">
                 <div className="order-line-main">
+                  {line.brand_name ? (
+                    <span className="order-line-brand">{line.brand_name}</span>
+                  ) : null}
                   <span className="order-line-name">
-                    {line.product_name || line.sku}
+                    {line.slug ? (
+                      <a href={`/products/${line.slug}`}>{lineTitle(line)}</a>
+                    ) : (
+                      lineTitle(line)
+                    )}
+                  </span>
+                  <span className="order-line-cut">
+                    {line.sku}
+                    {unit > 0 ? ` · ${formatMoney(unit, currency)} ${unitLabel(line)}` : ''}
                   </span>
                   {line.cut_requirements ? (
                     <span className="order-line-cut">{line.cut_requirements}</span>
                   ) : null}
                 </div>
-                <span className="order-line-qty">×{qty}</span>
+                <span className="order-line-qty">
+                  {line.product_type === 'fabric' ? `${qty} m` : `×${qty}`}
+                </span>
                 <span className="order-line-total">
                   {unit > 0 ? formatMoney(unit * qty, currency) : '—'}
                 </span>
@@ -109,6 +144,12 @@ export function orderCard(order) {
             <div>
               <dt>Subtotal</dt>
               <dd>{formatMoney(order.subtotal_cents, currency)}</dd>
+            </div>
+          ) : null}
+          {discountCents(order) > 0 ? (
+            <div className="order-discount-row">
+              <dt>Discount ({Number(order.discount_pct)}%)</dt>
+              <dd>−{formatMoney(discountCents(order), currency)}</dd>
             </div>
           ) : null}
           {order.shipping_cents != null && Number(order.shipping_cents) > 0 ? (
