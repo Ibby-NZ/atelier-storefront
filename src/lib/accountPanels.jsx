@@ -18,6 +18,7 @@
 //     badge — with a request-a-copy action where the PDF download would be.
 
 import { formatAmount } from './money.js'
+import { MIN_PASSWORD_LENGTH } from './passwordReset.js'
 
 function formatDate(value) {
   if (!value) return '—'
@@ -312,37 +313,134 @@ export function priceListsPanel({ brands, onDownload, downloading }) {
 }
 
 /**
- * Account details + the sign-out control.
+ * Account details, the password change, and the sign-out control.
+ *
+ * Name and phone are the client's own to edit (PATCH /auth/me). The EMAIL is
+ * not: it is the login identity, a collision on it is the office's to resolve,
+ * and the rules for that live behind PATCH /admin/users/:id. So it is shown
+ * with the sentence that says who to ask, not as a disabled input that reads
+ * as a field the page has broken.
+ *
+ * UNCONTROLLED INPUTS, read off the form on submit. No panel in this file may
+ * hold a hook — they are called conditionally from the island's renderPanel —
+ * and threading five controlled values back through the island would be five
+ * more pieces of state for two forms that are read once each.
  *
  * Log out lives here rather than in the header: the 2026 chrome gives the header
  * a single 24px account icon with no room for a button, so this is the only
  * place a signed-in visitor can end their session.
+ *
+ * @param {{ user: object, summary: object|null, onLogout: Function,
+ *           loggingOut: boolean, onSaveDetails: Function, onChangePassword: Function,
+ *           detailsState: { status: string, error: string },
+ *           passwordState: { status: string, error: string } }} props
  */
-export function detailsPanel({ user, summary, onLogout, loggingOut }) {
+export function detailsPanel({
+  user,
+  summary,
+  onLogout,
+  loggingOut,
+  onSaveDetails,
+  onChangePassword,
+  detailsState,
+  passwordState,
+}) {
   return (
     <div className="account-details">
-      <dl className="account-detail-list">
-        <div>
-          <dt>Name</dt>
-          <dd>{user.name || '—'}</dd>
-        </div>
-        <div>
-          <dt>Email</dt>
-          <dd>{user.email}</dd>
-        </div>
-        {summary?.trade_account?.company_name ? (
-          <div>
-            <dt>Account</dt>
-            <dd>{summary.trade_account.company_name}</dd>
+      <form className="account-detail-form" onSubmit={onSaveDetails} noValidate>
+        <fieldset className="field-group">
+          <legend>Your details</legend>
+          <label className="field">
+            <span>Name</span>
+            <input
+              type="text"
+              name="name"
+              autoComplete="name"
+              maxLength={200}
+              defaultValue={user.name ?? ''}
+            />
+          </label>
+          <label className="field">
+            <span>Phone</span>
+            <input
+              type="tel"
+              name="phone"
+              autoComplete="tel"
+              maxLength={40}
+              defaultValue={user.phone ?? ''}
+            />
+          </label>
+          <div className="field">
+            <span>Email</span>
+            <p className="account-detail-static">{user.email}</p>
+            <span className="field-hint">
+              This is what you sign in with. To change it, contact us and we will update it for you.
+            </span>
           </div>
+          {summary?.trade_account?.company_name ? (
+            <div className="field">
+              <span>Account</span>
+              <p className="account-detail-static">{summary.trade_account.company_name}</p>
+            </div>
+          ) : null}
+        </fieldset>
+
+        {detailsState.error ? (
+          <p className="error-state" role="alert">{detailsState.error}</p>
         ) : null}
-      </dl>
+        {detailsState.status === 'saved' ? (
+          <p className="field-hint" role="status">Your details are saved.</p>
+        ) : null}
+
+        <button type="submit" className="btn btn-primary" disabled={detailsState.status === 'saving'}>
+          {detailsState.status === 'saving' ? 'Saving…' : 'Save details'}
+        </button>
+      </form>
+
+      <details className="account-password">
+        <summary className="account-password-head">Change password</summary>
+        <form className="account-detail-form" onSubmit={onChangePassword} noValidate>
+          <fieldset className="field-group">
+            <legend className="sr-only">Change password</legend>
+            <label className="field">
+              <span>Current password</span>
+              <input type="password" name="current_password" autoComplete="current-password" />
+            </label>
+            <label className="field">
+              <span>New password</span>
+              <input type="password" name="new_password" autoComplete="new-password" />
+              <span className="field-hint">At least {MIN_PASSWORD_LENGTH} characters.</span>
+            </label>
+            <label className="field">
+              <span>Confirm new password</span>
+              <input type="password" name="confirm_password" autoComplete="new-password" />
+            </label>
+          </fieldset>
+
+          {passwordState.error ? (
+            <p className="error-state" role="alert">{passwordState.error}</p>
+          ) : null}
+          {passwordState.status === 'saved' ? (
+            <p className="field-hint" role="status">
+              Your password has been changed. You stay signed in here.
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={passwordState.status === 'saving'}
+          >
+            {passwordState.status === 'saving' ? 'Saving…' : 'Change password'}
+          </button>
+        </form>
+      </details>
 
       {accountManagerBlock(summary?.trade_account?.account_manager)}
 
       <p className="account-detail-note">
-        To change your details, or add a colleague to this account, contact us and we will
-        update them.
+        To add a colleague to this account, or to change anything else on your record, contact us
+        and we will update it.
       </p>
 
       <button type="button" className="btn btn-ghost" onClick={onLogout} disabled={loggingOut}>

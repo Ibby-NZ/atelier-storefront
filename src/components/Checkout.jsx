@@ -7,7 +7,8 @@ import { formatMoney } from '../lib/money.js'
 // that fetches a live quote from GET /shipping/quote, the order total, and a
 // "Pay by Card" button that POSTs the cart to /checkout/session and redirects
 // the browser to Stripe. No prices are sent to the server — only { sku, qty }
-// per line plus the zone; the API re-resolves every price (see checkout.js).
+// per line, the zone and the three optional free-text fields below; the API
+// re-resolves every price (see checkout.js).
 //
 // Shipping zones are the three fixed New Zealand zones seeded in the API
 // (meeting decision, flat-rate per zone). The quote itself is always live.
@@ -22,6 +23,12 @@ export default function Checkout() {
   const [quoteError, setQuoteError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [payError, setPayError] = useState('')
+  // Three optional fields the client fills in here, carried to the order through
+  // Stripe session metadata (the API writes them onto the order in the webhook).
+  // Blank ones are omitted from the body rather than sent as empty strings.
+  const [notes, setNotes] = useState('')
+  const [reference, setReference] = useState('')
+  const [poNumber, setPoNumber] = useState('')
 
   useEffect(() => {
     setItems(readCart())
@@ -89,7 +96,15 @@ export default function Checkout() {
       const body = await apiFetch('/checkout/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lines, zone }),
+        body: JSON.stringify({
+          lines,
+          zone,
+          // JSON.stringify drops undefined keys, so a blank field is simply
+          // not sent rather than written as an empty string.
+          notes: notes.trim() || undefined,
+          client_reference: reference.trim() || undefined,
+          customer_po_number: poNumber.trim() || undefined,
+        }),
       })
       if (body?.url) {
         // Cart is intentionally NOT cleared here — Stripe's cancel_url returns
@@ -133,6 +148,37 @@ export default function Checkout() {
           </select>
         </label>
       </div>
+
+      <fieldset className="field-group">
+        <legend>Your reference (optional)</legend>
+        <label className="field">
+          <span>Order notes</span>
+          <textarea
+            rows={3}
+            maxLength={500}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Your reference</span>
+          <input
+            type="text"
+            maxLength={200}
+            value={reference}
+            onChange={(event) => setReference(event.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Your PO number</span>
+          <input
+            type="text"
+            maxLength={200}
+            value={poNumber}
+            onChange={(event) => setPoNumber(event.target.value)}
+          />
+        </label>
+      </fieldset>
 
       <dl className="checkout-totals">
         <div>

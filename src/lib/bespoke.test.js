@@ -52,16 +52,22 @@ test('findBespokeHouse resolves a slug and never throws on an unknown one', () =
 test('bespokeCards keeps the flagged houses — editorial photo first, house image second', () => {
   const cards = bespokeCards([
     { slug: 'pierre-frey', name: 'Pierre Frey', bespoke: true, image_url: null },
-    { slug: 'houles', name: 'Houlès', bespoke: true, image_url: 'https://x/h.jpg' },
+    {
+      slug: 'houles',
+      name: 'Houlès',
+      bespoke: true,
+      image_url: 'https://x/h.jpg',
+      logo_url: 'https://x/h-logo.png',
+    },
     { slug: 'de-le-cuona', name: 'de Le Cuona', bespoke: false, image_url: 'https://x/d.jpg' },
     { slug: 'no-photo', name: 'No Photo', bespoke: true },
   ])
   assert.deepEqual(
-    cards.map((card) => [card.slug, card.name, card.href, card.image]),
+    cards.map((card) => [card.slug, card.name, card.href, card.image, card.logo_url]),
     [
-      ['pierre-frey', 'Pierre Frey', '/brands/pierre-frey', BESPOKE_HOUSES[0].images[0].src],
-      ['houles', 'Houlès', '/brands/houles', 'https://x/h.jpg'],
-      ['no-photo', 'No Photo', '/brands/no-photo', null],
+      ['pierre-frey', 'Pierre Frey', '/brands/pierre-frey', BESPOKE_HOUSES[0].images[0].src, null],
+      ['houles', 'Houlès', '/brands/houles', 'https://x/h.jpg', 'https://x/h-logo.png'],
+      ['no-photo', 'No Photo', '/brands/no-photo', null, null],
     ]
   )
 })

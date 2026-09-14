@@ -68,7 +68,9 @@
   background-color: var(--surface);
 }
 
-.bespoke-card-media img {
+/* `:not()` because the maison's mark is an <img> in this tile too: without it
+   the logo would be laid over the whole tile and cropped like the photograph. */
+.bespoke-card-media img:not(.bespoke-card-logo) {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -77,7 +79,7 @@
   transition: transform var(--zoom);
 }
 
-.bespoke-card:hover .bespoke-card-media img {
+.bespoke-card:hover .bespoke-card-media img:not(.bespoke-card-logo) {
   transform: scale(1.03);
 }
 
@@ -103,6 +105,15 @@
   text-align: center;
   color: #fff;
   text-wrap: balance;
+}
+
+/* The mark, as an image: contained in the tile's middle, never cropped or
+   zoomed like the photograph under it — `.house-card-logo`'s figure (houses.css). */
+img.bespoke-card-logo {
+  width: 55%;
+  max-height: 36%;
+  padding: 0;
+  object-fit: contain;
 }
 
 /* --- The enquiry form (house page) ----------------------------------------

@@ -2,7 +2,6 @@
 export const prerender = false // live: API brand + EmDash/markdown editorial overlay
 import { getCollection, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
-import { getImage } from 'astro:assets'
 import brandsBanner from '../../assets/img/brands-hero-bg.jpg'
 import { houseMeta } from '../../lib/houses.js'
 import Layout from '../../layouts/Layout.astro'
@@ -67,7 +66,11 @@ const heroImage = slideshow[0] ?? null
 // est. 1935", degrading to the country alone). And the photograph a house with
 // no banner of its own opens on.
 const meta = brand ? houseMeta(brand) : ''
-const fallbackHero = await getImage({ src: brandsBanner, format: 'webp', width: 2200 })
+// `brandsBanner.src` and not getImage(): this page is `prerender = false`, so
+// under `output: "server"` getImage() returns a RUNTIME `/_image` URL, and that
+// endpoint is not resolved on staging — every house without its own slideshow
+// opened on a blank hero there (Userback, 14 Sep 2026, de Le Cuona). The
+// imported asset is emitted to `/_astro/` at build time and served statically.
 
 // Extended copy: Portable Text blocks from the CMS, or the markdown body.
 const story = emPage?.story ?? null
@@ -118,6 +121,17 @@ const tiles = collectionTiles({
   brandSlug: slug,
 })
 
+// The FALLBACK route into the house's designs. The mock's brand page has one
+// action — "Visit website" — because the collection tiles below it are how a
+// shopper gets to the grid; so this appears only where there is no tile wall to
+// do that job, and then only where the grid it lands on has something in it.
+// Both flags are named here rather than inline because the actions row must
+// know whether it will have ANY child: rendered unconditionally it painted an
+// empty bordered box on every house with no website on file (Userback,
+// 14 Sep 2026).
+const showAllProducts = tiles.length === 0 && (designCount ?? 0) > 0
+const showActions = Boolean(brand?.website_url) || showAllProducts
+
 // Only a genuine miss 404s: the API answered and has no such brand, AND no
 // editorial page exists in either source. An API outage renders whatever
 // editorial we have (offline-safe), and an editorial page for a slug the API
@@ -150,7 +164,7 @@ if (notFound) {
             columns — the blurb on the left, the body copy and the actions on
             the right. */}
         <section class="photo-band photo-band--parallax house-banner">
-          <span class="photo-band-art" style={`background-image: url(${heroImage ?? fallbackHero.src})`}></span>
+          <span class="photo-band-art" style={`background-image: url(${heroImage ?? brandsBanner.src})`}></span>
           <div class="container photo-band-body">
             <div class="photo-band-row">
               <div class="house-banner-copy">
@@ -184,6 +198,32 @@ if (notFound) {
                   <Body />
                 </div>
               )}
+              {
+                // The actions sit under the bio in the LEFT column, not above
+                // the enquiry form on the right (Userback, 14 Sep 2026: "move
+                // this button here"). Rendered only when one of them will show.
+                showActions && (
+                  <div class="house-actions">
+                    {/* The house's own website (the client's rule). No URL on
+                        file -> no action, not a dead link. */}
+                    {brand?.website_url && (
+                      <a
+                        class="cta-underline"
+                        href={brand.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Visit website
+                      </a>
+                    )}
+                    {showAllProducts && (
+                      <a class="cta-underline" href={`/products?brand=${slug}`}>
+                        View all products
+                      </a>
+                    )}
+                  </div>
+                )
+              }
             </div>
 
             <div class="house-intro-body">
@@ -197,36 +237,6 @@ if (notFound) {
                   <Body />
                 </div>
               )}
-
-              <div class="house-actions">
-                {
-                  // The house's own website (the client's rule). No URL on file
-                  // -> no action, not a dead link.
-                  brand?.website_url && (
-                    <a
-                      class="cta-underline"
-                      href={brand.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Visit website
-                    </a>
-                  )
-                }
-                {
-                  // The FALLBACK route into the house's designs. The mock's
-                  // brand page has one action — "Visit website" — because the
-                  // collection tiles below it are how a shopper gets to the
-                  // grid; so this appears only where there is no tile wall to
-                  // do that job, and then only where the grid it lands on has
-                  // something in it.
-                  tiles.length === 0 && (designCount ?? 0) > 0 && (
-                    <a class="cta-underline" href={`/products?brand=${slug}`}>
-                      View all products
-                    </a>
-                  )
-                }
-              </div>
 
               {
                 // The quote form, an island because it posts and prefills from

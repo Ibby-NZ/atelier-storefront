@@ -1620,6 +1620,18 @@ markdown collections (above) remain the shipped baseline.
   panels marked `pending-link` with an explanation — "0 invoices" would be a lie
   by omission, since the record exists and the back office simply has not
   matched the login to it yet. A linked one sees everything.
+- **The Account panel edits name and phone, and nothing else.** Two uncontrolled
+  forms read on submit — `PATCH /auth/me` and `POST /auth/change-password` — with
+  their state in the island, because no panel in `accountPanels.jsx` may hold a
+  hook (`renderPanel` calls them conditionally). **Email is read-only on
+  purpose**: it is the login identity and the collision rules live behind
+  `PATCH /admin/users/:id`, so the row carries the sentence that says to ask the
+  office rather than a disabled input, which reads as a field the page has
+  broken. The change-password 401 is rewritten by `changePasswordError`
+  (`src/lib/passwordReset.js`, which already owns the 12-character floor both
+  password screens share): api.js turns every 401 into "Please log in to view
+  this", and on a page you are demonstrably signed in to that reads as a session
+  that has expired rather than as the wrong current password.
 - **Reorder rebuilds the basket; it never re-submits** (`src/lib/reorder.js`).
   Fabric lines refill the request list, finished goods refill the cart, and a
   mixed order fills both and lands on `/order-request`. A server-side "place it

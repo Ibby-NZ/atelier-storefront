@@ -1,13 +1,17 @@
 ---
 export const prerender = false // live: which houses take commissions is a CRM flag
 import Layout from '../layouts/Layout.astro'
-import { getImage } from 'astro:assets'
 import { safeFetch } from '../lib/api.js'
 import { bespokeCards } from '../lib/bespoke.js'
 // The client's own supply for this page (Sept 2026, 2070 × 1376).
 import heroArt from '../assets/img/bespoke-hero-bg.jpg'
 
-const hero = await getImage({ src: heroArt, format: 'webp', width: 2200 })
+// The imported asset's own `.src`, NOT getImage(): this page is
+// `prerender = false`, and under `output: "server"` getImage() hands back a
+// URL on the RUNTIME `/_image` endpoint, which is not resolved on staging — so
+// the hero came back blank there while it was fine in a local build (Userback,
+// 14 Sep 2026). An imported asset is emitted to `/_astro/` at build time and
+// served as a static file, whatever the page's prerender setting.
 
 // Bespoke (made-to-measure) page — client brief of 10 Aug 2026, reshaped Sept
 // 2026. A wall of the houses whose ateliers take custom commissions; each card
@@ -34,7 +38,7 @@ const cards = bespokeCards(data?.brands ?? null)
       header floating inside it, the headline left and one line of copy right
       (page feedback, Sept 2026: "make it look like the brands page"). */}
   <section class="photo-band photo-band--parallax bespoke-hero">
-    <span class="photo-band-art" style={`background-image: url(${hero.src});`}></span>
+    <span class="photo-band-art" style={`background-image: url(${heroArt.src});`}></span>
     <div class="container photo-band-body">
       <div class="photo-band-row">
         <h1 class="photo-band-title">
@@ -68,7 +72,16 @@ const cards = bespokeCards(data?.brands ?? null)
             <a class="bespoke-card" href={card.href}>
               <span class:list={['bespoke-card-media', { weave: !card.image }]}>
                 {card.image && <img src={card.image} alt="" loading="lazy" />}
-                <span class="bespoke-card-logo">{card.name}</span>
+                {card.logo_url ? (
+                  <img
+                    class="bespoke-card-logo"
+                    src={card.logo_url}
+                    alt={card.name}
+                    loading="lazy"
+                  />
+                ) : (
+                  <span class="bespoke-card-logo">{card.name}</span>
+                )}
               </span>
             </a>
           </li>

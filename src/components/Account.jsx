@@ -6,6 +6,7 @@ import { accountSections, sectionFromHash, SECTION } from '../lib/accountSection
 import { orderCard } from '../lib/orderView.jsx'
 import { reorderPlan, toRequestLines, toCartLines } from '../lib/reorder.js'
 import { replaceRequestList } from '../lib/requestList.js'
+import { newPasswordError, changePasswordError } from '../lib/passwordReset.js'
 import { addToCart, setCartQty } from '../lib/cart.js'
 import {
   dashboardPanel,
@@ -82,6 +83,10 @@ export default function Account() {
   const [requestingCopy, setRequestingCopy] = useState(null)
   const [requestedCopies, setRequestedCopies] = useState([])
   const [downloading, setDownloading] = useState(null)
+  // The two forms on the Account panel. `status` is idle | saving | saved; the
+  // panel holds no hooks, so their state lives here like every other panel's.
+  const [detailsState, setDetailsState] = useState({ status: 'idle', error: '' })
+  const [passwordState, setPasswordState] = useState({ status: 'idle', error: '' })
 
   const sections = accountSections(state.summary)
 
@@ -271,6 +276,67 @@ export default function Account() {
     }
   }, [])
 
+  // Name and phone only. Email is the login identity and stays with the office
+  // (see the panel), so it is not in the body even though the API would ignore
+  // it — sending a field the client cannot change is a promise the screen does
+  // not keep.
+  const handleSaveDetails = useCallback(async (event) => {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    setDetailsState({ status: 'saving', error: '' })
+    try {
+      const body = await apiFetch('/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: String(form.get('name') ?? '').trim(),
+          phone: String(form.get('phone') ?? '').trim(),
+        }),
+      })
+      // The greeting and the order-request prefill both read state.user, so the
+      // page has to take the saved row rather than leave the old name on screen.
+      if (body?.user) setState((current) => ({ ...current, user: body.user }))
+      setDetailsState({ status: 'saved', error: '' })
+    } catch (err) {
+      setDetailsState({
+        status: 'idle',
+        error: err instanceof ApiError ? err.message : 'We could not save your details.',
+      })
+    }
+  }, [])
+
+  const handleChangePassword = useCallback(async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    const fields = new FormData(form)
+    const password = String(fields.get('new_password') ?? '')
+    // The floor and the confirmation are checked here so the common mistakes
+    // answer instantly and never spend an attempt against the auth rate limit.
+    const problem = newPasswordError(password, String(fields.get('confirm_password') ?? ''))
+    if (problem) {
+      setPasswordState({ status: 'idle', error: problem })
+      return
+    }
+    setPasswordState({ status: 'saving', error: '' })
+    try {
+      await apiFetch('/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_password: String(fields.get('current_password') ?? ''),
+          new_password: password,
+        }),
+      })
+      form.reset()
+      setPasswordState({ status: 'saved', error: '' })
+    } catch (err) {
+      setPasswordState({
+        status: 'idle',
+        error: changePasswordError(err instanceof ApiError ? err : null),
+      })
+    }
+  }, [])
+
   const handleDownload = useCallback(async (brand) => {
     setDownloading(brand.slug)
     try {
@@ -369,8 +435,18 @@ export default function Account() {
             onDownload: handleDownload,
             onLogout: handleLogout,
             onLoadMore: handleLoadMore,
+            onSaveDetails: handleSaveDetails,
+            onChangePassword: handleChangePassword,
           },
-          flags: { loggingOut, reordering, requestingCopy, requestedCopies, downloading },
+          flags: {
+            loggingOut,
+            reordering,
+            requestingCopy,
+            requestedCopies,
+            downloading,
+            detailsState,
+            passwordState,
+          },
         })}
       </section>
     </div>
@@ -399,6 +475,10 @@ function renderPanel({ section, sections, panel, state, handlers, flags }) {
       summary: state.summary,
       onLogout: handlers.onLogout,
       loggingOut: flags.loggingOut,
+      onSaveDetails: handlers.onSaveDetails,
+      onChangePassword: handlers.onChangePassword,
+      detailsState: flags.detailsState,
+      passwordState: flags.passwordState,
     })
   }
 

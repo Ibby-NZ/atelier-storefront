@@ -1,6 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readResetToken, newPasswordError, MIN_PASSWORD_LENGTH } from './passwordReset.js'
+import {
+  readResetToken,
+  newPasswordError,
+  changePasswordError,
+  MIN_PASSWORD_LENGTH,
+} from './passwordReset.js'
 
 test('readResetToken pulls the token out of the emailed link', () => {
   assert.equal(readResetToken('?token=abc-DEF_123'), 'abc-DEF_123')
@@ -16,4 +21,34 @@ test('newPasswordError holds the API floor and the confirmation', () => {
   assert.equal(newPasswordError('short', 'short'), `Use at least ${MIN_PASSWORD_LENGTH} characters.`)
   assert.equal(newPasswordError(ok, `${ok}x`), 'The two passwords do not match.')
   assert.equal(newPasswordError(ok, ok), '')
+})
+
+test('changePasswordError separates the two 401s the route can answer with', () => {
+  assert.equal(
+    changePasswordError({
+      status: 401,
+      message: 'Your current password is not correct.',
+      body: { error: 'Your current password is not correct.' },
+    }),
+    'Your current password is not correct.'
+  )
+  assert.equal(
+    changePasswordError({
+      status: 401,
+      message: 'Authentication required.',
+      body: { error: 'Authentication required.' },
+    }),
+    'Your session has ended. Please sign in again and retry.'
+  )
+  // A 401 with no readable body: api.js's own sign-in sentence stands, which is
+  // the safe half of the pair — never "your password is wrong".
+  assert.equal(
+    changePasswordError({ status: 401, message: 'Please log in to view this.', body: null }),
+    'Please log in to view this.'
+  )
+  assert.equal(
+    changePasswordError({ status: 400, message: 'body/new_password must NOT have fewer than 12 characters' }),
+    'body/new_password must NOT have fewer than 12 characters'
+  )
+  assert.equal(changePasswordError(null), 'Something went wrong. Please try again.')
 })

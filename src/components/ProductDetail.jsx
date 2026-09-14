@@ -54,7 +54,8 @@ import {
 //                    the back office; an out-of-stock colourway is added the
 //                    same way and carries its lead-time note through to the
 //                    request page, where the whole list is sent as ONE request.
-//                    "Request a sample" sits beside it, landing on /contact.
+//                    "Request a sample" sits beside it, landing on /contact
+//                    with the colourway named (sampleHref below).
 //   finished good -> "Add to cart" (quantity field).
 //
 // THE TRADE GATE (lib/tradeGate.js) is why this island has a fourth status.
@@ -92,6 +93,21 @@ const MAX_QTY = 99
 
 // Where the request list is reviewed and sent.
 const REQUEST_PATH = '/order-request'
+
+// "Request a sample" is an enquiry, not a basket — there is no public sample
+// route on the API — so it lands on the contact form with the colourway already
+// named and the message written (ContactForm.jsx reads these back out of the
+// query). A bare /contact link looked like an action and did nothing visible.
+function sampleHref(product, colourway) {
+  const named = colourway
+    ? `${product.name} — ${colourway.name} (${colourway.sku})`
+    : product.name
+  const params = new URLSearchParams({
+    subject: `Sample request: ${named}`,
+    message: `I would like a sample of ${named}.`,
+  })
+  return `/contact?${params.toString()}`
+}
 
 // How many cards the Similar strip shows (the mock's row).
 const SIMILAR_LIMIT = 12 // the row runs off the right edge; twelve is the cap (Sept 2026)
@@ -558,34 +574,33 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
 
           <div className="detail-actions">
             {fabric ? (
-              <>
-                <button
-                  type="button"
-                  className="action-fill"
-                  onClick={onAddToRequest}
-                  disabled={!selected}
-                >
-                  {selected && !selected.in_stock ? 'Add to backorder quote' : 'Add to quote'}
-                </button>
-                <a className="action-outline" href="/contact">
-                  Request a sample
-                </a>
-              </>
+              <button
+                type="button"
+                className="action-fill"
+                onClick={onAddToRequest}
+                disabled={!selected}
+              >
+                {selected && !selected.in_stock ? 'Add to backorder quote' : 'Add to quote'}
+              </button>
             ) : (
-              <>
-                <button
-                  type="button"
-                  className="action-fill"
-                  onClick={onAddToCart}
-                  disabled={!canAddToCart}
-                >
-                  Add to cart
-                </button>
-                <a className="action-outline" href="/contact">
-                  Request a sample
-                </a>
-              </>
+              <button
+                type="button"
+                className="action-fill"
+                onClick={onAddToCart}
+                disabled={!canAddToCart}
+              >
+                Add to cart
+              </button>
             )}
+            {/* One sample control for both branches — it was two identical
+                copies, and a third would have drifted. */}
+            <a
+              className="action-outline"
+              href={sampleHref(product, selected)}
+              title="Ask us for a cutting of this colourway"
+            >
+              Request a sample
+            </a>
           </div>
 
           {metresError && <p className="field-error">{metresError}</p>}

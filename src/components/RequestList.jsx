@@ -45,7 +45,9 @@ import {
 //      lead-time checkbox is required, and a list built last week must not
 //      submit last week's answer. A SKU the live product no longer lists is
 //      flagged rather than sent — it would 422 the whole request.
-//   3. Prefills name/email from `GET /auth/me` (401 = guest, ignored).
+//   3. Prefills name/email/phone from `GET /auth/me` (401 = guest, ignored).
+//      The phone is the number the last request saved against the account, so
+//      the client is not asked for it twice.
 //
 // Everything renders inside one component — the store's ESLint has no React
 // plugin, so a JSX-only sub-component reference would trip no-unused-vars
@@ -83,6 +85,10 @@ export default function RequestList() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  // The client's own numbers for this job, carried through to the order so the
+  // back office can quote against them. Both optional, both free text.
+  const [clientReference, setClientReference] = useState('')
+  const [customerPoNumber, setCustomerPoNumber] = useState('')
   const [acceptedLeadTime, setAcceptedLeadTime] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
@@ -193,6 +199,7 @@ export default function RequestList() {
       if (!active || !user) return
       if (user.name) setName(user.name)
       if (user.email) setEmail(user.email)
+      if (user.phone) setPhone(user.phone)
     })
     return () => {
       active = false
@@ -333,6 +340,8 @@ export default function RequestList() {
             email: email.trim() || null,
             phone: phone.trim() || null,
           },
+          client_reference: clientReference.trim() || undefined,
+          customer_po_number: customerPoNumber.trim() || undefined,
           accepted_lead_time: acceptedLeadTime,
         }),
       })
@@ -488,6 +497,25 @@ export default function RequestList() {
           <label className="field">
             <span>Phone</span>
             <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} />
+          </label>
+          <label className="field">
+            <span>Your reference (optional)</span>
+            <input
+              type="text"
+              maxLength={200}
+              value={clientReference}
+              onChange={(event) => setClientReference(event.target.value)}
+              placeholder="What you call this job — a room, a project, a name"
+            />
+          </label>
+          <label className="field">
+            <span>Your PO number (optional)</span>
+            <input
+              type="text"
+              maxLength={200}
+              value={customerPoNumber}
+              onChange={(event) => setCustomerPoNumber(event.target.value)}
+            />
           </label>
         </fieldset>
 
