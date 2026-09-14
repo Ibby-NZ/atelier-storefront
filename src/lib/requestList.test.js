@@ -13,6 +13,8 @@ import {
   hasBackorderLine,
   hasUnavailableLine,
   toRequestPayloadLines,
+  EMPTY_ADDRESS,
+  requestAddressPayload,
 } from './requestList.js'
 
 // The list transforms are pure, so they test without a DOM. The storage
@@ -196,4 +198,24 @@ test('one short line makes the whole request a backorder', () => {
   assert.equal(hasBackorderLine(items), true)
   assert.equal(hasBackorderLine([items[0]]), false)
   assert.equal(hasBackorderLine([]), false)
+})
+
+test('requestAddressPayload sends nothing when the form names nowhere — a default country alone is not an address', () => {
+  assert.equal(requestAddressPayload(EMPTY_ADDRESS, 'Ada'), undefined)
+  assert.equal(requestAddressPayload({ ...EMPTY_ADDRESS, postal_code: '1010' }, 'Ada'), undefined)
+})
+
+test('requestAddressPayload sends the checkout shape, trimmed, blanks as null, with the contact as addressee', () => {
+  assert.deepEqual(
+    requestAddressPayload({ ...EMPTY_ADDRESS, line1: ' 12 Analytical Lane ', city: 'Auckland' }, ' Ada '),
+    {
+      name: 'Ada',
+      line1: '12 Analytical Lane',
+      line2: null,
+      city: 'Auckland',
+      state: null,
+      postal_code: null,
+      country: 'New Zealand',
+    }
+  )
 })

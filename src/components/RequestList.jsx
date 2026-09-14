@@ -19,6 +19,9 @@ import {
   requestTotalMetres,
   toRequestPayloadLines,
   normaliseMetres,
+  ADDRESS_FIELDS,
+  EMPTY_ADDRESS,
+  requestAddressPayload,
 } from '../lib/requestList.js'
 
 // Request-list island (US-020, FR-5/FR-6) — the cut-to-order flow as a CART,
@@ -89,6 +92,12 @@ export default function RequestList() {
   // back office can quote against them. Both optional, both free text.
   const [clientReference, setClientReference] = useState('')
   const [customerPoNumber, setCustomerPoNumber] = useState('')
+  // The client's own note for the quote, and where the cloth is going. Both
+  // optional: the office prices before anything ships, and many orders are
+  // collected — but a quote with freight needs a destination, and the note
+  // used to have nowhere to go but the per-line cut box (Userback 8373461).
+  const [notes, setNotes] = useState('')
+  const [address, setAddress] = useState(EMPTY_ADDRESS)
   const [acceptedLeadTime, setAcceptedLeadTime] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
@@ -342,6 +351,8 @@ export default function RequestList() {
           },
           client_reference: clientReference.trim() || undefined,
           customer_po_number: customerPoNumber.trim() || undefined,
+          notes: notes.trim() || undefined,
+          shipping_address: requestAddressPayload(address, name),
           accepted_lead_time: acceptedLeadTime,
         }),
       })
@@ -517,6 +528,33 @@ export default function RequestList() {
               onChange={(event) => setCustomerPoNumber(event.target.value)}
             />
           </label>
+          <label className="field">
+            <span>Notes for your quote (optional)</span>
+            <textarea
+              rows={3}
+              maxLength={2000}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Anything about the order as a whole — timing, matching, who to call"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset className="field-group">
+          <legend>Delivery address (optional)</legend>
+          <p className="field-hint">So the quote can include freight. Leave blank to collect.</p>
+          {ADDRESS_FIELDS.map(({ key, label, autoComplete }) => (
+            <label className="field" key={key}>
+              <span>{label}</span>
+              <input
+                type="text"
+                maxLength={200}
+                autoComplete={autoComplete}
+                value={address[key]}
+                onChange={(event) => setAddress((prev) => ({ ...prev, [key]: event.target.value }))}
+              />
+            </label>
+          ))}
         </fieldset>
 
         {needsLeadTime && (
