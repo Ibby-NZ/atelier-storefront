@@ -217,7 +217,7 @@ export default function Checkout() {
         type="button"
         className="btn btn-primary"
         onClick={payByCard}
-        disabled={submitting || quoteStatus !== 'ready'}
+        disabled={submitting || quoteStatus !== 'ready' || !currency}
       >
         {submitting ? 'Redirecting…' : 'Pay by card'}
       </button>
