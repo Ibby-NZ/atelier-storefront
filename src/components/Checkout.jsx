@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
-import { readCart, cartCount, cartSubtotalCents, CART_EVENT } from '../lib/cart.js'
+import { readCart, cartCount, cartSubtotalCents, cartCurrency, CART_EVENT } from '../lib/cart.js'
 import { formatMoney } from '../lib/money.js'
 
 // Checkout island (US-019). Shows the cart subtotal, a shipping-zone selector
@@ -83,7 +83,7 @@ export default function Checkout() {
     )
   }
 
-  const currency = items[0]?.currency || 'NZD'
+  const currency = cartCurrency(items)
   const subtotal = cartSubtotalCents(items)
   const shipping = quoteStatus === 'ready' && quote ? Number(quote.rate_cents) : null
   const total = shipping != null ? subtotal + shipping : null
@@ -180,27 +180,31 @@ export default function Checkout() {
         </label>
       </fieldset>
 
-      <dl className="checkout-totals">
-        <div>
-          <dt>Subtotal</dt>
-          <dd>{formatMoney(subtotal, currency)}</dd>
-        </div>
-        <div>
-          <dt>Shipping</dt>
-          <dd>
-            {quoteStatus === 'loading' && 'Calculating…'}
-            {quoteStatus === 'ready' && shipping != null && formatMoney(shipping, currency)}
-            {quoteStatus === 'error' && '—'}
-          </dd>
-        </div>
-        <div className="checkout-total">
-          <dt>Total</dt>
-          <dd>
-            {total != null ? formatMoney(total, currency) : '—'}
-            <span className="indicative-note">Indicative</span>
-          </dd>
-        </div>
-      </dl>
+      {currency ? (
+        <dl className="checkout-totals">
+          <div>
+            <dt>Subtotal</dt>
+            <dd>{formatMoney(subtotal, currency)}</dd>
+          </div>
+          <div>
+            <dt>Shipping</dt>
+            <dd>
+              {quoteStatus === 'loading' && 'Calculating…'}
+              {quoteStatus === 'ready' && shipping != null && formatMoney(shipping, currency)}
+              {quoteStatus === 'error' && '—'}
+            </dd>
+          </div>
+          <div className="checkout-total">
+            <dt>Total</dt>
+            <dd>
+              {total != null ? formatMoney(total, currency) : '—'}
+              <span className="indicative-note">Indicative</span>
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="cart-note">Items in different currencies check out separately.</p>
+      )}
 
       {quoteStatus === 'error' && <p className="error-state">{quoteError}</p>}
       {payError && (

@@ -4,9 +4,12 @@ import {
   setCartQty,
   removeFromCart,
   cartSubtotalCents,
+  cartCurrency,
   CART_EVENT,
 } from '../lib/cart.js'
 import { formatMoney } from '../lib/money.js'
+import { fetchCurrentUser } from '../lib/auth.js'
+import { noPriceCopyFor } from '../lib/catalogue.js'
 
 // Cart page island (US-019). Shows the client-side cart (finished goods only —
 // fabrics never reach the cart, they go through the order-request flow), lets
@@ -24,9 +27,13 @@ const MAX_QTY = 99
 
 export default function Cart() {
   const [items, setItems] = useState(null) // null until hydrated (avoids SSR flash)
+  // Only ever selects the no-price copy — a guest is invited to sign in, a
+  // signed-in shopper is not.
+  const [viewer, setViewer] = useState(null)
 
   useEffect(() => {
     setItems(readCart())
+    fetchCurrentUser().then(setViewer, () => setViewer(null))
     const sync = () => setItems(readCart())
     window.addEventListener(CART_EVENT, sync)
     window.addEventListener('storage', sync)
@@ -51,7 +58,7 @@ export default function Cart() {
     )
   }
 
-  const currency = items[0]?.currency || 'NZD'
+  const currency = cartCurrency(items)
   const subtotal = cartSubtotalCents(items)
 
   const changeQty = (sku, qty) => setItems(setCartQty(sku, qty))
@@ -88,7 +95,7 @@ export default function Cart() {
                 <p className="cart-line-unit">
                   {line.price_cents != null
                     ? `${formatMoney(line.price_cents, line.currency)} each`
-                    : 'Price on request'}
+                    : noPriceCopyFor(viewer)}
                   <span className="detail-selected-sku">{line.sku}</span>
                 </p>
               </div>
@@ -121,11 +128,15 @@ export default function Cart() {
       </ul>
 
       <div className="cart-summary">
-        <p className="cart-subtotal">
-          <span>Subtotal</span>
-          <strong>{formatMoney(subtotal, currency)}</strong>
-          <span className="indicative-note">Indicative</span>
-        </p>
+        {currency ? (
+          <p className="cart-subtotal">
+            <span>Subtotal</span>
+            <strong>{formatMoney(subtotal, currency)}</strong>
+            <span className="indicative-note">Indicative</span>
+          </p>
+        ) : (
+          <p className="cart-note">Items in different currencies check out separately.</p>
+        )}
         <p className="cart-note">Shipping is calculated at checkout.</p>
         <a className="btn btn-primary" href="/checkout">
           Proceed to checkout

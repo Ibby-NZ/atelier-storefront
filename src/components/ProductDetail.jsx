@@ -143,6 +143,11 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   // cookie and therefore no viewer) — anything else fails hydration. Resolved
   // alongside the product below, and only ever selects price copy.
   const [viewer, setViewer] = useState(null)
+  // False until the credentialed fetch settles, either way. Until then the
+  // price line is a blank of the same height, not the guest copy: the server
+  // has no cookie, so a trade shopper used to see "Sign in for trade pricing"
+  // (or retail) paint first and the NZ$ figure replace it (audit SF-TR-02/04).
+  const [viewerReady, setViewerReady] = useState(false)
   // The Similar strip: other designs from the same house, fetched once the
   // product (and its house) is known. Empty renders no section.
   const [similar, setSimilar] = useState([])
@@ -175,6 +180,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
         const loaded = body?.product ?? null
         setProduct(loaded)
         setViewer(user)
+        setViewerReady(true)
         // Keep the shopper's chosen colourway across the refresh; only fall
         // back to the default when that SKU is no longer listed.
         setSelectedSku((current) =>
@@ -186,6 +192,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
       })
       .catch((err) => {
         if (!active) return
+        setViewerReady(true)
         // A 403 carrying trade_only is the API's ANSWER, not a failure: this
         // shopper may not see this design. Show the invitation.
         if (isTradeGateError(err)) {
@@ -306,7 +313,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     return <p className="container detail-static products-empty">This product is not available.</p>
   }
 
-  const price = priceInfo(product, viewer)
+  const price = priceInfo(product, viewer, `/products/${encodeURIComponent(slug)}`)
   const fabric = isFabric(product)
   const specs = SPEC_FIELDS.filter(
     (field) => product[field.key] != null && product[field.key] !== ''
@@ -466,12 +473,24 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
 
           <p className="detail-lede">{lede}</p>
 
-          <p className={price.muted ? 'detail-price muted' : 'detail-price'}>
-            {price.label && <span className="detail-price-label">{price.label} </span>}
-            {price.text}
-            {!price.muted && fabric && <span className="detail-price-unit">/ m</span>}
-            {price.retail && <s className="detail-price-retail">{price.retail}</s>}
-          </p>
+          {viewerReady ? (
+            <p className={price.muted ? 'detail-price muted' : 'detail-price'}>
+              {price.label && <span className="detail-price-label">{price.label} </span>}
+              {price.href ? (
+                <a className="cta-underline" href={price.href}>
+                  {price.text}
+                </a>
+              ) : (
+                price.text
+              )}
+              {!price.muted && fabric && <span className="detail-price-unit">/ m</span>}
+              {price.retail && <s className="detail-price-retail">{price.retail}</s>}
+            </p>
+          ) : (
+            <p className="detail-price muted" aria-busy="true">
+              <span className="sr-only">Loading price</span>&nbsp;
+            </p>
+          )}
 
           <div className="detail-controls">
             {fabric ? (

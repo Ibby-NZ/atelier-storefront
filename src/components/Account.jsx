@@ -135,8 +135,16 @@ export default function Account() {
     }
 
     load()
+    // Back after Log out can restore this page from the bfcache, signed-in
+    // state and all, without running anything — the one way a signed-out
+    // browser still shows /account (audit SF-TR-03). A restored page re-asks.
+    const recheck = (event) => {
+      if (event.persisted) load()
+    }
+    window.addEventListener('pageshow', recheck)
     return () => {
       active = false
+      window.removeEventListener('pageshow', recheck)
     }
   }, [])
 

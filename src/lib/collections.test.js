@@ -26,7 +26,7 @@ test('EVERY live collection tiles — assigned, unassigned, or a house holding n
 
 test('a tile lands on its own collection where it has members, else the house grid', () => {
   const tiles = collectionTiles({ collections: LIVE, cards: [], brandSlug: 'manuel-canovas' })
-  assert.equal(tiles[0].href, '/products?brand=manuel-canovas')
+  assert.equal(tiles[0].href, '/brands/manuel-canovas')
   assert.equal(tiles[1].href, '/products?brand=manuel-canovas&collection=le-voyage')
 })
 

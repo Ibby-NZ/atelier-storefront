@@ -6,6 +6,7 @@
 
 import { formatMoney } from './money.js'
 import { tradeStatus, TRADE_STATUS } from './account.js'
+import { signInHref } from './tradeGate.js'
 
 export const PRODUCT_TYPE_LABELS = Object.freeze({
   fabric: 'Fabric',
@@ -74,7 +75,7 @@ export const NO_PRICE_COPY = Object.freeze({
   signedIn: 'Price on request',
 })
 
-const noPriceCopyFor = (viewer) => {
+export const noPriceCopyFor = (viewer) => {
   if (!viewer) return NO_PRICE_COPY.guest
   if (tradeStatus(viewer) === TRADE_STATUS.PENDING) return NO_PRICE_COPY.pending
   // Approved trade with no trade figure (every finished good), a customer, or
@@ -140,11 +141,14 @@ export function priceBandFor(cents) {
  * @param {object|null} [viewer] — the /auth/me user, or null when logged out.
  *   Only ever selects COPY: the API decides what pricing data exists, and this
  *   never derives a figure the response did not carry.
- * @returns {{ label: string, text: string, muted: boolean, indicative: boolean, retail: string|null }}
+ * @param {string} [returnTo] — the page to come back to after signing in. Only
+ *   the guest line gets an `href`: "Sign in for trade pricing" used to be drawn
+ *   as an action and went nowhere (audit SF-B2C-02, Sept 2026).
+ * @returns {{ label: string, text: string, muted: boolean, indicative: boolean, retail: string|null, href: string|null }}
  */
-export function priceInfo(product, viewer = null) {
+export function priceInfo(product, viewer = null, returnTo = '') {
   if (!product) {
-    return { label: '', text: '', muted: true, indicative: false, retail: null }
+    return { label: '', text: '', muted: true, indicative: false, retail: null, href: null }
   }
 
   const currency = product.currency || 'NZD'
@@ -158,6 +162,7 @@ export function priceInfo(product, viewer = null) {
       indicative: true,
       // Retail is struck through beside the trade price when we may show it.
       retail: hasRetail ? formatMoney(product.retail_price_cents, currency) : null,
+      href: null,
     }
   }
 
@@ -168,6 +173,7 @@ export function priceInfo(product, viewer = null) {
       muted: true,
       indicative: false,
       retail: null,
+      href: viewer ? null : signInHref(returnTo),
     }
   }
 
@@ -177,6 +183,7 @@ export function priceInfo(product, viewer = null) {
     muted: false,
     indicative: true,
     retail: null,
+    href: null,
   }
 }
 

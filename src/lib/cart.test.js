@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { shouldClearCartAfterFailedVerify } from './cart.js'
+import { shouldClearCartAfterFailedVerify, cartCurrency } from './cart.js'
 
 // The rule this guards is a money rule, not a tidiness one: /checkout/success is
 // only ever reached through a Stripe redirect, which happens after the payment
@@ -29,4 +29,14 @@ test('a failed verify empties the cart unless Stripe disowned the session', asyn
     assert.equal(shouldClearCartAfterFailedVerify(new TypeError('boom')), true)
     assert.equal(shouldClearCartAfterFailedVerify(undefined), true)
   })
+})
+
+// A subtotal only exists in one currency. Retail lines carry the SUPPLIER's
+// currency, so a US$ line and an NZ$ line can share a cart until checkout
+// refuses them; until then no total may pretend they add up.
+test('cartCurrency is the one shared code, or null when lines differ', () => {
+  assert.equal(cartCurrency([{ currency: 'NZD' }, { currency: 'NZD' }]), 'NZD')
+  assert.equal(cartCurrency([{ currency: 'USD' }, { currency: 'NZD' }]), null)
+  assert.equal(cartCurrency([{}]), 'NZD')
+  assert.equal(cartCurrency([]), null)
 })

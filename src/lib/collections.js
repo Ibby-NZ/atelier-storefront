@@ -86,10 +86,12 @@ export function collectionTiles({ collections = [], cards = [], brandSlug }) {
       season,
       description: card?.description || collection.description || '',
       image: card?.featuredImage || collection.image_url || null,
+      // Nothing published yet links back to the house, not to a grid that
+      // answers "Nothing matches those filters" (audit SF-TR-01).
       href:
         productCount > 0
           ? `${brandHref}&collection=${encodeURIComponent(collection.slug)}`
-          : brandHref,
+          : `/brands/${encodeURIComponent(brandSlug)}`,
       productCount,
     })
   })

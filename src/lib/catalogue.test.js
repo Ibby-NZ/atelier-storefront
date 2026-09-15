@@ -54,6 +54,9 @@ test('a visible retail price is struck through beside the trade price', () => {
 test('a guest with no visible price is invited to sign in', () => {
   assert.equal(priceInfo(hidden(), GUEST).text, NO_PRICE_COPY.guest)
   assert.match(priceInfo(hidden(), GUEST).text, /sign in/i)
+  // The invitation is a real link back to the page, not copy drawn as one.
+  assert.equal(priceInfo(hidden(), GUEST, '/products/atlas').href, '/login?redirect=%2Fproducts%2Fatlas')
+  assert.equal(priceInfo(hidden(), GUEST).href, '/login')
 })
 
 // The bug this guards: priceInfo used to take the product alone, so every
@@ -77,6 +80,9 @@ test('an approved trade user sees "price on request" where there is no trade fig
   // 36 of the 48 seeded products are finished goods, which carry no trade price.
   assert.equal(priceInfo(hidden(), APPROVED_TRADE).text, NO_PRICE_COPY.signedIn)
   assert.equal(priceInfo(hidden(), CUSTOMER).text, NO_PRICE_COPY.signedIn)
+  // Nobody signed in is sent to sign in; a real figure is never a link.
+  assert.equal(priceInfo(hidden(), CUSTOMER).href, null)
+  assert.equal(priceInfo(domestic(), GUEST).href, null)
 })
 
 test('a visible retail price renders for everyone, viewer or not', () => {

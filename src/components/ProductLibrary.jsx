@@ -513,10 +513,24 @@ export default function ProductLibrary() {
 
         {visible.length === 0 ? (
           <p className="library-empty">
-            Nothing matches those filters.{' '}
-            <button type="button" className="library-clear" onClick={clearFilters}>
-              Clear all
-            </button>
+            {/* A house deep-linked from its own page (or a collection tile)
+                with nothing published yet is not "no match" — say so, and
+                point back at the house. The gated case keeps its banner. */}
+            {!tradeGated && selection.brand?.length === 1 ? (
+              <>
+                No designs published for this house yet.{' '}
+                <a className="cta-underline" href={`/brands/${encodeURIComponent(selection.brand[0])}`}>
+                  Back to the house
+                </a>
+              </>
+            ) : (
+              <>
+                Nothing matches those filters.{' '}
+                <button type="button" className="library-clear" onClick={clearFilters}>
+                  Clear all
+                </button>
+              </>
+            )}
           </p>
         ) : (
           <ul className="product-grid product-grid-round">
