@@ -1192,6 +1192,14 @@
 
 /* A repeat order sits under its own card rather than in the card header: the
    card is shared with the guest order-lookup page, which has no basket. */
+/* The order the hash named (#orders/<number>): the card the confirmation's
+   "View in my account" lands on, so it is not one card among many. */
+.account-order.is-focused {
+  scroll-margin-top: var(--s8, 4rem);
+  outline: 1px solid var(--ochre);
+  outline-offset: var(--s2);
+}
+
 .account-order-actions {
   display: flex;
   justify-content: flex-end;

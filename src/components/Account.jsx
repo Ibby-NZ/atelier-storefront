@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, apiDownload, ApiError } from '../lib/api.js'
 import { fetchCurrentUser, logout, accountLabel } from '../lib/auth.js'
 import { isApprovedTrade, tradeStatusNote } from '../lib/account.js'
-import { accountSections, sectionFromHash, SECTION } from '../lib/accountSections.js'
+import { accountSections, orderCardId, orderFromHash, sectionFromHash, SECTION } from '../lib/accountSections.js'
 import { orderCard } from '../lib/orderView.jsx'
 import { reorderPlan, toRequestLines, toCartLines } from '../lib/reorder.js'
 import { replaceRequestList } from '../lib/requestList.js'
@@ -150,6 +150,25 @@ export default function Account() {
     window.addEventListener('hashchange', apply)
     return () => window.removeEventListener('hashchange', apply)
   }, [state.status, state.summary])
+
+  // `#orders/<number>` (the checkout confirmation's link) lands ON that order:
+  // once the Orders panel has rows, scroll its card into view and mark it. Runs
+  // again if the hash changes while the panel is open.
+  const [focusedOrder, setFocusedOrder] = useState(null)
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const apply = () => setFocusedOrder(orderFromHash(window.location.hash))
+    apply()
+    window.addEventListener('hashchange', apply)
+    return () => window.removeEventListener('hashchange', apply)
+  }, [])
+  const ordersLoaded = panels[SECTION.ORDERS]?.data?.orders?.length ?? 0
+  useEffect(() => {
+    if (!focusedOrder || section !== SECTION.ORDERS || ordersLoaded === 0) return
+    if (typeof document === 'undefined') return
+    const card = document.getElementById(orderCardId(focusedOrder))
+    if (card) card.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [focusedOrder, section, ordersLoaded])
 
   const openSection = useCallback((id) => {
     setSection(id)
@@ -439,6 +458,7 @@ export default function Account() {
             onChangePassword: handleChangePassword,
           },
           flags: {
+            focusedOrder,
             loggingOut,
             reordering,
             requestingCopy,
@@ -507,7 +527,11 @@ function renderPanel({ section, sections, panel, state, handlers, flags }) {
       <>
         <div className="order-list">
           {orders.map((order) => (
-            <div className="account-order" key={order.order_number}>
+            <div
+              className={`account-order${flags.focusedOrder === order.order_number ? ' is-focused' : ''}`}
+              id={orderCardId(order.order_number)}
+              key={order.order_number}
+            >
               {orderCard(order)}
               {reorderPlan(order).destination ? (
                 <div className="account-order-actions">

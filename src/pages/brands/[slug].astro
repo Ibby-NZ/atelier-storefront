@@ -3,7 +3,7 @@ export const prerender = false // live: API brand + EmDash/markdown editorial ov
 import { getCollection, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
 import brandsBanner from '../../assets/img/brands-hero-bg.jpg'
-import { houseMeta } from '../../lib/houses.js'
+import { houseArtwork, houseMeta } from '../../lib/houses.js'
 import Layout from '../../layouts/Layout.astro'
 import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
 import BespokeEnquiry from '../../components/BespokeEnquiry.jsx'
@@ -58,13 +58,18 @@ const mdPage = emPage
   : (await getCollection('brandPage')).find((entry) => entry.data.brand === slug) ?? null
 
 const name = brand?.name ?? emPage?.name ?? mdPage?.id ?? slug
-const blurb = emPage?.blurb || mdPage?.data.blurb || brand?.story || ''
+// The two CRM text fields (16 Sep 2026): the HEADLINE opens the left column,
+// the STORY is the body copy — on the right for an ordinary house, under the
+// headline for a bespoke one (whose right column is the enquiry form). The
+// editorial blurb, where the CMS has one, sits under the headline.
+const headline = brand?.headline ?? null
+const houseStory = brand?.story ?? null
+const blurb = emPage?.blurb || mdPage?.data.blurb || ''
 const slideshow = emPage?.slideshow ?? mdPage?.data.slideshow ?? []
 const cards = emPage?.collectionCards ?? mdPage?.data.collectionCards ?? []
-const heroImage = slideshow[0] ?? null
-// The Story hero's right-hand line — for a house, its provenance ("France ·
-// est. 1935", degrading to the country alone). And the photograph a house with
-// no banner of its own opens on.
+// The provenance line ("France · est. 1935", degrading to the country alone).
+// It used to be the banner's right-hand aside; the country is already the
+// badge over the name, so it now sits under the headline instead.
 const meta = brand ? houseMeta(brand) : ''
 // `brandsBanner.src` and not getImage(): this page is `prerender = false`, so
 // under `output: "server"` getImage() returns a RUNTIME `/_image` URL, and that
@@ -85,7 +90,7 @@ const Body = mdPage ? (await render(mdPage)).Content : null
 // The count is a safeFetch: a page must still render when the API is down, and
 // this brand may be editorial-only.
 const { data: held } = await safeFetch(
-  `/catalogue/products?brand=${encodeURIComponent(slug)}&limit=1`
+  `/catalogue/products?brand=${encodeURIComponent(slug)}&limit=12`
 )
 const designCount = held?.meta?.total ?? null
 
@@ -120,6 +125,21 @@ const tiles = collectionTiles({
   cards,
   brandSlug: slug,
 })
+
+// The banner is the SAME photograph the house's tile on /brands shows (16 Sep
+// 2026: "make sure the images for each brand are also the same for the
+// individual brand page"): the one artwork chain, lib/houses.js — the CRM's
+// house image, then the editorial slideshow, then a collection's photograph,
+// then a design's. The client's brands photograph is the floor under all four.
+const firstImage = (rows) => rows.find((row) => row?.image_url)?.image_url ?? null
+const heroImage = houseArtwork(
+  {
+    editorial: { [slug]: slideshow[0] ?? null },
+    collections: { [slug]: firstImage(collectionsBody?.collections ?? []) },
+    catalogue: { [slug]: firstImage(held?.products ?? []) },
+  },
+  { slug, image_url: brand?.image_url ?? null }
+)
 
 // The FALLBACK route into the house's designs. The mock's brand page has one
 // action — "Visit website" — because the collection tiles below it are how a
@@ -171,22 +191,29 @@ if (notFound) {
                 {brand?.country && <p class="badge-light">{brand.country}</p>}
                 <h1 class="photo-band-title">{name}</h1>
               </div>
-              {meta && (
-                <div class="photo-band-aside">
-                  <p>{meta}</p>
-                </div>
-              )}
+              {/* No right-hand aside: it printed the country a second time
+                  (16 Sep 2026, "redundant"). The provenance line moved under
+                  the headline below. */}
             </div>
           </div>
         </section>
         <section class="house-intro">
           <div class="container house-intro-inner">
             <div class="house-intro-blurb">
+              {headline && <p class="house-headline">{headline}</p>}
+              {meta && <p class="house-meta-line">{meta}</p>}
               {blurb && <p class="house-lede">{blurb}</p>}
               {
-                // A bespoke house's body copy sits under the blurb, because the
-                // right-hand column is the enquiry form. Same two blocks as
+                // A bespoke house's story sits under the headline, because the
+                // right-hand column is the enquiry form. Same blocks as
                 // below; the column is the only difference.
+                bespokeHouse && houseStory && (
+                  <div class="house-copy">
+                    <p>{houseStory}</p>
+                  </div>
+                )
+              }
+              {
                 bespokeHouse && story && (
                   <div class="house-copy">
                     <PortableText value={story} />
@@ -227,6 +254,11 @@ if (notFound) {
             </div>
 
             <div class="house-intro-body">
+              {!bespokeHouse && houseStory && (
+                <div class="house-copy">
+                  <p>{houseStory}</p>
+                </div>
+              )}
               {!bespokeHouse && story && (
                 <div class="house-copy">
                   <PortableText value={story} />

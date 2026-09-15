@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
 import { fetchCurrentUser } from '../lib/auth.js'
+import { accountOrderHref } from '../lib/accountSections.js'
 import { clearCart, shouldClearCartAfterFailedVerify } from '../lib/cart.js'
 import { formatMoney } from '../lib/money.js'
 
@@ -231,7 +232,10 @@ export default function CheckoutSuccess() {
       </a>
       {signedIn && (
         <p className="purchase-note">
-          <a className="cart-continue" href="/account">
+          {/* Lands ON this order in the account's Orders panel — the hash
+              names it (lib/accountSections.js orderFromHash) — rather than on
+              the overview (16 Sep 2026: "does not take you to the order"). */}
+          <a className="cart-continue" href={accountOrderHref(summary?.order_number)}>
             View in my account
           </a>
         </p>
