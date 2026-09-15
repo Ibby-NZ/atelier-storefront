@@ -9,7 +9,6 @@ import {
   readRequestList,
   addToRequestList,
   setRequestMetres,
-  setRequestNote,
   removeFromRequestList,
   clearRequestList,
   replaceRequestList,
@@ -224,7 +223,7 @@ export default function RequestList() {
           Your request number is <strong>{result.order_number}</strong>.
         </p>
         <p>
-          We will be in touch within 24 hours to confirm stock, cut requirements, and pricing
+          We will be in touch within 24 hours to confirm stock and pricing
           {backorder ? ', and to confirm the lead time on the items we are backordering.' : '.'}
         </p>
         <a className="btn btn-primary" href="/products">
@@ -454,16 +453,6 @@ export default function RequestList() {
                 >
                   Remove
                 </button>
-
-                <label className="field request-line-note">
-                  <span>Cut requirements</span>
-                  <textarea
-                    rows={2}
-                    value={line.cut_requirements ?? ''}
-                    onChange={(event) => setRequestNote(line.sku, event.target.value)}
-                    placeholder="Batch shading notes, cutting instructions, delivery timing…"
-                  />
-                </label>
 
                 {lineErrors[line.sku] && <p className="field-error request-line-error">{lineErrors[line.sku]}</p>}
               </li>

@@ -124,6 +124,35 @@ export function accountSections(summary) {
  * @returns {string}
  */
 export function sectionFromHash(hash, sections) {
-  const id = typeof hash === 'string' ? hash.replace(/^#/, '') : ''
+  const id = hashParts(hash).section
   return sections.some((section) => section.id === id) ? id : (sections[0]?.id ?? SECTION.DASHBOARD)
+}
+
+// `#orders/WEB-1234` is the Orders panel opened ON one order — what the
+// checkout confirmation links to. The section is the first path segment, the
+// order number the rest (an order number never carries a slash).
+const hashParts = (hash) => {
+  const text = typeof hash === 'string' ? hash.replace(/^#/, '') : ''
+  const slash = text.indexOf('/')
+  return slash === -1
+    ? { section: text, order: null }
+    : { section: text.slice(0, slash), order: decodeURIComponent(text.slice(slash + 1)) || null }
+}
+
+/** The order number a hash names, or null. */
+export function orderFromHash(hash) {
+  const { section, order } = hashParts(hash)
+  return section === SECTION.ORDERS ? order : null
+}
+
+/** The account link that opens the Orders panel on one order. */
+export function accountOrderHref(orderNumber) {
+  return orderNumber
+    ? `/account#${SECTION.ORDERS}/${encodeURIComponent(orderNumber)}`
+    : `/account#${SECTION.ORDERS}`
+}
+
+/** The DOM id an order card carries, so the hash can scroll to it. */
+export function orderCardId(orderNumber) {
+  return `order-${String(orderNumber ?? '').replace(/[^A-Za-z0-9_-]/g, '-')}`
 }

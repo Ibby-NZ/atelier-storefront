@@ -126,15 +126,16 @@ export default function BespokeEnquiry({ house }) {
             <label className="field">
               <span>What are you interested in? (optional)</span>
               <select value={category} onChange={(e) => updateEnquiry({ category: e.target.value })}>
-                {/* "All of the above" was the FIRST option, so "above" was
-                    nothing (Userback, 14 Sep 2026). The empty value is the
-                    payload contract (lib/bespoke.js) — only the label changes. */}
-                <option value="">Not sure yet — anything</option>
+                {/* The categories first and "All of the above" LAST, so
+                    "above" is true (16 Sep 2026: the "Not sure yet — anything"
+                    wording is gone). The empty value stays the payload contract
+                    (lib/bespoke.js) — a blank category means all of them. */}
                 {house.categories.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
                 ))}
+                <option value="">All of the above</option>
               </select>
             </label>
           )}

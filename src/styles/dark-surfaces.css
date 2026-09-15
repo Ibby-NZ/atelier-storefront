@@ -310,8 +310,13 @@ body.theme-dark .house-intro {
   background: var(--dark-bg);
 }
 
-body.theme-dark .house-lede {
+body.theme-dark .house-lede,
+body.theme-dark .house-headline {
   color: var(--bone);
+}
+
+body.theme-dark .house-meta-line {
+  color: var(--bone-soft);
 }
 
 body.theme-dark .house-copy {

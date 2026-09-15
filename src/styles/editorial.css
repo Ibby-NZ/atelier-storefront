@@ -408,6 +408,35 @@
   gap: var(--s6); /* 32px */
 }
 
+/* The CRM headline: the one line the page opens on (16 Sep 2026). heading/md,
+   the size the blurb used to be set at before it was demoted to body text. */
+.house-headline {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* The provenance line ("France · est. 1935"), the banner's old right-hand
+   aside, now under the headline. */
+.house-meta-line {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.house-headline + .house-meta-line,
+.house-headline + .house-lede,
+.house-meta-line + .house-lede {
+  margin-top: var(--s4);
+}
+
 /* The house blurb. It was the frame's heading/md (24px, 1.1) and the client
    read a five-line paragraph set at that size as a mistake, not an opening
    line (Userback, 14 Sep 2026, Loro Piana: "Make this normal text"). It is now

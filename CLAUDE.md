@@ -1997,3 +1997,30 @@ would turn every heading invisible. Each surface gets its ground flipped to
   shared and the rules are correct the day a dark product page returns.
 - **Story is no longer an inversion.** With no toggle there is nothing for it to
   invert against; it is simply a dark page, as it is drawn.
+
+## 16 September 2026 feedback round
+
+- **The house page's banner is the house's TILE photograph**: `houseArtwork`
+  (lib/houses.js), the same chain `/brands` uses — the CRM's `image_url`, then
+  the editorial slideshow, then a collection's picture, then a design's, then
+  the client's brands photograph. The right-hand banner aside (the country a
+  second time) is gone; the provenance line ("France · est. 1935") moved under
+  the headline.
+- **`brands.headline` + `brands.story` are the two CRM text fields on a house
+  page.** The headline opens the left column (`.house-headline`), the story is
+  the body copy — on the RIGHT for an ordinary house, under the headline for a
+  bespoke one (whose right column is the enquiry form). The editorial blurb no
+  longer falls back to `brand.story`; the two are different fields now.
+- **The bespoke form's "What are you interested in?" lists the categories
+  first and "All of the above" LAST** (the empty value is still the payload
+  contract; "Not sure yet — anything" is gone).
+- **The request list has no per-line "Cut requirements" box.** Cutting
+  vocabulary belongs to the cutting system; `cut_requirements` still exists on
+  the API and older orders still print theirs in the account.
+- **"View in my account" lands ON the order**: `accountOrderHref(order_number)`
+  is `/account#orders/<number>`; `sectionFromHash` reads the section off the
+  first segment, `orderFromHash` the order, and Account scrolls the card
+  (`orderCardId`) into view and marks it `.is-focused` once the Orders panel
+  has rows. The account's Orders panel already renders every order in full
+  (lines, totals, status) — that IS the customer's order detail; a guest has
+  /order-lookup.
