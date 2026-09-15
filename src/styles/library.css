@@ -580,11 +580,11 @@
   justify-content: center;
 }
 
-/* `.product-price.muted` shrink-wraps to its underline, which needs an
-   alignment of its own — and `align-self` on the child beats the `align-items`
-   above, so without this the "Price on request" / "Sign in for trade pricing"
-   action was the one line in a round card hanging off the left edge while the
-   house, the name, the specs and every real price were centred. */
+/* `.product-price.muted` shrink-wraps, which needs an alignment of its own —
+   and `align-self` on the child beats the `align-items` above, so without this
+   the "Price on request" / "Sign in for trade pricing" line was the one line in
+   a round card hanging off the left edge while the house, the name, the specs
+   and every real price were centred. */
 .product-grid-round .product-price.muted {
   align-self: center;
 }
@@ -659,9 +659,11 @@
   color: var(--shell-muted);
 }
 
-/* The price line doubles as the card action. A real figure is money; the
-   no-price copy ("Sign in for trade pricing") is drawn as the direction's
-   underlined ghost action, which is exactly what the mock's card carries. */
+/* The price line: a real figure is money; the no-price copy ("Sign in for
+   trade pricing") is plain muted text. It sits INSIDE the card's link, so it
+   cannot be its own action — it used to be drawn as an underlined ghost action
+   that opened the product, not the sign-in (audit SF-B2C-02). The detail page
+   carries the real link. */
 .product-price {
   display: block;
   /* `auto`, not a value: the rows above a price vary per card (a design with no
@@ -681,16 +683,9 @@
 .product-price.muted {
   align-self: flex-start;
   margin-top: auto;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--umber-soft);
   font-size: var(--t-xs);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--umber-soft);
-}
-
-.product-card > a:hover .product-price.muted {
-  color: var(--ochre);
-  border-bottom-color: var(--ochre);
 }
 
 .product-price .detail-price-label {

@@ -319,7 +319,24 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
 - **`src/lib/catalogue.js`** is the single place the catalogue display rules
   live, so the library grid, the product detail island and the homepage cannot
   drift apart. Pure functions, no fetching, no DOM.
-  - `priceInfo(product, viewer)` → `{ label, text, muted, indicative, retail }`.
+  - `priceInfo(product, viewer, returnTo)` → `{ label, text, muted, indicative, retail, href }`.
+    `href` is set on the GUEST no-price line only (`signInHref(returnTo)`): the
+    detail page renders it as a real `cta-underline` link, because "Sign in for
+    trade pricing" used to be drawn as an action that went nowhere (audit
+    SF-B2C-02, Sept 2026). The library card CANNOT carry it — the price sits
+    inside the card's own `<a>` — so there the copy is plain muted text, not the
+    ghost-action underline it used to wear. **The detail island renders the
+    price line as a blank of the same height (`aria-busy`) until the
+    credentialed fetch settles** (`viewerReady`): the server has no cookie, so
+    a trade shopper used to see the guest copy or retail paint first and the
+    NZ$ figure replace it (audit SF-TR-02/04). The library grid needs no such
+    guard — it renders nothing until the same `Promise.all` resolves.
+    `noPriceCopyFor(viewer)` is exported for the cart, which used to hard-code
+    "Price on request". `cartCurrency(items)` (`src/lib/cart.js`) is the one
+    currency every line shares or null, and the cart and checkout show a
+    subtotal/total ONLY when it is a string — retail lines carry the supplier's
+    currency, and `cartSubtotalCents` adds raw cents, so a US$ line first and an
+    NZ$ line second used to total as "US$" of both.
     FR-3 precedence: `trade_price_cents` (only ever sent to an approved trade
     user, so if it arrived, show it, with the visible retail struck through
     beside it) → `price_hidden` or no retail price → a `NO_PRICE_COPY` line

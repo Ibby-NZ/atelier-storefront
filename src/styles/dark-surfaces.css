@@ -485,12 +485,6 @@ body.theme-dark .product-price {
 
 body.theme-dark .product-price.muted {
   color: var(--bone-soft);
-  border-bottom-color: var(--bone-soft);
-}
-
-body.theme-dark .product-card > a:hover .product-price.muted {
-  color: var(--tan);
-  border-bottom-color: var(--tan);
 }
 
 body.theme-dark .product-swatch-dot {
