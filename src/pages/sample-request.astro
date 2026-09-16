@@ -1,0 +1,21 @@
+---
+export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+import Layout from '../layouts/Layout.astro'
+import SampleRequestList from '../components/SampleRequestList.jsx'
+---
+
+<Layout
+  title="Your sample request — Atelier Textiles"
+  description="Review the colourways you would like cuttings of, add your details, and send them as one request."
+>
+  <section class="page-intro">
+    <p class="page-eyebrow">Samples</p>
+    <h1>Your sample request</h1>
+    <p>
+      Add as many colourways as you like from the library and send them as one request. We
+      confirm what is available and post your cuttings out.
+    </p>
+  </section>
+
+  <SampleRequestList client:load />
+</Layout>

@@ -6,6 +6,7 @@ import { accountSections, orderCardId, orderFromHash, sectionFromHash, SECTION }
 import { orderCard } from '../lib/orderView.jsx'
 import { reorderPlan, toRequestLines, toCartLines } from '../lib/reorder.js'
 import { replaceRequestList } from '../lib/requestList.js'
+import { tradeDetailsErrors, tradeDetailsPatch } from '../lib/tradeDetails.js'
 import { newPasswordError, changePasswordError } from '../lib/passwordReset.js'
 import { addToCart, setCartQty } from '../lib/cart.js'
 import {
@@ -307,6 +308,57 @@ export default function Account() {
   // (see the panel), so it is not in the body even though the API would ignore
   // it — sending a field the client cannot change is a promise the screen does
   // not keep.
+  // The trade client's own application (16 Sep 2026). Read once the page is
+  // ready and the account is trade (summary present); a 404 is "the office
+  // created this login by hand", which the panel says rather than errors.
+  const [tradeDetails, setTradeDetails] = useState({ status: 'idle', application: null, error: '', errors: {} })
+  useEffect(() => {
+    if (state.status !== 'ready' || !state.summary) return undefined
+    let active = true
+    setTradeDetails({ status: 'loading', application: null, error: '', errors: {} })
+    apiFetch('/account/trade-application')
+      .then((body) => {
+        if (active) setTradeDetails({ status: 'ready', application: body?.application ?? null, error: '', errors: {} })
+      })
+      .catch((err) => {
+        if (!active) return
+        if (err instanceof ApiError && err.status === 404) {
+          setTradeDetails({ status: 'none', application: null, error: '', errors: {} })
+        } else {
+          setTradeDetails({
+            status: 'error',
+            application: null,
+            error: err instanceof ApiError ? err.message : 'We could not load your trade details.',
+            errors: {},
+          })
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [state.status, state.summary])
+
+  const handleSaveTradeDetails = useCallback(async (event) => {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    setTradeDetails((current) => ({ ...current, status: 'saving', error: '', errors: {} }))
+    try {
+      const body = await apiFetch('/account/trade-application', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tradeDetailsPatch(form)),
+      })
+      setTradeDetails({ status: 'saved', application: body?.application ?? null, error: '', errors: {} })
+    } catch (err) {
+      setTradeDetails((current) => ({
+        ...current,
+        status: 'ready',
+        error: err instanceof ApiError ? err.message : 'We could not save your trade details.',
+        errors: err instanceof ApiError ? tradeDetailsErrors(err.body?.errors) : {},
+      }))
+    }
+  }, [])
+
   const handleSaveDetails = useCallback(async (event) => {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -464,8 +516,10 @@ export default function Account() {
             onLoadMore: handleLoadMore,
             onSaveDetails: handleSaveDetails,
             onChangePassword: handleChangePassword,
+            onSaveTradeDetails: handleSaveTradeDetails,
           },
           flags: {
+            tradeDetails,
             focusedOrder,
             loggingOut,
             reordering,
@@ -507,6 +561,9 @@ function renderPanel({ section, sections, panel, state, handlers, flags }) {
       onChangePassword: handlers.onChangePassword,
       detailsState: flags.detailsState,
       passwordState: flags.passwordState,
+      // Only a trade account has an application to edit.
+      tradeDetails: state.summary ? flags.tradeDetails : null,
+      onSaveTradeDetails: handlers.onSaveTradeDetails,
     })
   }
 

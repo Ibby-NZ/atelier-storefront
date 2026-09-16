@@ -746,8 +746,12 @@
 }
 
 /* --- Account + order history ---------------------------------------------- */
+/* The portal takes the container's width (16 Sep 2026: "orders should take up
+   more of the screen") — the 58rem cap left a third of a desktop screen empty
+   beside a list of order cards. */
 .account {
-  max-width: 58rem;
+  max-width: none;
+  padding-inline: var(--s4);
 }
 
 /* The greeting and Log out share the rule that used to sit under the greeting
@@ -1227,7 +1231,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--s6);
-  max-width: 52rem;
 }
 
 .order-card {
@@ -1477,4 +1480,32 @@
 .library-shell .cart-empty .cta-underline,
 .library-shell .cart-empty .btn {
   align-self: center;
+}
+
+/* --- Trade details (account portal) -------------------------------------- */
+/* The client's own application form, editable. Two columns where there is
+   room, the field-group rhythm the details form already has. */
+.account-trade-form {
+  margin: 0 0 var(--s6);
+  max-width: 48rem;
+}
+
+.account-trade-form .field-group {
+  margin-bottom: var(--s5);
+}
+
+.account-trade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s3) var(--s5);
+}
+
+.account-trade-grid .field-wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 40rem) {
+  .account-trade-grid {
+    grid-template-columns: 1fr;
+  }
 }

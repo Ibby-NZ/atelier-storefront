@@ -1,6 +1,7 @@
 ---
 import CartIndicator from './CartIndicator.jsx'
 import RequestIndicator from './RequestIndicator.jsx'
+import SampleIndicator from './SampleIndicator.jsx'
 import AccountNav from './AccountNav.jsx'
 import Wordmark from './Wordmark.astro'
 
@@ -93,6 +94,7 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
           the drawn header keeps its three icons and a shopper who has built a
           list can still reach it from any page. */}
       <RequestIndicator client:load />
+      <SampleIndicator client:load />
       <CartIndicator client:load />
       {/* The burger, phones and tablets only (chrome.css hides it above
           1024px). Two lines that fold into a cross when the menu is open. */}
