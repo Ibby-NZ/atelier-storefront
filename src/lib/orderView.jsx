@@ -26,6 +26,10 @@ const KIND_LABELS = {
   checkout: 'Online order',
   order_request: 'Fabric order',
   backorder_request: 'Backorder',
+  // An order the office keyed for this client — a phone call, a walk-in, a
+  // bespoke enquiry. It printed as the raw column value ("manual") on the
+  // client's own summary row.
+  manual: 'Sales order',
 }
 
 // A small coloured status pill. Unknown statuses fall back to a neutral badge.
@@ -72,24 +76,40 @@ export const discountCents = (order) => {
   return pct > 0 && subtotal > 0 ? Math.round(subtotal * (pct / 100)) : 0
 }
 
-export function orderCard(order) {
+// A card COLLAPSES (16 Sep 2026): a client with dozens of orders had to scroll
+// past every line of every one of them to reach the next. The summary carries
+// what identifies an order at a glance — number, kind, date, status, total —
+// and the lines and totals open under it.
+//
+// A native <details>, so it needs no JavaScript and no state: keyboard and
+// screen-reader behaviour come free, and the `open` prop is what lets a linked
+// order (#orders/<number>) arrive already expanded.
+export function orderCard(order, { open = false } = {}) {
   const currency = 'NZD'
   const lines = order.lines ?? []
   const created = formatDate(order.created_at)
   const priced = hasQuotedTotal(order)
 
   return (
-    <article className="order-card" key={order.order_number}>
-      <header className="order-card-head">
+    <details className="order-card" key={order.order_number} open={open}>
+      <summary className="order-card-head">
         <div>
           <h2 className="order-number">{order.order_number}</h2>
           <p className="order-meta">
             {KIND_LABELS[order.kind] ?? order.kind}
             {created ? ` · ${created}` : ''}
+            {lines.length > 0 ? ` · ${lines.length === 1 ? '1 item' : `${lines.length} items`}` : ''}
           </p>
         </div>
-        {statusBadge(order.status)}
-      </header>
+        <span className="order-card-head-right">
+          {/* The figure the summary is worth reading for. An unpriced request
+              says so rather than printing the $0.00 its columns hold. */}
+          <span className="order-summary-total">
+            {priced ? formatMoney(order.total_cents, currency) : 'Priced on confirmation'}
+          </span>
+          {statusBadge(order.status)}
+        </span>
+      </summary>
 
       {lines.length > 0 ? (
         <ul className="order-lines">
@@ -188,6 +208,6 @@ export function orderCard(order) {
           ) : null}
         </dl>
       )}
-    </article>
+    </details>
   )
 }

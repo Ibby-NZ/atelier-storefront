@@ -19,8 +19,7 @@ import {
   panelError,
   panelEmpty,
   pendingLinkNotice,
-  moreControl,
-} from '../lib/accountPanels.jsx'
+  moreControl, passwordPanel } from '../lib/accountPanels.jsx'
 
 // The account portal (US-022, extended for approved trade clients).
 //
@@ -551,6 +550,13 @@ function renderPanel({ section, sections, panel, state, handlers, flags }) {
     })
   }
 
+  if (section === SECTION.PASSWORD) {
+    return passwordPanel({
+      onChangePassword: handlers.onChangePassword,
+      passwordState: flags.passwordState,
+    })
+  }
+
   if (section === SECTION.DETAILS) {
     return detailsPanel({
       user: state.user,
@@ -558,9 +564,7 @@ function renderPanel({ section, sections, panel, state, handlers, flags }) {
       onLogout: handlers.onLogout,
       loggingOut: flags.loggingOut,
       onSaveDetails: handlers.onSaveDetails,
-      onChangePassword: handlers.onChangePassword,
       detailsState: flags.detailsState,
-      passwordState: flags.passwordState,
       // Only a trade account has an application to edit.
       tradeDetails: state.summary ? flags.tradeDetails : null,
       onSaveTradeDetails: handlers.onSaveTradeDetails,
@@ -597,7 +601,9 @@ function renderPanel({ section, sections, panel, state, handlers, flags }) {
               id={orderCardId(order.order_number)}
               key={order.order_number}
             >
-              {orderCard(order)}
+              {/* The order a link named arrives expanded; the rest collapse,
+                  so dozens fit on one screen. */}
+              {orderCard(order, { open: flags.focusedOrder === order.order_number })}
               {reorderPlan(order).destination ? (
                 <div className="account-order-actions">
                   <button

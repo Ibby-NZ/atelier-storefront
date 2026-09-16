@@ -27,6 +27,7 @@ export const SECTION = Object.freeze({
   INVOICES: 'invoices',
   PRICE_LISTS: 'price-lists',
   DETAILS: 'details',
+  PASSWORD: 'password',
 })
 
 // Copy for a panel that exists but has nothing in it yet, per reason. The
@@ -80,6 +81,15 @@ const SECTIONS = Object.freeze([
   Object.freeze({
     id: SECTION.DETAILS,
     label: 'Account',
+    trade: false,
+    needsLink: false,
+  }),
+  // Changing a password was a <details> disclosure buried under the account
+  // form, where the client could not find it (16 Sep 2026). Every account has a
+  // password, so this tab is never gated.
+  Object.freeze({
+    id: SECTION.PASSWORD,
+    label: 'Password',
     trade: false,
     needsLink: false,
   }),
