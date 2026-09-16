@@ -2024,3 +2024,26 @@ would turn every heading invisible. Each surface gets its ground flipped to
   has rows. The account's Orders panel already renders every order in full
   (lines, totals, status) — that IS the customer's order detail; a guest has
   /order-lookup.
+
+### The sample enquiry cart and the trade details form (16 Sep 2026)
+
+- **"Request a sample" ADDS to a list; it no longer opens /contact.** `lib/sampleList.js`
+  is the requestList.js shape (localStorage, one line per SKU, capped at 20, pure
+  transforms tested), `SampleIndicator` is the header badge, and `/sample-request`
+  (`SampleRequestList.jsx`) sends the lot as one `POST /samples/request` — contact
+  prefilled from the session, guests welcome with an email. The API lands it as a
+  `pending` sample request in the CRM and emails both sides; the list clears on
+  success.
+- **A trade client edits their own application under Account → Account**
+  (`tradeDetailsForm` in accountPanels.jsx, fields declared once in
+  `lib/tradeDetails.js`): `GET`/`PATCH /account/trade-application`. The consent
+  block is not offered — the API refuses it anyway. A 404 (a login the office
+  created by hand) is said in words. Uncontrolled inputs keyed on `updated_at`,
+  the details form's own idiom; a 422 prints under the field it names.
+- **The portal takes the container's width** (`.account` had a 58rem cap, the
+  order list 52rem) — "orders should take up more of the screen".
+- **The worktree gotcha**: an Astro dev server whose `node_modules` is a symlink
+  into another checkout serves no island — Vite refuses `@astrojs/react/dist/client.js`
+  from outside the root and every `client:load` component silently fails to
+  hydrate (the server-rendered HTML looks fine). Install real node_modules in a
+  worktree before trusting a browser check.

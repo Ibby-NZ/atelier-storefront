@@ -19,6 +19,7 @@
 
 import { formatAmount } from './money.js'
 import { MIN_PASSWORD_LENGTH } from './passwordReset.js'
+import { BUSINESS_TYPES, TRADE_DETAIL_SECTIONS } from './tradeDetails.js'
 
 function formatDate(value) {
   if (!value) return '—'
@@ -344,9 +345,12 @@ export function detailsPanel({
   onChangePassword,
   detailsState,
   passwordState,
+  tradeDetails = null,
+  onSaveTradeDetails = null,
 }) {
   return (
     <div className="account-details">
+      {tradeDetails && onSaveTradeDetails ? tradeDetailsForm({ tradeDetails, onSaveTradeDetails }) : null}
       <form className="account-detail-form" onSubmit={onSaveDetails} noValidate>
         <fieldset className="field-group">
           <legend>Your details</legend>
@@ -447,5 +451,104 @@ export function detailsPanel({
         {loggingOut ? 'Logging out…' : 'Log out'}
       </button>
     </div>
+  )
+}
+
+
+/* --- Trade details ----------------------------------------------------------
+   The client's own application, editable (16 Sep 2026). Uncontrolled inputs
+   with defaultValue, the details form's own idiom; the PATCH body is built off
+   FormData by tradeDetailsPatch. Keyed on the loaded row's updated_at so a
+   fresh save re-seeds the defaults. */
+function tradeField(field, application, errors) {
+  const error = errors?.[field.key]
+  const value = application?.[field.key]
+  const className = `field${field.wide ? ' field-wide' : ''}${field.kind === 'bool' ? ' field-checkbox' : ''}`
+  if (field.kind === 'bool') {
+    return (
+      <label className={className} key={field.key}>
+        <input type="checkbox" name={field.key} defaultChecked={value === true} />
+        <span>{field.label}</span>
+      </label>
+    )
+  }
+  return (
+    <label className={className} key={field.key}>
+      <span>{field.label}</span>
+      {field.kind === 'textarea' ? (
+        <textarea name={field.key} rows={2} maxLength={2000} defaultValue={value ?? ''} />
+      ) : field.kind === 'business_type' ? (
+        <select name={field.key} defaultValue={value ?? ''}>
+          <option value="">Choose…</option>
+          {BUSINESS_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input type={field.kind} name={field.key} maxLength={2000} defaultValue={value ?? ''} />
+      )}
+      {error ? <span className="field-error">{error}</span> : null}
+    </label>
+  )
+}
+
+function tradeDetailsForm({ tradeDetails, onSaveTradeDetails }) {
+  if (tradeDetails.status === 'loading' || tradeDetails.status === 'idle') {
+    return <p className="products-status">Loading your trade details…</p>
+  }
+  if (tradeDetails.status === 'none') {
+    return (
+      <p className="account-panel-note">
+        Your trade account was set up by our office, so there is no application form to edit
+        here. Contact us to change your business details.
+      </p>
+    )
+  }
+  if (tradeDetails.status === 'error' && !tradeDetails.application) {
+    return (
+      <p className="error-state" role="alert">
+        {tradeDetails.error}
+      </p>
+    )
+  }
+  const { application, errors } = tradeDetails
+  return (
+    <form
+      className="account-detail-form account-trade-form"
+      onSubmit={onSaveTradeDetails}
+      noValidate
+      key={application?.updated_at ?? application?.id ?? 'trade'}
+    >
+      <fieldset className="field-group">
+        <legend>Trade details</legend>
+        <p className="field-hint">
+          What you told us when you applied. Keep it current — the office reads it when it
+          sends your samples and invoices.
+        </p>
+      </fieldset>
+      {TRADE_DETAIL_SECTIONS.map((section) => (
+        <fieldset className="field-group" key={section.title}>
+          <legend>{section.title}</legend>
+          <div className="account-trade-grid">
+            {section.fields.map((field) => tradeField(field, application, errors))}
+          </div>
+        </fieldset>
+      ))}
+      {tradeDetails.error ? (
+        <p className="error-state" role="alert">
+          {tradeDetails.error}
+        </p>
+      ) : null}
+      {tradeDetails.status === 'saved' ? (
+        <p className="field-hint" role="status">
+          Your trade details are saved.
+        </p>
+      ) : null}
+      <button type="submit" className="btn btn-primary" disabled={tradeDetails.status === 'saving'}>
+        {tradeDetails.status === 'saving' ? 'Saving…' : 'Save trade details'}
+      </button>
+    </form>
   )
 }

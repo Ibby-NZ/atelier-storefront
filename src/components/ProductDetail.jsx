@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
 import { fetchCurrentUser } from '../lib/auth.js'
 import { addToCart } from '../lib/cart.js'
+import { SAMPLE_PATH, addToSampleList } from '../lib/sampleList.js'
 import {
   addToRequestList,
   normaliseMetres,
@@ -98,16 +99,6 @@ const REQUEST_PATH = '/order-request'
 // route on the API — so it lands on the contact form with the colourway already
 // named and the message written (ContactForm.jsx reads these back out of the
 // query). A bare /contact link looked like an action and did nothing visible.
-function sampleHref(product, colourway) {
-  const named = colourway
-    ? `${product.name} — ${colourway.name} (${colourway.sku})`
-    : product.name
-  const params = new URLSearchParams({
-    subject: `Sample request: ${named}`,
-    message: `I would like a sample of ${named}.`,
-  })
-  return `/contact?${params.toString()}`
-}
 
 // How many cards the Similar strip shows (the mock's row).
 const SIMILAR_LIMIT = 12 // the row runs off the right edge; twelve is the cap (Sept 2026)
@@ -139,6 +130,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   const [metres, setMetres] = useState('1')
   const [metresError, setMetresError] = useState('')
   const [requested, setRequested] = useState(0) // metres just added, 0 = nothing
+  const [sampleAdded, setSampleAdded] = useState(null) // the colourway just added to the sample request
   // Starts null so the client's first render matches the server's (which has no
   // cookie and therefore no viewer) — anything else fails hydration. Resolved
   // alongside the product below, and only ever selects price copy.
@@ -379,6 +371,23 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     setRequested(wanted)
   }
 
+  // "Request a sample" adds the colourway to the sample enquiry cart
+  // (lib/sampleList.js) — it used to open /contact with the colourway named,
+  // so three cuttings were three enquiries. The list is sent as ONE request
+  // from /sample-request and lands in the CRM as pending.
+  const onRequestSample = () => {
+    if (!selected) return
+    addToSampleList({
+      sku: selected.sku,
+      slug: product.slug,
+      name: product.name,
+      brand: product.brand?.name ?? null,
+      colourway: selected.name,
+      image_url: selected.image_url ?? product.hi_res_asset_url ?? null,
+    })
+    setSampleAdded(selected.name)
+  }
+
   // The lede under the name. The mock writes the fabric flow's own explainer
   // there; a finished good has no equivalent copy, so it states the simpler
   // truth of that flow instead.
@@ -613,14 +622,22 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
             )}
             {/* One sample control for both branches — it was two identical
                 copies, and a third would have drifted. */}
-            <a
+            <button
+              type="button"
               className="action-outline"
-              href={sampleHref(product, selected)}
-              title="Ask us for a cutting of this colourway"
+              onClick={onRequestSample}
+              disabled={!selected}
+              title="Add a cutting of this colourway to your sample request"
             >
               Request a sample
-            </a>
+            </button>
           </div>
+          {sampleAdded && (
+            <p className="purchase-added">
+              {sampleAdded} added to your sample request.{' '}
+              <a href={SAMPLE_PATH}>Review sample request</a>
+            </p>
+          )}
 
           {metresError && <p className="field-error">{metresError}</p>}
 
