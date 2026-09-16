@@ -10,9 +10,15 @@ import { SOCIAL } from '../lib/site.js'
 // four-column one — the showroom addresses, phone and email still live in
 // src/lib/site.js and still render on /contact, where the design puts them.
 //
-// The newsletter has no service behind it (meeting decision: newsletters are
-// journal posts), so the form lands on /contact rather than pretending to
-// subscribe — a dead "Join us" that swallowed the address would be worse.
+// The newsletter form posts to atelier-api's POST /newsletter, which forwards
+// the address to Mailchimp (double opt-in: Mailchimp sends the confirmation).
+// It used to land on /contact under an earlier decision that newsletters are
+// journal posts; the client asked for Mailchimp on 16 Sep 2026. With no
+// MAILCHIMP_* on the API the route answers 503 and its sentence is printed
+// under the box — never a "Join us" that swallows the address and says nothing.
+// Plain <script>, not an island: the footer is on every page and a React
+// hydration for one input is not worth it. Re-armed on `astro:page-load`
+// because ClientRouter swaps the footer on navigation.
 //
 // The second column is Trade Account / Contact / Privacy Policy / Terms &
 // Conditions, always all four — the client's own list (Userback, 25 Aug 2026).
@@ -82,16 +88,65 @@ const socialHref = (label) => SOCIAL.find((s) => s.label === label)?.href
         </ul>
       </nav>
 
-      <form class="site-footer-newsletter" action="/contact" method="get">
+      <form class="site-footer-newsletter" method="post" novalidate>
         <p class="site-footer-newsletter-head">Receive our Newsletter</p>
         <input
           type="email"
-          name="newsletter"
+          name="email"
           placeholder="Enter your email..."
           aria-label="Email address"
+          autocomplete="email"
+          required
         />
+        <div class="sr-only" aria-hidden="true">
+          <input type="text" name="website" tabindex="-1" autocomplete="off" />
+        </div>
         <button class="site-footer-join" type="submit">Join us</button>
+        <p class="site-footer-newsletter-note" role="status"></p>
       </form>
     </div>
   </div>
 </footer>
+
+<script>
+  import { apiFetch, ApiError } from '../lib/api.js'
+
+  const SENT = 'Thank you — check your inbox to confirm your subscription.'
+  const INVALID = 'A valid email address is required.'
+
+  document.addEventListener('astro:page-load', () => {
+    const form = document.querySelector('.site-footer-newsletter')
+    if (!(form instanceof HTMLFormElement) || form.dataset.armed) return
+    form.dataset.armed = 'true'
+    const email = form.elements.namedItem('email')
+    const website = form.elements.namedItem('website')
+    const button = form.querySelector('.site-footer-join')
+    const note = form.querySelector('.site-footer-newsletter-note')
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      note.textContent = ''
+      note.classList.remove('is-error')
+      if (!email.checkValidity() || !email.value.trim()) {
+        note.textContent = INVALID
+        note.classList.add('is-error')
+        return
+      }
+      button.disabled = true
+      try {
+        await apiFetch('/newsletter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.value.trim(), website: website.value }),
+        })
+        note.textContent = SENT
+        form.reset()
+      } catch (error) {
+        note.textContent = error instanceof ApiError ? error.message : INVALID
+        note.classList.add('is-error')
+      } finally {
+        button.disabled = false
+      }
+    })
+  })
+</script>

@@ -509,6 +509,21 @@ body:not(.theme-dark) .site-header--overlay.is-pinned {
   color: var(--ochre);
 }
 
+.site-footer-newsletter-note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--umber-soft);
+}
+.site-footer-newsletter-note:empty {
+  display: none;
+}
+.site-footer-newsletter-note.is-error {
+  color: var(--clay);
+}
+
+
 /* --- Responsive ----------------------------------------------------------- */
 /* Below the container's own breakpoint the two flex groups meet in the middle
    of the wordmark, so the row becomes three stacked rows: wordmark, nav,
