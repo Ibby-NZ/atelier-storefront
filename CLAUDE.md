@@ -2047,3 +2047,27 @@ would turn every heading invisible. Each surface gets its ground flipped to
   from outside the root and every `client:load` component silently fails to
   hydrate (the server-rendered HTML looks fine). Install real node_modules in a
   worktree before trusting a browser check.
+
+## 16 September 2026, round two
+
+- **An order card COLLAPSES.** `orderCard(order, { open })` is a native
+  `<details>`: the summary carries number, kind, date, item count, total and
+  status, and the lines and totals open under it. A client with dozens of orders
+  scrolled past every line of every one of them. The order a hash link names
+  (`#orders/<number>`) arrives expanded, and the guest lookup — one order, looked
+  up on purpose — passes `open: true`.
+- **Changing a password is its own account section** (`SECTION.PASSWORD`,
+  `passwordPanel`), not a `<details>` buried under the account form. Every
+  account has one, so the tab is never gated.
+- **A collection tile ALWAYS links to its own grid**
+  (`/products?brand=…&collection=…`). It used to fall back to the house page when
+  `product_count` was 0 — the audit's SF-TR-01 reasoning — and that reasoning
+  assumed the count was true. On the house page it cannot be: the page renders
+  server-side and a server fetch carries no session cookie, so the count arrives
+  gated, 0 for every trade-only house, and every tile bounced back to the page it
+  was on. The grid is client-side, has the cookie, and explains its own gate.
+  **Separately: no product in the seeded catalogue carries a `collection_id` at
+  all**, so the grids are empty until the office assigns products to collections
+  in the CRM (Catalogue → Products). The vendored snapshot has no product↔
+  collection mapping to import — the product rows carry a `design`, and no design
+  name matches any collection name.

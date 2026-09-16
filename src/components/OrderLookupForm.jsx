@@ -86,7 +86,8 @@ export default function OrderLookupForm() {
         </button>
       </form>
 
-      {order ? <div className="order-list">{orderCard(order)}</div> : null}
+      {/* One order, looked up on purpose — it opens expanded. */}
+      {order ? <div className="order-list">{orderCard(order, { open: true })}</div> : null}
     </div>
   )
 }

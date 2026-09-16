@@ -24,10 +24,15 @@ test('EVERY live collection tiles — assigned, unassigned, or a house holding n
   assert.equal(collectionTiles({ collections: [], brandSlug: 'de-le-cuona' }).length, 0)
 })
 
-test('a tile lands on its own collection where it has members, else the house grid', () => {
+// Every tile lands on its OWN collection, members or not (16 Sep 2026). The
+// count is computed server-side with no session cookie, so it reads 0 for every
+// trade-only house — falling back on it sent every tile back to the page it was
+// on. The grid is client-side, has the cookie, and explains its own gate.
+test('a tile always lands on its own collection grid, never back on the house', () => {
   const tiles = collectionTiles({ collections: LIVE, cards: [], brandSlug: 'manuel-canovas' })
-  assert.equal(tiles[0].href, '/brands/manuel-canovas')
+  assert.equal(tiles[0].href, '/products?brand=manuel-canovas&collection=giverny')
   assert.equal(tiles[1].href, '/products?brand=manuel-canovas&collection=le-voyage')
+  assert.equal(tiles.filter((tile) => tile.href.startsWith('/brands/')).length, 0)
 })
 
 test('the season is split off the name onto its own label', () => {

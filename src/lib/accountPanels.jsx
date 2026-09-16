@@ -332,9 +332,12 @@ export function priceListsPanel({ brands, onDownload, downloading }) {
  * place a signed-in visitor can end their session.
  *
  * @param {{ user: object, summary: object|null, onLogout: Function,
- *           loggingOut: boolean, onSaveDetails: Function, onChangePassword: Function,
+ *           loggingOut: boolean, onSaveDetails: Function,
  *           detailsState: { status: string, error: string },
- *           passwordState: { status: string, error: string } }} props
+ *           tradeDetails: object|null, onSaveTradeDetails: Function|null }} props
+ *
+ * Changing a password is NOT here any more — it has a section of its own
+ * (passwordPanel, 16 Sep 2026).
  */
 export function detailsPanel({
   user,
@@ -342,9 +345,7 @@ export function detailsPanel({
   onLogout,
   loggingOut,
   onSaveDetails,
-  onChangePassword,
   detailsState,
-  passwordState,
   tradeDetails = null,
   onSaveTradeDetails = null,
 }) {
@@ -401,44 +402,6 @@ export function detailsPanel({
         </button>
       </form>
 
-      <details className="account-password">
-        <summary className="account-password-head">Change password</summary>
-        <form className="account-detail-form" onSubmit={onChangePassword} noValidate>
-          <fieldset className="field-group">
-            <legend className="sr-only">Change password</legend>
-            <label className="field">
-              <span>Current password</span>
-              <input type="password" name="current_password" autoComplete="current-password" />
-            </label>
-            <label className="field">
-              <span>New password</span>
-              <input type="password" name="new_password" autoComplete="new-password" />
-              <span className="field-hint">At least {MIN_PASSWORD_LENGTH} characters.</span>
-            </label>
-            <label className="field">
-              <span>Confirm new password</span>
-              <input type="password" name="confirm_password" autoComplete="new-password" />
-            </label>
-          </fieldset>
-
-          {passwordState.error ? (
-            <p className="error-state" role="alert">{passwordState.error}</p>
-          ) : null}
-          {passwordState.status === 'saved' ? (
-            <p className="field-hint" role="status">
-              Your password has been changed. You stay signed in here.
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={passwordState.status === 'saving'}
-          >
-            {passwordState.status === 'saving' ? 'Saving…' : 'Change password'}
-          </button>
-        </form>
-      </details>
 
       {accountManagerBlock(summary?.trade_account?.account_manager)}
 
@@ -550,5 +513,51 @@ function tradeDetailsForm({ tradeDetails, onSaveTradeDetails }) {
         {tradeDetails.status === 'saving' ? 'Saving…' : 'Save trade details'}
       </button>
     </form>
+  )
+}
+
+/* --- Password --------------------------------------------------------------
+   Its own section since 16 Sep 2026. It was a <details> under the account form,
+   where the client could not find it; every account has a password, so the tab
+   is never gated. */
+export function passwordPanel({ onChangePassword, passwordState }) {
+  return (
+    <div className="account-details">
+      <form className="account-detail-form" onSubmit={onChangePassword} noValidate>
+        <fieldset className="field-group">
+          <legend className="sr-only">Change password</legend>
+          <label className="field">
+            <span>Current password</span>
+            <input type="password" name="current_password" autoComplete="current-password" />
+          </label>
+          <label className="field">
+            <span>New password</span>
+            <input type="password" name="new_password" autoComplete="new-password" />
+            <span className="field-hint">At least {MIN_PASSWORD_LENGTH} characters.</span>
+          </label>
+          <label className="field">
+            <span>Confirm new password</span>
+            <input type="password" name="confirm_password" autoComplete="new-password" />
+          </label>
+        </fieldset>
+
+        {passwordState.error ? (
+          <p className="error-state" role="alert">{passwordState.error}</p>
+        ) : null}
+        {passwordState.status === 'saved' ? (
+          <p className="field-hint" role="status">
+            Your password has been changed. You stay signed in here.
+          </p>
+        ) : null}
+
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={passwordState.status === 'saving'}
+        >
+          {passwordState.status === 'saving' ? 'Saving…' : 'Change password'}
+        </button>
+      </form>
+    </div>
   )
 }

@@ -1240,14 +1240,59 @@
   overflow: hidden;
 }
 
+/* The card is a native <details> since 16 Sep 2026 — the summary is the row a
+   client scans, the body opens under it. The default triangle is replaced by a
+   chevron drawn from a border, so the marker matches the rest of the site. */
+.order-card > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.order-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.order-card > summary::after {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: var(--s3);
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg) translate(-0.1rem, -0.1rem);
+  transition: transform 120ms ease;
+}
+
+.order-card[open] > summary::after {
+  transform: rotate(-135deg) translate(-0.1rem, -0.1rem);
+}
+
+.order-card-head-right {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.order-summary-total {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-sm);
+  color: var(--ink);
+}
+
 .order-card-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--s4);
   padding: var(--s5);
-  border-bottom: var(--hair);
   background: var(--surface);
+}
+
+/* The rule under the summary belongs to the OPEN card: on a collapsed one it
+   drew a line under nothing. */
+.order-card[open] > .order-card-head {
+  border-bottom: var(--hair);
 }
 
 .order-number {

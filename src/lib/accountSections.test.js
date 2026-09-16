@@ -16,6 +16,7 @@ test('a non-trade account sees only the non-trade sections', () => {
     SECTION.DASHBOARD,
     SECTION.ORDERS,
     SECTION.DETAILS,
+    SECTION.PASSWORD,
   ])
 })
 
@@ -26,6 +27,7 @@ test('a linked trade account sees samples and invoices', () => {
     SECTION.SAMPLES,
     SECTION.INVOICES,
     SECTION.DETAILS,
+    SECTION.PASSWORD,
   ])
 })
 

@@ -86,12 +86,24 @@ export function collectionTiles({ collections = [], cards = [], brandSlug }) {
       season,
       description: card?.description || collection.description || '',
       image: card?.featuredImage || collection.image_url || null,
-      // Nothing published yet links back to the house, not to a grid that
-      // answers "Nothing matches those filters" (audit SF-TR-01).
-      href:
-        productCount > 0
-          ? `${brandHref}&collection=${encodeURIComponent(collection.slug)}`
-          : `/brands/${encodeURIComponent(brandSlug)}`,
+      // ALWAYS the collection's own grid (16 Sep 2026: "collection links under
+      // brands don't go to products under that collection, they just reroute to
+      // the same brand page").
+      //
+      // It used to fall back to the house page when `product_count` was 0, on
+      // the audit's SF-TR-01 reasoning that an empty grid reads worse than no
+      // link. That reasoning assumed the count was TRUE here, and on this page
+      // it cannot be: the house page renders SERVER-side and a server fetch
+      // carries no session cookie (see pages/products/[slug].astro), so the
+      // count arrives gated — 0 for every trade-only house, which is all but one
+      // of them. So every tile bounced back to the page it was on, which is
+      // exactly what the client reported.
+      //
+      // The grid is client-side and DOES have the cookie, so an approved trade
+      // client sees the real products there; a signed-out visitor gets the
+      // grid's own trade banner, which explains the gate rather than silently
+      // going nowhere.
+      href: `${brandHref}&collection=${encodeURIComponent(collection.slug)}`,
       productCount,
     })
   })
