@@ -26,79 +26,69 @@ const title = emPage?.title || (entry?.data.title ?? 'Contact')
   dark
 >
   <article class="content-page contact-page">
-    {/* Head: the direction's badge + display headline, with the editable intro
-        under it on the prose measure. */}
-    <header class="contact-head">
-      <h1>{title}</h1>
-      {
-        emPage?.content && (
-          <div class="prose">
-            <PortableText value={emPage.content} />
-          </div>
-        )
-      }
-      {
-        !emPage?.content && Content && (
-          <div class="prose">
-            <Content />
-          </div>
-        )
-      }
-    </header>
-
-    {/* Two columns on the featured band's split: the details as hairline rows
-        (the house page's facts figure — label left, value right) beside the
-        enquiry form on a raised panel. */}
+    {/* Two columns from the top (page feedback, Sept 2026 — the form sits
+        beside the headline, not under the intro): the head, the ways in and
+        the three showrooms on the left; the enquiry form on its panel on the
+        right, top-aligned with the headline. */}
     <div class="contact-layout">
-      <section class="contact-details" aria-label="Contact details">
-        <dl class="contact-rows">
-          <div class="contact-row">
-            <dt>Email</dt>
-            <dd>
-              <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
-            </dd>
-          </div>
-          <div class="contact-row">
-            <dt>Phone</dt>
-            <dd>
-              <a href={`tel:${CONTACT.phoneHref}`}>{CONTACT.phone}</a>
-              <span class="contact-muted">{CONTACT.freephone}</span>
-            </dd>
-          </div>
+      <div class="contact-copy">
+        <header class="contact-head">
+          <h1>{title}</h1>
           {
-            SHOWROOMS.map((s) => (
-              <div class="contact-row">
-                <dt>{s.city}</dt>
-                <dd>
-                  <span>{s.name}</span>
-                  {s.lines.map((line) => (
-                    <span class="contact-muted">{line}</span>
-                  ))}
-                </dd>
+            emPage?.content && (
+              <div class="prose">
+                <PortableText value={emPage.content} />
               </div>
-            ))
+            )
           }
-          <div class="contact-row">
-            <dt>Hours</dt>
-            <dd>
-              <span>{SHOWROOM_HOURS}</span>
-              <span class="contact-muted">Trade showrooms, by appointment</span>
-            </dd>
+          {
+            !emPage?.content && Content && (
+              <div class="prose">
+                <Content />
+              </div>
+            )
+          }
+        </header>
+
+        <section class="contact-details" aria-label="Contact details">
+          {/* The two ways in, set large in the display face — a page whose one
+              job is to be reached should not file its email in a table. */}
+          <div class="contact-reach">
+            <a class="contact-reach-link" href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+            <a class="contact-reach-link" href={`tel:${CONTACT.phoneHref}`}>{CONTACT.phone}</a>
+            <p class="contact-reach-note">{CONTACT.freephone}</p>
           </div>
-          <div class="contact-row">
-            <dt>Follow</dt>
-            <dd class="contact-social">
+
+          {/* The showrooms as three tiles, the city as each one's title. */}
+          <ul class="contact-showrooms">
+            {
+              SHOWROOMS.map((s) => (
+                <li class="contact-showroom">
+                  <p class="contact-showroom-city">{s.city}</p>
+                  <p class="contact-showroom-name">{s.name}</p>
+                  <p class="contact-showroom-lines">
+                    {s.lines.map((line) => <span>{line}</span>)}
+                  </p>
+                </li>
+              ))
+            }
+          </ul>
+
+          <p class="contact-foot">
+            <span>{SHOWROOM_HOURS} · Trade showrooms, by appointment.</span>
+            <span class="contact-foot-links">
               {
                 SOCIAL.map((link) => (
-                  <a href={link.href} target="_blank" rel="noopener noreferrer">
+                  <a class="cta-underline" href={link.href} target="_blank" rel="noopener noreferrer">
                     {link.label}
                   </a>
                 ))
               }
-            </dd>
-          </div>
-        </dl>
-      </section>
+            </span>
+          </p>
+        </section>
+      </div>
+
       <section class="contact-form-panel" aria-label="Send an enquiry">
         <h2>Send an enquiry</h2>
         <ContactForm client:load />

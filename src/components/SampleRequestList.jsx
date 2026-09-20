@@ -128,51 +128,62 @@ export default function SampleRequestList() {
     )
   }
 
+  // The figure (page feedback, Sept 2026): two halves on the container — the
+  // cuttings as a hairline list on the left, each a thumbnail, the house
+  // badge, the name and colourway, the SKU and a one-line note; the details
+  // form on a surface panel on the right, the contact page's panel exactly,
+  // so the two forms on the site read as one. No fieldset box, no legend.
   return (
-    <form className="request-list" onSubmit={onSubmit} noValidate>
+    <form className="sample-request" onSubmit={onSubmit} noValidate>
       {honeypotField(website, setWebsite)}
-      <div className="request-list-lines">
-        <ul className="cart-lines">
+      <div className="sample-lines-col">
+        <div className="sample-lines-head">
+          <h2>{items.length === 1 ? '1 cutting' : `${items.length} cuttings`}</h2>
+          <a className="cta-underline" href="/products">
+            Add another
+          </a>
+        </div>
+        <ul className="sample-lines">
           {items.map((line) => {
             const label = line.name || line.sku
             return (
-              <li key={line.sku} className="cart-line request-line">
-                <div className="cart-line-media">
+              <li key={line.sku} className="sample-line">
+                <div className="sample-line-media">
                   {line.image_url ? (
-                    <img className="cart-line-image" src={line.image_url} alt="" loading="lazy" />
+                    <img className="sample-line-image" src={line.image_url} alt="" loading="lazy" />
                   ) : (
-                    <span className="cart-line-image product-image-placeholder" aria-hidden="true" />
+                    <span className="sample-line-image product-image-placeholder" aria-hidden="true" />
                   )}
                 </div>
-                <div className="cart-line-main">
-                  {line.brand && <p className="cart-line-brand">{line.brand}</p>}
-                  <p className="cart-line-name">
+                <div className="sample-line-main">
+                  {line.brand && <p className="badge-ochre">{line.brand}</p>}
+                  <p className="sample-line-name">
                     {line.slug ? (
-                      <a className="cart-line-link" href={`/products/${line.slug}`}>
+                      <a className="sample-line-link" href={`/products/${line.slug}`}>
                         {label}
                       </a>
                     ) : (
                       label
                     )}
-                    {line.colourway && <span className="cart-line-colourway"> — {line.colourway}</span>}
                   </p>
-                  <p className="cart-line-unit">
-                    <span className="detail-selected-sku">{line.sku}</span>
+                  <p className="sample-line-meta">
+                    {line.colourway && <span>{line.colourway}</span>}
+                    <span className="sample-line-sku">{line.sku}</span>
                   </p>
-                  <label className="field request-line-note">
-                    <span>Note (optional)</span>
+                  <label className="sample-line-note">
+                    <span className="sr-only">Note for {label}</span>
                     <input
                       type="text"
                       maxLength={500}
                       value={line.note ?? ''}
                       onChange={(event) => setSampleNote(line.sku, event.target.value)}
-                      placeholder="Anything that helps us pick the right cutting"
+                      placeholder="Add a note — anything that helps us pick the right cutting"
                     />
                   </label>
                 </div>
                 <button
                   type="button"
-                  className="cart-remove"
+                  className="sample-line-remove"
                   onClick={() => removeFromSampleList(line.sku)}
                   aria-label={`Remove ${label}`}
                 >
@@ -182,51 +193,43 @@ export default function SampleRequestList() {
             )
           })}
         </ul>
-        <a className="cart-continue" href="/products">
-          Add another sample
-        </a>
       </div>
 
-      <aside className="cart-summary request-summary">
-        <p className="cart-subtotal">
-          <span>{items.length === 1 ? '1 cutting' : `${items.length} cuttings`}</span>
-        </p>
-        <p className="cart-note">
-          Nothing is charged — we send cuttings out free of charge and confirm by email.
+      <section className="sample-panel" aria-label="Your details">
+        <h2>Where to send them</h2>
+        <p className="sample-panel-note">
+          Nothing is charged — cuttings go out free of charge and we confirm by email.
         </p>
 
-        <fieldset className="field-group">
-          <legend>Your details</legend>
-          <label className="field">
-            <span>Name</span>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
-          </label>
-          <label className="field">
-            <span>Email</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              aria-invalid={fieldErrors.email ? 'true' : undefined}
-            />
-            {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
-          </label>
-          <label className="field">
-            <span>Phone</span>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
-          </label>
-          <label className="field">
-            <span>Delivery address and anything else</span>
-            <textarea
-              rows={3}
-              maxLength={2000}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Where to send them, and the project they are for…"
-            />
-          </label>
-        </fieldset>
+        <label className="field">
+          <span>Name</span>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+        </label>
+        <label className="field">
+          <span>Email</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            aria-invalid={fieldErrors.email ? 'true' : undefined}
+          />
+          {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+        </label>
+        <label className="field">
+          <span>Phone (optional)</span>
+          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
+        </label>
+        <label className="field">
+          <span>Delivery address and anything else</span>
+          <textarea
+            rows={5}
+            maxLength={2000}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Where to send them, and the project they are for…"
+          />
+        </label>
 
         {submitError && (
           <p className="error-state" role="alert">
@@ -236,7 +239,7 @@ export default function SampleRequestList() {
         <button type="submit" className="btn btn-primary" disabled={submitting}>
           {submitting ? 'Sending…' : 'Request samples'}
         </button>
-      </aside>
+      </section>
     </form>
   )
 }

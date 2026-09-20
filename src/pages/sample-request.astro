@@ -4,18 +4,29 @@ import Layout from '../layouts/Layout.astro'
 import SampleRequestList from '../components/SampleRequestList.jsx'
 ---
 
+{/* Opens on the shop page's banner like the cart, the checkout and the journal
+    (page feedback, Sept 2026 — it opened on the Maison page-intro, which read
+    as another site), then the list beside the form on the container. */}
 <Layout
   title="Your sample request — Atelier Textiles"
   description="Review the colourways you would like cuttings of, add your details, and send them as one request."
+  bleed
+  overlay="light"
 >
-  <section class="page-intro">
-    <p class="page-eyebrow">Samples</p>
-    <h1>Your sample request</h1>
-    <p>
-      Add as many colourways as you like from the library and send them as one request. We
-      confirm what is available and post your cuttings out.
-    </p>
+  <section class="library-hero">
+    <div class="container library-hero-row">
+      <div class="library-hero-heading">
+        <p class="badge-ochre">Samples</p>
+        <h1>Your sample request</h1>
+      </div>
+      <p class="library-hero-note">
+        Add as many colourways as you like from the library and send them as one request. We
+        confirm what is available and post your cuttings out, free of charge.
+      </p>
+    </div>
   </section>
 
-  <SampleRequestList client:load />
+  <div class="container library-shell">
+    <SampleRequestList client:load />
+  </div>
 </Layout>

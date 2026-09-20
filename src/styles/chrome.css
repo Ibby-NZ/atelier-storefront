@@ -99,7 +99,8 @@
 body:not(.theme-dark) .site-header--overlay.is-pinned .site-nav a,
 body:not(.theme-dark) .site-header--overlay.is-pinned .site-util-link,
 body:not(.theme-dark) .site-header--overlay.is-pinned .site-icon,
-body:not(.theme-dark) .site-header--overlay.is-pinned .site-burger {
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-burger,
+body:not(.theme-dark) .site-header--overlay.is-pinned .site-search-input {
   color: var(--umber-soft);
 }
 
@@ -263,6 +264,67 @@ body:not(.theme-dark) .site-header--overlay.is-pinned {
   height: 24px;
 }
 
+/* --- Header search -----------------------------------------------------------
+   The magnifier is a toggle: the field lives in the row and slides open
+   beside it (Header.astro's script; there is no search page — page feedback,
+   Sept 2026). The input is listed beside `.site-icon` in every colour-only
+   rule below, so it reads on every ground; the rule under it is a hairline
+   in the same colour. */
+.site-search {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.site-search-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.site-search-input {
+  width: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid currentcolor;
+  background: transparent;
+  color: var(--umber-soft);
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  line-height: 1.4;
+  opacity: 0;
+  transition: width 0.35s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.25s, margin 0.35s;
+}
+
+.site-search-input:focus {
+  outline: none;
+}
+
+.site-search-input::placeholder {
+  color: inherit;
+  opacity: 0.55;
+}
+
+.site-search-input::-webkit-search-decoration,
+.site-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.site-search.is-open .site-search-input {
+  width: 12rem;
+  margin-right: var(--s3);
+  padding: 2px 0 4px;
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .site-search.is-open .site-search-input {
+    width: min(9rem, 40vw);
+  }
+}
+
 /* The cart count. Ochre rather than claret: on this header claret belongs to
    the Maison direction and would be the only warm-red pixel on the page. */
 .site-icon-count {
@@ -292,7 +354,9 @@ body:not(.theme-dark) .site-header--overlay.is-pinned {
 .theme-dark .site-header .site-nav a,
 .theme-dark .site-header .site-util-link,
 .theme-dark .site-header .site-icon,
-.theme-dark .site-header .site-burger {
+.theme-dark .site-header .site-burger,
+.site-header--overlay .site-search-input,
+.theme-dark .site-header .site-search-input {
   color: var(--bone);
 }
 
@@ -319,7 +383,8 @@ body:not(.theme-dark) .site-header--overlay.is-pinned {
 .site-header--overlay.site-header--overlay-light .site-nav a,
 .site-header--overlay.site-header--overlay-light .site-util-link,
 .site-header--overlay.site-header--overlay-light .site-icon,
-.site-header--overlay.site-header--overlay-light .site-burger {
+.site-header--overlay.site-header--overlay-light .site-burger,
+.site-header--overlay.site-header--overlay-light .site-search-input {
   color: var(--umber-soft);
 }
 
@@ -638,7 +703,8 @@ body:not(.theme-dark) .site-header--overlay.is-pinned {
   .is-menu-open .site-nav a,
   .is-menu-open .site-util-link,
   .is-menu-open .site-icon,
-  .is-menu-open .site-burger {
+  .is-menu-open .site-burger,
+  .is-menu-open .site-search-input {
     color: var(--bone);
   }
 

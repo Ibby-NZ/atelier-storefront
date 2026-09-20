@@ -106,7 +106,8 @@ body.theme-dark .site-header:not(.site-header--overlay) {
 body.theme-dark .site-header:not(.site-header--overlay) .site-nav a,
 body.theme-dark .site-header:not(.site-header--overlay) .site-util-link,
 body.theme-dark .site-header:not(.site-header--overlay) .site-icon,
-body.theme-dark .site-header:not(.site-header--overlay) .site-burger {
+body.theme-dark .site-header:not(.site-header--overlay) .site-burger,
+body.theme-dark .site-header:not(.site-header--overlay) .site-search-input {
   color: var(--bone-soft);
 }
 
@@ -254,18 +255,6 @@ body.theme-dark .house-wall {
   background: var(--dark-bg);
 }
 
-body.theme-dark .house-wall-head h2 {
-  color: var(--bone);
-}
-
-body.theme-dark .house-wall-head .cta-underline {
-  color: var(--bone);
-}
-
-body.theme-dark .house-wall-head a.cta-underline:hover {
-  color: var(--tan);
-}
-
 body.theme-dark .house-card-name {
   color: var(--bone-soft);
 }
@@ -315,10 +304,6 @@ body.theme-dark .house-headline {
   color: var(--bone);
 }
 
-body.theme-dark .house-meta-line {
-  color: var(--bone-soft);
-}
-
 body.theme-dark .house-copy {
   color: var(--bone-soft);
 }
@@ -328,6 +313,16 @@ body.theme-dark .house-actions .cta-underline {
 }
 
 body.theme-dark .house-actions a.cta-underline:hover {
+  color: var(--tan);
+}
+
+/* The contact page's closing line: the social links reversed like every other
+   underlined action on the dark ground. */
+body.theme-dark .contact-foot .cta-underline {
+  color: var(--bone);
+}
+
+body.theme-dark .contact-foot a.cta-underline:hover {
   color: var(--tan);
 }
 

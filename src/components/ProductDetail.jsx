@@ -102,6 +102,9 @@ const REQUEST_PATH = '/order-request'
 
 // How many cards the Similar strip shows (the mock's row).
 const SIMILAR_LIMIT = 12 // the row runs off the right edge; twelve is the cap (Sept 2026)
+// Up to this many tiles fit inside the container, so they sit centred under
+// the centred head instead of hanging off the left (page feedback, Sept 2026).
+const CENTRED_MAX = 3
 
 // The colourway a shopper should land on: the first one in stock, else the
 // first one at all. Returns null for a product with no colourways.
@@ -691,7 +694,10 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
               running off the right edge, dragged (DragScroll binds on the
               `atelier-drag-scroll` event the effect fires once these have
               rendered). Same round card as the shop grid. */}
-          <ul className="product-grid product-grid-round detail-similar-row" data-drag-scroll>
+          <ul
+            className={`product-grid product-grid-round detail-similar-row${similar.length <= CENTRED_MAX ? ' is-centred' : ''}`}
+            data-drag-scroll
+          >
             {similar.map((row) => {
               const rowPrice = priceInfo(row, viewer)
               const weave = weaveBackground(row.colourways?.[0]?.hex_tones)

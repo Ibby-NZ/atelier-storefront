@@ -119,7 +119,7 @@ const hero = applySection(
   dark
 >
   <section class="photo-band photo-band--parallax house-hero">
-    <span class="photo-band-art" style={`background-image: url(${hero.image});`}></span>
+    <span class="photo-band-art" style={`background-image: url('${hero.image}');`}></span>
     <div class="container photo-band-body">
       <div class="photo-band-row">
         <h1 class="photo-band-title">{hero.title}</h1>
@@ -152,12 +152,11 @@ const hero = applySection(
   {
     houses.length > 0 && (
       <section class="container house-wall">
-        {/* Heading only: the "Explore all products" action was dropped at the
-            client's request (Userback, 25 Aug 2026). The tiles are how a
-            reader leaves this wall, and the header nav carries the library. */}
-        <div class="house-wall-head">
-          <h2>Brands</h2>
-        </div>
+        {/* No head over the wall: the "Explore all products" action went at the
+            client's request (Userback, 25 Aug 2026) and the "Brands" headline
+            followed it (page feedback, Sept 2026) — the hero already names the
+            page. The tiles are how a reader leaves this wall, and the header
+            nav carries the library. */}
         <ul class="house-wall-grid">
           {houses.map((house) => (
             <li>

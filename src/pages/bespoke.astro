@@ -38,7 +38,7 @@ const cards = bespokeCards(data?.brands ?? null)
       header floating inside it, the headline left and one line of copy right
       (page feedback, Sept 2026: "make it look like the brands page"). */}
   <section class="photo-band photo-band--parallax bespoke-hero">
-    <span class="photo-band-art" style={`background-image: url(${heroArt.src});`}></span>
+    <span class="photo-band-art" style={`background-image: url('${heroArt.src}');`}></span>
     <div class="container photo-band-body">
       <div class="photo-band-row">
         <h1 class="photo-band-title">
@@ -57,12 +57,10 @@ const cards = bespokeCards(data?.brands ?? null)
     </div>
   </section>
 
-  {/* The wall — the same section, head and rhythm as the Brands page's wall of
-      houses; the cards are drawn to the same 371 × 497 tile. */}
+  {/* The wall — the same section and rhythm as the Brands page's wall of
+      houses; the cards are drawn to the same 371 × 497 tile. No head over it
+      (page feedback, Sept 2026 — the hero names the page). */}
   <section class="container house-wall">
-    <div class="house-wall-head">
-      <h2>Choose a house</h2>
-    </div>
     <ul class="bespoke-wall">
       {
         cards.map((card) => (

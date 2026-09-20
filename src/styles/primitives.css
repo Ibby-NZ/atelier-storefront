@@ -12,8 +12,6 @@
 .product-brand,
 .cart-line-brand,
 .detail-price-label,
-.field > span,
-.field-group legend,
 .footer-heading,
 .library-results-label {
   font-family: var(--font-ui);
@@ -23,6 +21,19 @@
   text-transform: uppercase;
   color: var(--muted);
   line-height: 1.3;
+}
+
+/* Form labels are sentence case, not the tracked eyebrow above (client, Sept
+   2026: "labels should not be uppercase", site-wide). One rule, every form. */
+.field > span,
+.field-group legend {
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  line-height: 1.4;
 }
 
 /* --- Page header (eyebrow → Fraunces headline → muted lede) --------------- */

@@ -596,6 +596,19 @@
   scroll-snap-align: start;
 }
 
+/* Three or fewer tiles fit inside the container, so they sit centred under
+   the centred head rather than hanging off the left (page feedback, Sept
+   2026). Auto margins on the two ends, NOT `justify-content: center`: when
+   the row does overflow (three tiles on a phone) centring a scroller clips
+   its first tile off the left edge, while auto margins simply collapse. */
+.detail-similar-row.is-centred > li:first-child {
+  margin-inline-start: auto;
+}
+
+.detail-similar-row.is-centred > li:last-child {
+  margin-inline-end: auto;
+}
+
 .detail-similar-head {
   display: flex;
   align-items: baseline;

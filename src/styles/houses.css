@@ -24,28 +24,6 @@
   padding-block: var(--s9) var(--s10);
 }
 
-/* Centred: the frame (9379:3579) sets the "Brands" headline at x=506.5 in a
-   1136 wrapper — dead centre. `.bespoke` shares the head, so it is centred there
-   too, which is the point. */
-.house-wall-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: var(--s5);
-  margin-bottom: var(--s7);
-  text-align: center;
-}
-
-.house-wall-head h2 {
-  margin: 0;
-  font-family: var(--font-grotesk);
-  font-weight: 400;
-  font-size: var(--g-lg);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--umber);
-}
-
 .house-wall-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
