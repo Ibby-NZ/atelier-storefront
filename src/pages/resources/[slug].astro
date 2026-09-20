@@ -93,7 +93,7 @@ const shareText = encodeURIComponent(title)
       <article class="post">
         <div class="container">
           <section class:list={['photo-band', 'photo-band--parallax', 'post-hero', { weave: !hero }]}>
-            {hero && <span class="photo-band-art" style={`background-image: url(${hero})`}></span>}
+            {hero && <span class="photo-band-art" style={`background-image: url('${hero}')`}></span>}
             <div class="photo-band-body post-hero-body">
               <p class="badge-light">The Atelier Journal</p>
               <h1 class="photo-band-title">{title}</h1>

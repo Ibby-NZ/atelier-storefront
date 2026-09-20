@@ -282,7 +282,8 @@ export async function getEmdashPage(slug) {
   }
 }
 
-// Every published CMS page, for site search (pages/search.astro). Same
+// Every published CMS page (the [slug] catch-all's index; the site search
+// that first needed it is gone). Same
 // soft-failure rule: no CMS, no office pages in the results.
 export async function listEmdashPages() {
   try {

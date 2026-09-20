@@ -72,23 +72,40 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
       <a class="site-util-link" href="/contact" aria-current={isActive('/contact') ? 'page' : undefined}>
         Contact
       </a>
-      {/* Site search (September 2026): the magnifier lands on /search, whose
-          field is focused on arrival and whose results cover designs, houses,
-          the journal and pages. It used to open the library, which only
-          searched designs. */}
-      <a class="site-icon" href="/search" aria-label="Search the site">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
+      {/* Search (Sept 2026): the magnifier opens a field in the row itself —
+          there is no search page any more — and a query lands on the library's
+          own `?q=`, which searches designs, houses, composition and colourways.
+          The script below owns the open/close; the field is a plain GET form. */}
+      <form class="site-search" role="search" action="/products" method="get">
+        <label class="sr-only" for="site-search-q">Search designs</label>
+        <input
+          class="site-search-input"
+          id="site-search-q"
+          type="search"
+          name="q"
+          placeholder="Search designs…"
+          autocomplete="off"
+        />
+        <button
+          class="site-icon site-search-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-search-q"
+          aria-label="Search"
         >
-          <path d="M13.7069 15.0002L19.0001 20.2929" stroke-linecap="round"></path>
-          <circle cx="9.5" cy="9.5" r="6.5"></circle>
-        </svg>
-      </a>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M13.7069 15.0002L19.0001 20.2929" stroke-linecap="round"></path>
+            <circle cx="9.5" cy="9.5" r="6.5"></circle>
+          </svg>
+        </button>
+      </form>
       <AccountNav client:load />
       {/* The fabric request list. Renders nothing until it holds something, so
           the drawn header keeps its three icons and a shopper who has built a
@@ -193,15 +210,53 @@ const isActive = (href) => current === href || current.startsWith(`${href}/`)
 
     if (button) button.addEventListener('click', () => set(!header.classList.contains('is-menu-open')))
     if (menu) menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => set(false)))
+
+    // Header search: the magnifier is a toggle. Closed → open and focus the
+    // field; open with something typed → submit (to /products?q=); open and
+    // empty → close. Escape and a click anywhere else close it too.
+    const search = header.querySelector('.site-search')
+    const searchToggle = search && search.querySelector('.site-search-toggle')
+    const searchInput = search && search.querySelector('.site-search-input')
+    const setSearch = (open) => {
+      if (!search) return
+      search.classList.toggle('is-open', open)
+      if (searchToggle) searchToggle.setAttribute('aria-expanded', String(open))
+      if (!searchInput) return
+      if (open) searchInput.focus()
+      else searchInput.blur()
+    }
+    const onSearchToggle = () => {
+      if (!search.classList.contains('is-open')) return setSearch(true)
+      if (searchInput && searchInput.value.trim()) return search.requestSubmit()
+      setSearch(false)
+    }
+    const onSearchSubmit = (event) => {
+      if (searchInput && !searchInput.value.trim()) {
+        event.preventDefault()
+        setSearch(false)
+      }
+    }
+    const onDocClick = (event) => {
+      if (search && search.classList.contains('is-open') && !search.contains(event.target)) setSearch(false)
+    }
+    if (searchToggle) searchToggle.addEventListener('click', onSearchToggle)
+    if (search) search.addEventListener('submit', onSearchSubmit)
+    document.addEventListener('click', onDocClick)
+
     const onKey = (event) => {
-      if (event.key === 'Escape') set(false)
+      if (event.key === 'Escape') {
+        set(false)
+        setSearch(false)
+      }
     }
     document.addEventListener('keydown', onKey)
     document.addEventListener(
       'astro:before-swap',
       () => {
         set(false)
+        setSearch(false)
         document.removeEventListener('keydown', onKey)
+        document.removeEventListener('click', onDocClick)
         window.removeEventListener('scroll', onScroll)
       },
       { once: true }

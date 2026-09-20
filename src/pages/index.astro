@@ -259,7 +259,7 @@ const latestHead = applySection(
 const manifesto = applySection({ ...MANIFESTO, image: manifestoArt.src }, sections['home-manifesto'])
 const housesBand = applySection({ ...HOUSES, image: designHousesArt.src }, sections['home-houses'])
 
-const bandStyle = (image) => (image ? `background-image: url(${image})` : undefined)
+const bandStyle = (image) => (image ? `background-image: url('${image}')` : undefined)
 ---
 
 <Layout

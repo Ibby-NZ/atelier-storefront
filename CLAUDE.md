@@ -175,10 +175,21 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     island remounts on its own. Any new third-party widget needs the same.
   - **Favicon** (September 2026): `public/favicon.svg` (+ `favicon.png` 96px
     for Safari, which still ignores svg icons, and `apple-touch-icon.png`
-    180px), linked from the layout head. The mark is the Didot Bold "A"
-    outline on the shell cream; the CRM ships the same glyph reversed so the
-    two tabs tell apart. `public/` did not exist before this — Astro copies it
-    to `dist/client/` and `server.mjs` serves it with the rest.
+    180px), linked from the layout head. **The glyph is the ATELIER
+    wordmark's own geometric "A"** — the three subpaths (two legs, crossbar)
+    lifted verbatim from `Wordmark.astro`, so tab and header are one
+    letterform. **As three `<path>`s, not one `d`**: the legs and crossbar
+    overlap and wind against each other, so merged into one path the
+    nonzero rule sums the overlaps to zero and punches holes at the apex and
+    crossbar (the first render did exactly that). Tan on the dark ground, sized and coloured from the tile the
+    client supplied on 17 Sep 2026 (`~/Downloads/Faveicon (3).jpg`, 120px).
+    It shipped first as a Didot serif "A", umber on cream, then the same
+    serif reversed; both were wrong — "looks different" — and the CRM still
+    carries the serif on its grey. The PNGs are rendered from the SVG (a
+    headless Chromium screenshot at 96 and 180 — macOS `sips` cannot rasterise
+    SVG), so change the SVG and re-render both. `public/` did not exist before
+    this — Astro copies it to `dist/client/` and `server.mjs` serves it with
+    the rest.
   - **Do not verify the toolbar's absence by filename.** The old note claimed
     `ls dist/client/_astro | grep -i agent` came back empty; it does, but only
     because Astro names the chunk after the package entry (`index.mjs` →
@@ -287,7 +298,10 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     serif, and Fraunces went with the Sept 2026 token sync), **Inter** UI,
     **IBM Plex Mono** data (SKUs, money, dates), loaded from Google Fonts in
     `Layout.astro` with system fallbacks. Eyebrows are the `.badge-ochre`
-    figure — 12px semibold — not the old 10–11px tracked uppercase.
+    figure — 12px semibold — not the old 10–11px tracked uppercase. **Form
+    labels are sentence case** (`.field > span`, `.field-group legend`,
+    `.request-metres-label`: 14px Inter 500, no tracking — client, Sept 2026,
+    "labels should not be uppercase", site-wide).
   - Discipline from the handoff, worth keeping: richness comes from photography,
     not chrome; **roughly one claret element per screen**; 1px `--line` hairlines
     instead of heavy cards; no zebra striping; shadows only as a whisper-soft
@@ -675,7 +689,10 @@ Where it surfaces:
     is latte (`--button-primary-ground`, pink/300, hovering pink/400) beside
     a white secondary, and there is no hi-res download link and no
     "Indicative" note. Below the band, **"Similar Products"** — the head
-    centred, no action — is the brands row's figure: up to twelve same-house
+    centred, no action — is the brands row's figure (three or fewer tiles sit
+    centred under the head — `.is-centred`, auto margins on the end tiles so
+    an overflowing row still scrolls from its first tile; Sept 2026): up to
+    twelve same-house
     round cards (the shop's `.product-grid-round` card, `SIMILAR_LIMIT`,
     self filtered out) in a row that runs off the right edge on the canvas
     ground, dragged. DragScroll binds page rows on `astro:page-load`, before
@@ -1016,7 +1033,12 @@ Where it surfaces:
     burger on the right — the absolutely-centred mark sat under the icons
     once the nav had gone. The
     icons are inline SVG, not `<img>`, so `stroke="currentColor"` follows the
-    theme. A **fourth** icon, `RequestIndicator.jsx` (scissors, the fabric
+    theme. **The magnifier is a toggle, not a link** (Sept 2026): `.site-search`
+    is a GET form to `/products` with a zero-width `?q=` input beside the
+    icon; the script opens it (and focuses the field), submits it when there
+    is text, closes it when there is not, and on Escape or a click elsewhere.
+    The input joins every colour-only rule `.site-icon` is in, so it reads
+    on every ground. A **fourth** icon, `RequestIndicator.jsx` (scissors, the fabric
     request list), sits before the cart and **renders nothing while the list is
     empty** — the drawn header keeps its three icons in the state the mock was
     drawn in, and a shopper who has actually built a request list can still
@@ -1195,9 +1217,10 @@ the home's design-houses COPY and the same CMS hook: `applySection` over the
 `home-houses` site section, so copy or an image the office sets there is the
 /brands hero too, and an empty CMS renders the shipped art and copy; image,
 title and body only — the band's align/scrim knobs stay the home's), then the
-**wall of house tiles** under a CENTRED "Brands" head (the frame sets it at
-x=506.5 in the 1136 wrapper; `.house-wall-head` is centred, and `/bespoke`
-borrows the head so it is centred there too) — 3-up 371×497, photograph under a
+**wall of house tiles** — with NO head over it since Sept 2026 (page
+feedback: "remove this fully"; the frame's centred "Brands" headline and the
+"Choose a house" head `/bespoke` borrowed from it are both gone, with
+`.house-wall-head` — the hero names the page) — 3-up 371×497, photograph under a
 flat 0.38 scrim with the maison's mark centred — the brand's `logo_url` PNG as
 `img.house-card-logo` when the CRM has one, else the house NAME in the same
 class — then the **featured-collection band**, which is
@@ -1240,7 +1263,10 @@ they are the same page drawn twice:
   the same full-viewport hero, on the client's brands photograph
   (`brands-hero-bg.jpg`) when it has none of its own (page feedback: "no hero
   banner"). The hero is the Story page's, exactly: badge + name at the foot on
-  the left, the house's provenance (`houseMeta`) on the right, a flat 20%
+  the left (no provenance line anywhere on the page since Sept 2026 — the
+  "Italy" / "France · est. 1935" `.house-meta-line` under the headline was
+  removed at the client's request, and `houseMeta` is no longer imported
+  here), a flat 20%
   scrim (the frame's) under the foot gradient. Everything from the intro down
   is identical. **It is not a product-detail screen** — the tiles below it are
   still collections and the copy is still a house blurb; the frame name misleads.
@@ -1343,26 +1369,13 @@ page exists, so a page is never a confusing hybrid of both sources.
 No islands; the journal pages render on demand (`prerender = false`) because
 the CMS is queried live:
 
-- **`/search` (`search.astro`, September 2026)** — site search; the header's
-  magnifier lands here (it used to open `/products`, which searched designs
-  only). Opens on the shop banner like `/resources`, then a plain GET form —
-  a search is a URL (`/search?q=linen`) and needs no script; the field is
-  focused on every arrival (an `astro:page-load` listener, because `autofocus`
-  only takes on a full load under ClientRouter). **Two halves by necessity**:
-  the page is `prerender = false` and server-renders the CMS-backed hits —
-  journal posts (`listPosts()`) and the office's pages (`listEmdashPages()`
-  mapped through `cmsPageHit`, which skips `/contact`/`/privacy`/`/terms`
-  because they already sit in the fixed index) — while `SearchResults.jsx`
-  fetches designs and houses off the API **credentialed**, because which
-  designs come back depends on who is asking and a server fetch carries no
-  cookie. Designs use the API's own `q` (24, then "See all in the library"
-  hands off to `/products?q=`); houses are the brand list matched
-  client-side; the trade gate is named with `TRADE_GATE_COPY.library` exactly
-  as the library names it. `src/lib/search.js` (tested) owns the fixed page
-  index (`SITE_PAGES`, with the words a shopper might reach each page by) and
-  the one matching rule — **every word must appear** (AND): on an index this
-  small OR reads as noise. Page sheet `search.css`; `robots.txt` disallows
-  `/search` at launch — one URL per query, nothing to index.
+- **There is no `/search` page** (removed Sept 2026 at the client's request,
+  a week after it was built: "this search icon should extend in the header
+  itself"). The header's magnifier is a toggle that opens a field in the row
+  and submits to `/products?q=` — see Site chrome. `search.astro`,
+  `search.css`, `SearchResults.jsx` and `lib/search.js` are gone with their
+  `robots.txt` disallow; `listEmdashPages` and `truncateWords` survive for
+  their other callers.
 - **`/resources` (`resources/index.astro`)** — opens on the shop page's banner
   (`.library-hero`, `<Layout bleed overlay="light">`, no italics — Sept 2026),
   then `listPosts()` from `src/lib/posts.js`: published EmDash `posts` UNION
@@ -1370,6 +1383,9 @@ the CMS is queried live:
   have** (editor of record; markdown is the offline baseline and is not even
   loaded for a slug the CMS has). Lead card + gallery, hero + title + date +
   standfirst; empty state when none. Cards link to `/resources/<post.id>`.
+  Every card's picture sits in `.journal-card-frame` and zooms inside it on
+  hover, exactly the lead card's one hover (page feedback, Sept 2026); the
+  Maison border-to-brass hover went with it.
 - **`/resources/[slug]` (`resources/[slug].astro`)** — `getEmdashPost(slug)`
   first (Portable Text body via `<PortableText>`, `houses` → the brand tags),
   else the markdown entry (`render(post)` inside `.prose`), else 404. **Rebuilt
@@ -1414,11 +1430,16 @@ the CMS is queried live:
   Text via `getEmdashPage` / `<PortableText>`), then the markdown
   `page`-collection entry (`getEntry('page', <id>)` + `render`), then the
   empty state. Page-level precedence like the brand pages — a CMS entry stops
-  the markdown loading entirely, never a hybrid. `/contact` opens on the
-  display headline alone — the "Contact" badge over it was removed on every
-  width (mobile feedback, Sept 2026) — then the details rows beside the
-  enquiry form on its surface panel, which under 640px pads 32/24 rather than
-  48 so the fields keep the container's own width. Seeded markdown:
+  the markdown loading entirely, never a hybrid. `/contact` is two columns
+  from the top (page feedback, Sept 2026): the display headline and intro,
+  then the ways in — email and phone set large in the display face
+  (`.contact-reach`), the three showrooms as surface tiles with the city as
+  title (`.contact-showrooms`), and one closing line for hours and the
+  social links — on the left; the enquiry form on its surface panel on the
+  right, top-aligned with the headline. The hairline label/value rows it had
+  ("too list style") are gone. Under 640px the tiles stack and the panel pads
+  32/24 rather than 48 so the fields keep the container's own width.
+  Seeded markdown:
   `src/content/pages/story.md`, `contact.md`, and — since Sept 2026, at the
   client's request — `privacy.md` and `terms.md` carrying LOREM IPSUM
   placeholders under numbered headings until the client's copy lands (the
@@ -2033,7 +2054,16 @@ would turn every heading invisible. Each surface gets its ground flipped to
   (`SampleRequestList.jsx`) sends the lot as one `POST /samples/request` — contact
   prefilled from the session, guests welcome with an email. The API lands it as a
   `pending` sample request in the CRM and emails both sides; the list clears on
-  success.
+  success. **The page wears the direction** (page feedback, Sept 2026 — it opened
+  on the Maison `.page-intro` with a 24rem boxed sidebar, "too condensed while
+  the rest has a lot of white space"): `<Layout bleed overlay="light">` on the
+  shop banner like the cart and checkout, then `.sample-request` — two EQUAL
+  halves on the container: the cuttings as a hairline list (`.sample-line`:
+  88px thumbnail, house `.badge-ochre`, 20px name, colourway + SKU, a ruled
+  one-line note, underlined Remove) beside the details on `.sample-panel`,
+  which is the contact page's surface panel to the pixel — no fieldset, no
+  legend. Rules in commerce.css under "Sample request"; `/order-request` is
+  still on the Maison figure and is the obvious next page to bring across.
 - **A trade client edits their own application under Account → Account**
   (`tradeDetailsForm` in accountPanels.jsx, fields declared once in
   `lib/tradeDetails.js`): `GET`/`PATCH /account/trade-application`. The consent

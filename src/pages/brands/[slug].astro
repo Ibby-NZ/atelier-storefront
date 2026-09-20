@@ -3,7 +3,7 @@ export const prerender = false // live: API brand + EmDash/markdown editorial ov
 import { getCollection, render } from 'astro:content'
 import { PortableText } from 'emdash/ui'
 import brandsBanner from '../../assets/img/brands-hero-bg.jpg'
-import { houseArtwork, houseMeta } from '../../lib/houses.js'
+import { houseArtwork } from '../../lib/houses.js'
 import Layout from '../../layouts/Layout.astro'
 import { apiFetch, ApiError, safeFetch } from '../../lib/api.js'
 import BespokeEnquiry from '../../components/BespokeEnquiry.jsx'
@@ -70,7 +70,6 @@ const cards = emPage?.collectionCards ?? mdPage?.data.collectionCards ?? []
 // The provenance line ("France · est. 1935", degrading to the country alone).
 // It used to be the banner's right-hand aside; the country is already the
 // badge over the name, so it now sits under the headline instead.
-const meta = brand ? houseMeta(brand) : ''
 // `brandsBanner.src` and not getImage(): this page is `prerender = false`, so
 // under `output: "server"` getImage() returns a RUNTIME `/_image` URL, and that
 // endpoint is not resolved on staging — every house without its own slideshow
@@ -184,7 +183,7 @@ if (notFound) {
             columns — the blurb on the left, the body copy and the actions on
             the right. */}
         <section class="photo-band photo-band--parallax house-banner">
-          <span class="photo-band-art" style={`background-image: url(${heroImage ?? brandsBanner.src})`}></span>
+          <span class="photo-band-art" style={`background-image: url('${heroImage ?? brandsBanner.src}')`}></span>
           <div class="container photo-band-body">
             <div class="photo-band-row">
               <div class="house-banner-copy">
@@ -201,7 +200,6 @@ if (notFound) {
           <div class="container house-intro-inner">
             <div class="house-intro-blurb">
               {headline && <p class="house-headline">{headline}</p>}
-              {meta && <p class="house-meta-line">{meta}</p>}
               {blurb && <p class="house-lede">{blurb}</p>}
               {
                 // A bespoke house's story sits under the headline, because the
@@ -285,7 +283,7 @@ if (notFound) {
             {tiles.map((tile) => (
               <a class:list={['tile', { weave: !tile.image }]} href={tile.href}>
                 {tile.image && (
-                  <span class="tile-art" style={`background-image: url(${tile.image})`} />
+                  <span class="tile-art" style={`background-image: url('${tile.image}')`} />
                 )}
                 <span class="tile-body">
                   <span class="tile-heading">

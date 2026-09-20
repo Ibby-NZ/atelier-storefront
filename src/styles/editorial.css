@@ -129,24 +129,35 @@
   text-decoration: none;
 }
 
+/* The picture in a frame, exactly the lead card's: 4:3, the photograph zooms
+   inside it on hover and nothing else moves (page feedback, Sept 2026 — "like
+   the featured one"; the Maison border-to-brass hover went with it). */
+.journal-card-frame {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  margin-bottom: var(--s4);
+  background: var(--surface);
+}
+
 .journal-card img,
 .journal-card-media {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 100%;
   object-fit: cover;
-  margin-bottom: var(--s4);
-  border: var(--hair);
-  background: var(--surface);
-  transition: border-color var(--slow), box-shadow var(--slow);
 }
 
-/* Maison hover: the frame moves, the type does not — border to brass plus a
-   soft shadow, no lift and no zoom. */
-.journal-card > a:hover img,
-.journal-card > a:hover .journal-card-media {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-lift);
+@media (prefers-reduced-motion: no-preference) {
+  .journal-card img,
+  .journal-card-media {
+    transition: transform 0.9s cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
+  .journal-card > a:hover img,
+  .journal-card > a:hover .journal-card-media {
+    transform: scale(1.05);
+  }
 }
 
 .journal-card h3 {
@@ -420,20 +431,9 @@
   text-wrap: balance;
 }
 
-/* The provenance line ("France · est. 1935"), the banner's old right-hand
-   aside, now under the headline. */
-.house-meta-line {
-  margin: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-
-.house-headline + .house-meta-line,
-.house-headline + .house-lede,
-.house-meta-line + .house-lede {
+/* No provenance line ("Italy", "France · est. 1935") under the headline any
+   more — removed on every house (page feedback, Sept 2026). */
+.house-headline + .house-lede {
   margin-top: var(--s4);
 }
 
@@ -566,6 +566,23 @@
   padding-block: var(--s8) var(--s10);
 }
 
+/* Two columns from the top: the copy and the ways in on the left, the form on
+   the right, top-aligned so the panel sits level with the headline (page
+   feedback, Sept 2026 — "push the form to top"). The featured band's split. */
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--s10);
+  align-items: start;
+}
+
+.contact-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+  min-width: 0;
+}
+
 .contact-head {
   display: flex;
   flex-direction: column;
@@ -591,73 +608,105 @@
   color: var(--ink-soft);
 }
 
-/* The featured band's split: copy-side column beside a panel, on a wide
-   gutter, top-aligned. */
-.contact-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: var(--s10);
-  align-items: start;
-  margin-top: var(--s9);
-}
-
-/* The house page's facts figure: 12px semibold label left, value right, a
-   hairline over every row, the last row ruled below as well so the list closes. */
-.contact-rows {
+/* --- The ways in ----------------------------------------------------------
+   Not a table (page feedback, Sept 2026 — "not so list style"): the email and
+   the phone set large in the display face with the freephone under them, the
+   three showrooms as tiles with the city as each one's title, and a single
+   closing line for the hours and the social links. */
+.contact-details {
   display: flex;
   flex-direction: column;
-  margin: 0;
+  gap: var(--s7);
 }
 
-.contact-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--s6);
-  padding-block: var(--s4);
-  border-top: 1px solid var(--line);
-}
-
-.contact-row:last-child {
-  border-bottom: 1px solid var(--line);
-}
-
-.contact-row dt {
-  flex: 0 0 7rem;
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-}
-
-.contact-row dd {
+.contact-reach {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  margin: 0;
-  text-align: right;
-  font-size: var(--t-base);
-  line-height: 1.5;
-  color: var(--ink);
+  align-items: flex-start;
+  gap: var(--s2);
 }
 
-.contact-row a {
+.contact-reach-link {
+  font-family: var(--font-grotesk);
+  font-size: var(--g-lg);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   color: var(--ink);
   text-decoration: none;
   transition: color var(--quick);
 }
 
-.contact-row a:hover {
+.contact-reach-link:hover {
   color: var(--accent);
 }
 
-.contact-muted {
+.contact-reach-note {
+  margin: var(--s2) 0 0;
+  font-size: var(--t-base);
   color: var(--muted);
 }
 
-.contact-social {
-  flex-direction: row;
+.contact-showrooms {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-showroom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s5);
+  background: var(--surface);
+}
+
+.contact-showroom p {
+  margin: 0;
+}
+
+.contact-showroom-city {
+  margin-bottom: var(--s2);
+  font-family: var(--font-grotesk);
+  font-size: 1.375rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.contact-showroom-name {
+  font-size: var(--t-base);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.contact-showroom-lines {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.contact-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4) var(--s6);
+  margin: 0;
+  padding-top: var(--s5);
+  border-top: 1px solid var(--line);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.contact-foot-links {
+  display: flex;
   gap: var(--s5);
 }
 
@@ -688,20 +737,17 @@
     grid-template-columns: 1fr;
     gap: var(--s8);
   }
-
-  .contact-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--s2);
-  }
-
-  .contact-row dd {
-    align-items: flex-start;
-    text-align: left;
-  }
 }
 
 @media (max-width: 640px) {
+  .contact-reach-link {
+    font-size: 1.5rem;
+  }
+
+  .contact-showrooms {
+    grid-template-columns: 1fr;
+  }
+
   .contact-form-panel {
     padding: var(--s5) var(--s4);
   }

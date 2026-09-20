@@ -92,11 +92,16 @@ const formatDate = (date) => (date ? dateFormat.format(date) : '')
           {rest.map((post) => (
             <li class="journal-card">
               <a href={`/resources/${post.id}`}>
-                {post.hero ? (
-                  <img src={post.hero} alt="" loading="lazy" />
-                ) : (
-                  <span class="journal-card-media weave" aria-hidden="true" />
-                )}
+                {/* The picture in a frame it zooms inside of on hover — the
+                    lead card's one hover, on every card now (page feedback,
+                    Sept 2026). */}
+                <span class="journal-card-frame">
+                  {post.hero ? (
+                    <img src={post.hero} alt="" loading="lazy" />
+                  ) : (
+                    <span class="journal-card-media weave" aria-hidden="true" />
+                  )}
+                </span>
                 <h3>{post.title}</h3>
                 {post.date && <p class="post-date">{formatDate(post.date)}</p>}
               </a>

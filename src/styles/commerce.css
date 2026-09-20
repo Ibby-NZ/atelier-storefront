@@ -266,10 +266,9 @@
 
 .request-metres-label {
   font-family: var(--font-ui);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: var(--t-base);
+  font-weight: 500;
+  color: var(--ink-soft);
 }
 
 .request-metres input {
@@ -1552,5 +1551,215 @@
 @media (max-width: 40rem) {
   .account-trade-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* --- Sample request ---------------------------------------------------------
+   The sample cart (pages/sample-request.astro + SampleRequestList.jsx), rebuilt
+   on the direction's figures (page feedback, Sept 2026 — it wore the Maison
+   page-intro and a 24rem boxed sidebar, "too condensed while the rest has a
+   lot of white space"). It opens on the shop banner and sets two halves on
+   the container: the cuttings as a hairline list on the left, the details on
+   the contact page's surface panel on the right — the two forms on the site
+   are now the same panel. */
+.sample-request {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s10);
+  align-items: start;
+}
+
+.sample-lines-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  min-width: 0;
+}
+
+.sample-lines-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s5);
+}
+
+.sample-lines-head h2,
+.sample-panel h2 {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-weight: 400;
+  font-size: var(--g-lg);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.sample-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.sample-line {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: var(--s5);
+  align-items: start;
+  padding: var(--s5) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.sample-line-media {
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.sample-line-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sample-line-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.sample-line-main .badge-ochre {
+  margin: 0 0 var(--s1);
+}
+
+.sample-line-name {
+  margin: 0;
+  font-size: 1.25rem; /* the library card's 20px Inter medium */
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.sample-line-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--quick);
+}
+
+.sample-line-link:hover {
+  color: var(--accent);
+}
+
+.sample-line-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin: 0;
+  font-size: var(--t-base);
+  color: var(--muted);
+}
+
+.sample-line-sku {
+  letter-spacing: 0.04em;
+}
+
+/* One quiet line, ruled not boxed, so a note never outweighs the cutting. */
+.sample-line-note {
+  display: block;
+  margin-top: var(--s3);
+}
+
+.sample-line-note input {
+  width: 100%;
+  padding: var(--s2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  transition: border-color var(--quick);
+}
+
+.sample-line-note input::placeholder {
+  color: var(--muted);
+}
+
+.sample-line-note input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.sample-line-remove {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: var(--t-base);
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: color var(--quick);
+}
+
+.sample-line-remove:hover {
+  color: var(--ink);
+}
+
+/* The panel: the contact page's, to the pixel. */
+.sample-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s7);
+  background: var(--surface);
+}
+
+.sample-panel h2 {
+  margin-bottom: var(--s1);
+}
+
+.sample-panel-note {
+  margin: 0 0 var(--s3);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.sample-panel .btn {
+  margin-top: var(--s2);
+}
+
+@media (max-width: 1024px) {
+  .sample-request {
+    grid-template-columns: 1fr;
+    gap: var(--s8);
+  }
+}
+
+@media (max-width: 640px) {
+  .sample-line {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .sample-line-media {
+    width: 72px;
+    height: 72px;
+  }
+
+  .sample-line-remove {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .sample-panel {
+    padding: var(--s5) var(--s4);
   }
 }
