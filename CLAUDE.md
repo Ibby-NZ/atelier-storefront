@@ -857,13 +857,23 @@ Where it surfaces:
   flow, all `client:load` islands reading the client cart. `/cart` (`Cart.jsx`)
   edits quantity / removes lines / shows subtotal. `/checkout` (`Checkout.jsx`)
   is laid out like a Shopify checkout (Sept 2026): a Cart › Checkout › Secure
-  payment step row, Delivery + Payment sections on the left, and a sticky order
-  summary (thumbnails with qty badges, subtotal / shipping / total) on the
-  right, which folds into a native `<details>` "Show order summary" bar under
-  1025px. The three fixed NZ zones (Auckland / North Island / South Island)
-  render as radio rows, each quoted **live** and in parallel from
-  `GET /shipping/quote?zone=&qty=` whenever the total qty changes, so every
-  rate shows before the shopper picks. **The store collects the customer's
+  payment step row, Contact + Delivery + Your reference on the left, and on the
+  right a sticky stack (`.checkout-aside`) of **shipping method, the order
+  summary, then Pay now directly under the total**. The summary (thumbnails with
+  qty badges, subtotal / shipping / GST / total) folds into a native `<details>`
+  "Show order summary" bar under 1025px; there the aside is `display: contents`,
+  which hands its three blocks to the page grid so the summary bar stays at the
+  top of a phone while the method and Pay now drop BELOW the form (only a grid
+  child can be reordered — hence the wrapper that steps out of the way).
+  **The whole page is one `<form>`**, so the button in the right-hand column
+  still runs the left-hand column's native validation. **The three fixed NZ
+  zones (Auckland / North Island / South Island) are ONE control: a `Region`
+  `<select>` among the address fields**, each option carrying its own rate,
+  quoted **live** and in parallel from `GET /shipping/quote?zone=&qty=` whenever
+  the total qty changes. The shipping method on the right states the rate that
+  region buys and is not a second chooser: two controls would be two answers to
+  "where is this going", and the cheaper one would be the one the freight was
+  charged at. **The store collects the customer's
   contact and delivery details itself** (Sept 2026): email, phone, name or
   business, address lines, city, postcode — country is not a field, delivery
   is NZ-only. A signed-in shopper's form starts from `GET /checkout/prefill`
@@ -1696,6 +1706,9 @@ markdown collections (above) remain the shipped baseline.
   panels marked `pending-link` with an explanation — "0 invoices" would be a lie
   by omission, since the record exists and the back office simply has not
   matched the login to it yet. A linked one sees everything.
+- **The password tab is labelled "Reset Password".** It is an action, not a
+  field, and a client scanning the nav looks for the verb (page feedback, Sept
+  2026); the panel itself is still the change-password form.
 - **The Account panel edits name and phone, and nothing else.** Two uncontrolled
   forms read on submit — `PATCH /auth/me` and `POST /auth/change-password` — with
   their state in the island, because no panel in `accountPanels.jsx` may hold a

@@ -393,7 +393,8 @@
   gap: var(--s8);
 }
 
-.checkout-section h2 {
+.checkout-section h2,
+.checkout-method h2 {
   margin: 0 0 var(--s2);
   font-family: var(--font-display);
   font-weight: 400;
@@ -499,10 +500,28 @@
   margin-top: var(--s4);
 }
 
-.checkout-summary {
+/* The right column: shipping method, price box, Pay now — one sticky stack, so
+   the button the shopper is reaching for stays under the total they are reading
+   (page feedback, Sept 2026). */
+.checkout-aside {
   order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
   position: sticky;
   top: var(--s5);
+}
+
+.checkout-payment {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkout-pay-note {
+  margin: var(--s3) 0 0;
+}
+
+.checkout-summary {
   padding: var(--s6);
   border: var(--hair);
   border-radius: var(--r-md);
@@ -1642,6 +1661,26 @@
   .checkout {
     grid-template-columns: 1fr;
     gap: var(--s6);
+  }
+
+  /* `display: contents` because the aside's three blocks belong in three
+     different places on a phone: the summary bar on top, the shipping method
+     and Pay now below the form. Only a grid child can be reordered, so the
+     wrapper steps out of the way. */
+  .checkout-aside {
+    display: contents;
+  }
+
+  .checkout-main {
+    order: 1;
+  }
+
+  .checkout-method {
+    order: 2;
+  }
+
+  .checkout-payment {
+    order: 3;
   }
 
   .checkout-summary {

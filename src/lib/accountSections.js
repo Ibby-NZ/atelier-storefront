@@ -89,7 +89,10 @@ const SECTIONS = Object.freeze([
   // password, so this tab is never gated.
   Object.freeze({
     id: SECTION.PASSWORD,
-    label: 'Password',
+    // "Reset Password", not "Password": the tab is an action, and a client
+    // scanning the nav for where to change theirs reads the verb (page
+    // feedback, Sept 2026).
+    label: 'Reset Password',
     trade: false,
     needsLink: false,
   }),
