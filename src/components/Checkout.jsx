@@ -5,11 +5,13 @@ import { formatMoney, STORE_CURRENCY } from '../lib/money.js'
 import { gstCents } from '../lib/gst.js'
 import { EMPTY_CUSTOMER, customerFromPrefill, customerBody } from '../lib/checkoutCustomer.js'
 
-// Checkout island (US-019), laid out like a Shopify checkout: Delivery and
-// Payment on the left, a sticky order summary on the right (collapsed into a
-// "Show order summary" bar on phones — a native <details>, no JS accordion).
+// Checkout island (US-019), laid out like a Shopify checkout: Contact, Delivery
+// and Your reference on the left, and on the right — in this order — the
+// shipping method, the order summary, and Pay now directly under the total
+// (page feedback, Sept 2026). The summary is a native <details>, collapsed into
+// a "Show order summary" bar on phones, no JS accordion.
 // Every shipping zone is quoted live from GET /shipping/quote in parallel so
-// the shopper sees each rate before choosing. The customer's contact and
+// the Region field can price each one before it is chosen. The customer's contact and
 // delivery details are collected HERE (Sept 2026) — a signed-in shopper starts
 // from GET /checkout/prefill (account, last order, trade application) and may
 // edit every field — and travel with the cart to POST /checkout/session, which
@@ -18,9 +20,16 @@ import { EMPTY_CUSTOMER, customerFromPrefill, customerBody } from '../lib/checko
 // every price (see checkout.js). GST (15%, src/lib/gst.js) is shown on goods
 // plus freight and charged by the API as its own line.
 //
-// Shipping zones are the three fixed New Zealand zones seeded in the API
-// (meeting decision, flat-rate per zone); delivery is NZ-only, so no country
-// field.
+// REGION IS THE ZONE. The three fixed New Zealand zones seeded in the API
+// (meeting decision, flat-rate per zone) are the delivery regions, so they are
+// ONE control — a Region <select> among the address fields — and the shipping
+// method on the right states the rate that region buys. Two controls would be
+// two answers to "where is this going", and the cheaper one would be the one the
+// freight was charged at. Delivery is NZ-only, so no country field.
+//
+// The whole page is ONE <form>: Pay now sits in the right-hand column but
+// submits the fields on the left, so native `required` / type=email validation
+// still runs before payNow does.
 
 const SHIPPING_ZONES = ['Auckland', 'North Island', 'South Island']
 const DESKTOP = '(min-width: 1025px)' // matches the commerce.css breakpoint
@@ -111,6 +120,8 @@ export default function Checkout() {
   const shipping = quotes ? quotes[zone] : null
   const gst = shipping != null ? gstCents(subtotal + shipping) : null
   const total = shipping != null ? subtotal + shipping + gst : null
+  const rateText = (cents) =>
+    cents != null ? formatMoney(cents, currency) : quoteError ? '—' : 'Calculating…'
 
   const edit = (key) => (event) => setCustomer({ ...customer, [key]: event.target.value })
 
@@ -149,68 +160,8 @@ export default function Checkout() {
   }
 
   return (
-    <div className="checkout">
-      <details
-        className="checkout-summary"
-        open={summaryOpen}
-        onToggle={(event) => setSummaryOpen(event.currentTarget.open)}
-      >
-        <summary>
-          <span>{summaryOpen ? 'Hide' : 'Show'} order summary</span>
-          <strong>{formatMoney(total ?? subtotal, currency)}</strong>
-        </summary>
-
-        <ul className="checkout-lines">
-          {items.map((line) => {
-            const label = line.name || line.sku
-            return (
-              <li key={line.sku} className="checkout-line">
-                <span className="checkout-line-media">
-                  {line.image_url ? (
-                    <img className="cart-line-image" src={line.image_url} alt="" loading="lazy" />
-                  ) : (
-                    <span className="cart-line-image product-image-placeholder" aria-hidden="true" />
-                  )}
-                  <span className="checkout-line-qty" aria-label={`Quantity ${line.qty}`}>
-                    {line.qty}
-                  </span>
-                </span>
-                <span className="checkout-line-main">
-                  <span className="checkout-line-name">{label}</span>
-                  {line.colourway && <span className="checkout-line-meta">{line.colourway}</span>}
-                </span>
-                <span className="checkout-line-price">
-                  {formatMoney((Number(line.price_cents) || 0) * (Number(line.qty) || 0), STORE_CURRENCY)}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
-
-        <dl className="checkout-totals">
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{formatMoney(subtotal, currency)}</dd>
-          </div>
-          <div>
-            <dt>Shipping</dt>
-            <dd>{shipping != null ? formatMoney(shipping, currency) : quoteError ? '—' : 'Calculating…'}</dd>
-          </div>
-          <div>
-            <dt>GST 15%</dt>
-            <dd>{gst != null ? formatMoney(gst, currency) : '—'}</dd>
-          </div>
-          <div className="checkout-total">
-            <dt>Total</dt>
-            <dd>
-              {total != null ? formatMoney(total, currency) : '—'}
-              <span className="indicative-note">Indicative</span>
-            </dd>
-          </div>
-        </dl>
-      </details>
-
-      <form className="checkout-main" onSubmit={payNow}>
+    <form className="checkout" onSubmit={payNow}>
+      <div className="checkout-main">
         <section className="checkout-section" aria-labelledby="checkout-contact">
           <h2 id="checkout-contact">Contact</h2>
           <div className="checkout-fields">
@@ -247,22 +198,28 @@ export default function Checkout() {
               <span>City</span>
               <input type="text" autoComplete="shipping address-level2" required value={customer.city} onChange={edit('city')} />
             </label>
+            {/* The zone, as an address field. Each option carries its own rate
+                so the choice is priced before it is made — the shipping method
+                and the totals on the right both follow this select. */}
+            <label className="field">
+              <span>Region</span>
+              <select
+                autoComplete="shipping address-level1"
+                required
+                value={zone}
+                onChange={(event) => setZone(event.target.value)}
+              >
+                {SHIPPING_ZONES.map((z) => (
+                  <option key={z} value={z}>
+                    {quotes ? `${z} — ${formatMoney(quotes[z], currency)}` : z}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="field">
               <span>Postcode</span>
               <input type="text" inputMode="numeric" autoComplete="shipping postal-code" required value={customer.postal_code} onChange={edit('postal_code')} />
             </label>
-          </div>
-          <p className="checkout-hint checkout-hint-region">Delivery region</p>
-          <div className="ship-options" role="radiogroup" aria-label="Delivery region">
-            {SHIPPING_ZONES.map((z) => (
-              <label key={z} className={`ship-option${zone === z ? ' is-selected' : ''}`}>
-                <input type="radio" name="zone" value={z} checked={zone === z} onChange={() => setZone(z)} />
-                <span className="ship-option-name">{z}</span>
-                <span className="ship-option-rate">
-                  {quotes ? formatMoney(quotes[z], currency) : quoteError ? '—' : '…'}
-                </span>
-              </label>
-            ))}
           </div>
           {quoteError && <p className="error-state">{quoteError}</p>}
         </section>
@@ -301,14 +258,89 @@ export default function Checkout() {
               />
             </label>
           </div>
+          <a className="cart-continue" href="/cart">
+            ‹ Return to cart
+          </a>
+        </section>
+      </div>
+
+      {/* Right column, top to bottom: shipping method, price box, Pay now.
+          `display: contents` under 1025px hands these three straight to the page
+          grid so the summary bar can stay at the top of a phone while Pay now
+          drops below the form (commerce.css). */}
+      <aside className="checkout-aside">
+        <section className="checkout-method" aria-labelledby="checkout-method-heading">
+          <h2 id="checkout-method-heading">Shipping method</h2>
+          <div className="ship-options">
+            <div className="ship-option is-selected">
+              <span className="ship-option-name">{zone} — flat rate</span>
+              <span className="ship-option-rate">{rateText(shipping)}</span>
+            </div>
+          </div>
         </section>
 
-        <section className="checkout-section" aria-labelledby="checkout-payment">
-          <h2 id="checkout-payment">Payment</h2>
-          <p className="checkout-hint">
-            All transactions are secure and encrypted. You will enter your card details
-            with Stripe.
-          </p>
+        <details
+          className="checkout-summary"
+          open={summaryOpen}
+          onToggle={(event) => setSummaryOpen(event.currentTarget.open)}
+        >
+          <summary>
+            <span>{summaryOpen ? 'Hide' : 'Show'} order summary</span>
+            <strong>{formatMoney(total ?? subtotal, currency)}</strong>
+          </summary>
+
+          <ul className="checkout-lines">
+            {items.map((line) => {
+              const label = line.name || line.sku
+              return (
+                <li key={line.sku} className="checkout-line">
+                  <span className="checkout-line-media">
+                    {line.image_url ? (
+                      <img className="cart-line-image" src={line.image_url} alt="" loading="lazy" />
+                    ) : (
+                      <span className="cart-line-image product-image-placeholder" aria-hidden="true" />
+                    )}
+                    <span className="checkout-line-qty" aria-label={`Quantity ${line.qty}`}>
+                      {line.qty}
+                    </span>
+                  </span>
+                  <span className="checkout-line-main">
+                    <span className="checkout-line-name">{label}</span>
+                    {line.colourway && <span className="checkout-line-meta">{line.colourway}</span>}
+                  </span>
+                  <span className="checkout-line-price">
+                    {formatMoney((Number(line.price_cents) || 0) * (Number(line.qty) || 0), STORE_CURRENCY)}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+
+          <dl className="checkout-totals">
+            <div>
+              <dt>Subtotal</dt>
+              <dd>{formatMoney(subtotal, currency)}</dd>
+            </div>
+            <div>
+              <dt>Shipping</dt>
+              <dd>{shipping != null ? formatMoney(shipping, currency) : quoteError ? '—' : 'Calculating…'}</dd>
+            </div>
+            <div>
+              <dt>GST 15%</dt>
+              <dd>{gst != null ? formatMoney(gst, currency) : '—'}</dd>
+            </div>
+            <div className="checkout-total">
+              <dt>Total</dt>
+              <dd>
+                {total != null ? formatMoney(total, currency) : '—'}
+                <span className="indicative-note">Indicative</span>
+              </dd>
+            </div>
+          </dl>
+        </details>
+
+
+        <div className="checkout-payment">
           {payError && (
             <p className="error-state">
               {payError} <a href="/cart">Review your cart</a>
@@ -321,11 +353,12 @@ export default function Checkout() {
           >
             {submitting ? 'Redirecting to Stripe…' : 'Pay now'}
           </button>
-          <a className="cart-continue" href="/cart">
-            ‹ Return to cart
-          </a>
-        </section>
-      </form>
-    </div>
+          <p className="checkout-hint checkout-pay-note">
+            All transactions are secure and encrypted. You will enter your card details
+            with Stripe.
+          </p>
+        </div>
+      </aside>
+    </form>
   )
 }
