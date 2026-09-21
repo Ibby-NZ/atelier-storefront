@@ -8,6 +8,8 @@
 // native `storage` event only fires in OTHER tabs, so we need our own signal for
 // the tab that made the change.
 
+import { STORE_CURRENCY } from './money.js'
+
 // Exported so the header island can compare it against a native `storage`
 // event's key without redefining the string.
 export const STORAGE_KEY = 'atelier_cart'
@@ -110,13 +112,21 @@ export function cartCount(items = readCart()) {
   return items.reduce((sum, line) => sum + (Number(line.qty) || 0), 0)
 }
 
-// The one currency every line shares, or null when they differ. A subtotal is
-// only a number when this is a string: `cartSubtotalCents` adds raw cents, and
-// the API refuses a mixed cart with a 422 anyway (audit SF-B2C-02 — a US$ Trend
-// line first and an NZ$ line second used to total as "US$" of both).
-export function cartCurrency(items = readCart()) {
-  const codes = new Set(items.map((line) => line.currency || 'NZD'))
-  return codes.size === 1 ? [...codes][0] : null
+/**
+ * The currency the cart is quoted in. Always `STORE_CURRENCY` — a basket cannot
+ * be mixed any more, because a line's price never came from the supplier's
+ * currency in the first place (see money.js).
+ *
+ * It takes the stored lines and IGNORES their `currency` field on purpose. A
+ * cart written before this fix is sitting in a real shopper's localStorage with
+ * `"currency":"USD"` on it, and honouring that would keep printing "US$429" on
+ * a figure the API has always held as New Zealand cents — and would keep
+ * suppressing the subtotal on a basket that was never actually mixed
+ * (audit SF-B2C-02: a US$ Trend line first and an NZ$ line second used to total
+ * as "US$" of both).
+ */
+export function cartCurrency() {
+  return STORE_CURRENCY
 }
 
 // Subtotal in cents. Lines with an unknown price (price_cents null) contribute 0

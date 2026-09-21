@@ -7,7 +7,7 @@ import {
   cartCurrency,
   CART_EVENT,
 } from '../lib/cart.js'
-import { formatMoney } from '../lib/money.js'
+import { formatMoney, STORE_CURRENCY } from '../lib/money.js'
 import { fetchCurrentUser } from '../lib/auth.js'
 import { noPriceCopyFor } from '../lib/catalogue.js'
 
@@ -58,7 +58,7 @@ export default function Cart() {
     )
   }
 
-  const currency = cartCurrency(items)
+  const currency = cartCurrency()
   const subtotal = cartSubtotalCents(items)
 
   const changeQty = (sku, qty) => setItems(setCartQty(sku, qty))
@@ -94,7 +94,7 @@ export default function Cart() {
                 </p>
                 <p className="cart-line-unit">
                   {line.price_cents != null
-                    ? `${formatMoney(line.price_cents, line.currency)} each`
+                    ? `${formatMoney(line.price_cents, STORE_CURRENCY)} each`
                     : noPriceCopyFor(viewer)}
                   <span className="detail-selected-sku">{line.sku}</span>
                 </p>
@@ -112,7 +112,7 @@ export default function Cart() {
                 />
               </label>
 
-              <p className="cart-line-total">{formatMoney(linePrice, line.currency)}</p>
+              <p className="cart-line-total">{formatMoney(linePrice, STORE_CURRENCY)}</p>
 
               <button
                 type="button"
@@ -128,15 +128,11 @@ export default function Cart() {
       </ul>
 
       <div className="cart-summary">
-        {currency ? (
-          <p className="cart-subtotal">
-            <span>Subtotal</span>
-            <strong>{formatMoney(subtotal, currency)}</strong>
-            <span className="indicative-note">Indicative</span>
-          </p>
-        ) : (
-          <p className="cart-note">Items in different currencies check out separately.</p>
-        )}
+        <p className="cart-subtotal">
+          <span>Subtotal</span>
+          <strong>{formatMoney(subtotal, currency)}</strong>
+          <span className="indicative-note">Indicative</span>
+        </p>
         <p className="cart-note">Shipping is calculated at checkout.</p>
         <a className="btn btn-primary" href="/checkout">
           Proceed to checkout

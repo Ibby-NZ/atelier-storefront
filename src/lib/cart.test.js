@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { shouldClearCartAfterFailedVerify, cartCurrency } from './cart.js'
+import { STORE_CURRENCY } from './money.js'
 
 // The rule this guards is a money rule, not a tidiness one: /checkout/success is
 // only ever reached through a Stripe redirect, which happens after the payment
@@ -31,12 +32,16 @@ test('a failed verify empties the cart unless Stripe disowned the session', asyn
   })
 })
 
-// A subtotal only exists in one currency. Retail lines carry the SUPPLIER's
-// currency, so a US$ line and an NZ$ line can share a cart until checkout
-// refuses them; until then no total may pretend they add up.
-test('cartCurrency is the one shared code, or null when lines differ', () => {
-  assert.equal(cartCurrency([{ currency: 'NZD' }, { currency: 'NZD' }]), 'NZD')
-  assert.equal(cartCurrency([{ currency: 'USD' }, { currency: 'NZD' }]), null)
-  assert.equal(cartCurrency([{}]), 'NZD')
-  assert.equal(cartCurrency([]), null)
+// A basket is one currency because a PRICE is: `product.currency` is the
+// supplier's and never described the figure stored against it. The stale
+// `currency` on a line is ignored on purpose — a cart saved before this fix is
+// still in a shopper's localStorage carrying "USD", and honouring it would keep
+// printing US$ over New Zealand cents and keep suppressing a subtotal that was
+// never actually mixed.
+test('the cart is quoted in the selling currency, whatever a stored line says', () => {
+  assert.equal(cartCurrency([{ currency: 'NZD' }, { currency: 'NZD' }]), STORE_CURRENCY)
+  assert.equal(cartCurrency([{ currency: 'USD' }, { currency: 'NZD' }]), STORE_CURRENCY)
+  assert.equal(cartCurrency([{}]), STORE_CURRENCY)
+  assert.equal(cartCurrency([]), STORE_CURRENCY)
+  assert.equal(cartCurrency(), STORE_CURRENCY)
 })

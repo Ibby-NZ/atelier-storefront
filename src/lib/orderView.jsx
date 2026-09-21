@@ -10,7 +10,7 @@
 // trip no-unused-vars; calling a function counts as a use. No hooks inside, so
 // calling them directly (not rendering as elements) is safe.
 
-import { formatMoney } from './money.js'
+import { formatMoney, STORE_CURRENCY } from './money.js'
 import { hasQuotedTotal } from './reorder.js'
 
 // Human labels + a CSS modifier class per order status.
@@ -85,7 +85,7 @@ export const discountCents = (order) => {
 // screen-reader behaviour come free, and the `open` prop is what lets a linked
 // order (#orders/<number>) arrive already expanded.
 export function orderCard(order, { open = false } = {}) {
-  const currency = 'NZD'
+  const currency = STORE_CURRENCY
   const lines = order.lines ?? []
   const created = formatDate(order.created_at)
   const priced = hasQuotedTotal(order)

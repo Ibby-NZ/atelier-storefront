@@ -4,7 +4,7 @@
 // library grid, the product detail island and the homepage, so they live here
 // rather than being copied into each. Pure functions only — no fetching, no DOM.
 
-import { formatMoney } from './money.js'
+import { formatMoney, STORE_CURRENCY } from './money.js'
 import { tradeStatus, TRADE_STATUS } from './account.js'
 import { signInHref } from './tradeGate.js'
 
@@ -58,11 +58,19 @@ export const productClassLabel = (product) =>
   categoryLabel(product?.category) || productTypeLabel(product?.product_type)
 
 // `products.currency` is the SUPPLIER's currency (EUR for Pierre Frey, USD for
-// Trend…) and belongs to `retail_price_cents`. `trade_price_cents` is different:
-// the API precomputes it through the pricing waterfall and stores it in **NZD
-// cents**. Formatting it with `product.currency` renders a New Zealand figure as
-// "US$187.76". Trade money is always NZD.
-export const TRADE_CURRENCY = 'NZD'
+// Trend…) — what Atelier PAYS a house. It belongs to NEITHER price field: the
+// trade figure comes out of the pricing waterfall and the retail figure out of
+// the office or the D365 merge, and both are stored in New Zealand cents
+// whatever that column says. Reading it as the retail price's currency is what
+// printed a NZ$429 towel as "US$429" on the card beside a NZ$389 one — two
+// currencies in one grid, for products a shopper buys in one basket, in one
+// Stripe charge, delivered to one New Zealand address.
+//
+// So there is no per-product currency any more, and no separate trade one: every
+// figure a customer sees is `STORE_CURRENCY` (money.js), the SELLING region's —
+// theirs. `TRADE_CURRENCY` is gone rather than aliased, because a name that says
+// the trade figure has a currency of its own is the misreading this fixes.
+export { STORE_CURRENCY }
 
 // What to say where a product has no price this viewer may see. Which line
 // applies depends on WHO is looking, which is why priceInfo takes a viewer:
@@ -101,8 +109,8 @@ export function visiblePriceCents(product) {
 // the office's ("100–200, 201–300, …"): the first closed band starts at $100,
 // each later one at the previous ceiling plus one, and anything under $100 is
 // its own row. Banded on the figure the card shows, so a trade viewer's rows
-// are NZD trade figures and a guest's are the supplier-currency retail ones —
-// the facet reads the same way the price line under it does.
+// the bands are the same money for every viewer and every house: one currency,
+// so a $100–$200 row cannot hold a US$150 fabric next to a NZ$150 one.
 export const PRICE_BAND_WIDTH = 100
 const UNDER_FIRST_BAND = Object.freeze({
   value: `under-${PRICE_BAND_WIDTH}`,
@@ -151,17 +159,18 @@ export function priceInfo(product, viewer = null, returnTo = '') {
     return { label: '', text: '', muted: true, indicative: false, retail: null, href: null }
   }
 
-  const currency = product.currency || 'NZD'
   const hasRetail = !product.price_hidden && product.retail_price_cents != null
 
   if (product.trade_price_cents != null) {
     return {
       label: 'Trade',
-      text: formatMoney(product.trade_price_cents, TRADE_CURRENCY),
+      text: formatMoney(product.trade_price_cents, STORE_CURRENCY),
       muted: false,
       indicative: true,
-      // Retail is struck through beside the trade price when we may show it.
-      retail: hasRetail ? formatMoney(product.retail_price_cents, currency) : null,
+      // Retail is struck through beside the trade price when we may show it —
+      // and in the SAME currency, or the saving the strike-through is there to
+      // show would be read off two different scales.
+      retail: hasRetail ? formatMoney(product.retail_price_cents, STORE_CURRENCY) : null,
       href: null,
     }
   }
@@ -179,7 +188,7 @@ export function priceInfo(product, viewer = null, returnTo = '') {
 
   return {
     label: '',
-    text: formatMoney(product.retail_price_cents, currency),
+    text: formatMoney(product.retail_price_cents, STORE_CURRENCY),
     muted: false,
     indicative: true,
     retail: null,

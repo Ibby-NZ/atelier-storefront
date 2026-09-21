@@ -17,6 +17,8 @@
 // Pure — no storage, no DOM, no fetch. The island calls these and then hands the
 // result to requestList.js / cart.js. Guarded by reorder.test.js.
 
+import { STORE_CURRENCY } from './money.js'
+
 /** Order kinds whose lines were cut to order, and go back to the request list. */
 const FABRIC_TYPE = 'fabric'
 const FINISHED_TYPE = 'finished_good'
@@ -88,7 +90,7 @@ export function toCartLines(order) {
       slug: line.slug ?? null,
       name: line.product_name ?? null,
       price_cents: Number(line.unit_price_cents) || 0,
-      currency: 'NZD',
+      currency: STORE_CURRENCY,
       qty: Math.max(Math.floor(Number(line.qty) || 1), 1),
     }))
 }

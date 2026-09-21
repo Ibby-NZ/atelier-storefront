@@ -346,19 +346,11 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     NZ$ figure replace it (audit SF-TR-02/04). The library grid needs no such
     guard — it renders nothing until the same `Promise.all` resolves.
     `noPriceCopyFor(viewer)` is exported for the cart, which used to hard-code
-    "Price on request". `cartCurrency(items)` (`src/lib/cart.js`) is the one
-    currency every line shares or null, and the cart and checkout show a
-    subtotal/total ONLY when it is a string — retail lines carry the supplier's
-    currency, and `cartSubtotalCents` adds raw cents, so a US$ line first and an
-    NZ$ line second used to total as "US$" of both.
+    "Price on request".
     FR-3 precedence: `trade_price_cents` (only ever sent to an approved trade
     user, so if it arrived, show it, with the visible retail struck through
     beside it) → `price_hidden` or no retail price → a `NO_PRICE_COPY` line
     **chosen by the viewer** → retail.
-    **`trade_price_cents` is NZD cents**, while `products.currency` is the
-    supplier's currency and belongs to `retail_price_cents` — formatting the
-    trade figure with the product currency rendered NZ money as "US$187.76".
-    `TRADE_CURRENCY` is the constant; do not pass `product.currency` there.
     `indicative: true` drives the small muted "Indicative" annotation the design
     system puts beside every monetary figure.
   - **`viewer` is the `/auth/me` user (or null) and only ever picks COPY** — it
@@ -387,8 +379,38 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
     top). Returns `undefined` when there are no tones, so the caller falls back
     to the plain CSS placeholder.
   - `toneList`, `productTypeLabel`, `isFabric`.
-- `src/lib/money.js` `formatMoney(cents, currency)` stays the only money
-  formatter.
+- **`src/lib/money.js` owns the money — the formatter AND `STORE_CURRENCY`, the
+  one currency any customer is ever quoted.** Nothing on the storefront reads a
+  currency off a product, a cart line or an order any more.
+  - **There is no per-product currency.** `products.currency` is the SUPPLIER's
+    — what Atelier pays a house, EUR for Pierre Frey, USD for Trend — and it
+    describes NEITHER price column: `trade_price_cents` comes out of the pricing
+    waterfall, which computes in NZ$ throughout, and `retail_price_cents` comes
+    from the office, the seed, or the D365 merge, which only ever fills a price
+    from a line whose currency IS New Zealand (the API's `src/legacy/merge.js`).
+    Both are New Zealand cents whatever that column says. Reading it as the
+    price's currency put **"US$429.00" on one card and "$129.00" on the next**
+    in the same grid, for goods bought in one basket, in one Stripe charge, to
+    one New Zealand address — and sent the same mismatch to Stripe's
+    `price_data.currency`, a ~1.8x overcharge on a figure the card had shown in
+    NZ$. It also published the wrong `priceCurrency` in the product page's
+    JSON-LD, so the rich result advertised a NZ price as USD.
+    The API no longer publishes the supplier currency on a public product at
+    all: `currency` on the catalogue read models is the SELLING currency.
+  - **`cartCurrency()` takes no argument and ignores `line.currency`.** A cart
+    written before this fix is still in a real shopper's localStorage carrying
+    `"currency":"USD"`; honouring it would keep printing US$ over NZ cents and
+    keep suppressing the subtotal on a basket that was never mixed. The
+    "Items in different currencies check out separately" note and the disabled
+    Pay-now button it gated are gone with it — a basket cannot be mixed now.
+  - **ONE SELLING REGION PER DEPLOYMENT — New Zealand**, and `STORE_CURRENCY` is
+    a constant rather than an env var on purpose. The shipping tiers price only
+    NZ zones, GST is 15% and one Stripe session settles in one currency, so a
+    second region is a business change (a rate source, a rounding rule, a Stripe
+    account that settles in it), not a formatting one — a env var here could
+    only relabel NZ figures, not price them. `formatAmount` keeps its currency
+    argument for LEGACY Dynamics invoices alone: an invoice already issued is a
+    record of what was charged, not a price being quoted.
 - **`src/lib/houses.js`** — house presentation for the Maison screens.
   `foundedYear(brand)` parses "Founded 1935" / "Established 2006" out of
   `brand.story` (the API has no founded column and inventing a date table would

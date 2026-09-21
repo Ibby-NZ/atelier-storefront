@@ -36,6 +36,29 @@ const domestic = (extra = {}) => ({
   ...extra,
 })
 
+// THE BUG THIS FILE NOW GUARDS: `currency` on a product is the SUPPLIER's — what
+// Atelier pays a house — and describes neither price column, both of which are
+// stored in New Zealand cents. Formatting a retail figure with it put "US$429"
+// on one card and "NZ$389" on the next, for two things bought in one basket, in
+// one charge, delivered to one New Zealand address.
+test('retail is quoted in the selling currency, never the supplier’s', () => {
+  const american = domestic({ currency: 'USD', retail_price_cents: 42900 })
+  assert.equal(priceInfo(american, CUSTOMER).text, '$429.00')
+  assert.doesNotMatch(priceInfo(american, CUSTOMER).text, /US\$|€|£/)
+  // Two houses that invoice Atelier differently read as one price list.
+  const french = domestic({ currency: 'EUR', retail_price_cents: 38900 })
+  assert.equal(priceInfo(french, CUSTOMER).text, '$389.00')
+})
+
+test('the struck-through retail beside a trade price is the same currency too', () => {
+  const info = priceInfo(
+    domestic({ currency: 'USD', retail_price_cents: 42900, trade_price_cents: 28900 }),
+    APPROVED_TRADE
+  )
+  assert.equal(info.text, '$289.00')
+  assert.equal(info.retail, '$429.00')
+})
+
 test('trade price wins, and is always formatted in NZD, not the supplier currency', () => {
   const info = priceInfo(hidden({ trade_price_cents: 18776 }), APPROVED_TRADE)
   assert.equal(info.label, 'Trade')
