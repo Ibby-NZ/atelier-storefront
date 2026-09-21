@@ -834,17 +834,32 @@ Where it surfaces:
 - **`/cart`, `/checkout`, `/checkout/success` (US-019)** — the B2C card-checkout
   flow, all `client:load` islands reading the client cart. `/cart` (`Cart.jsx`)
   edits quantity / removes lines / shows subtotal. `/checkout` (`Checkout.jsx`)
-  has a shipping-zone selector (the three fixed NZ zones: Auckland / North
-  Island / South Island), fetches a **live** quote from
-  `GET /shipping/quote?zone=&qty=`, shows the total, and "Pay by Card" POSTs
-  `{ lines: [{ sku, qty }], zone }` to `POST /checkout/session` then
+  is laid out like a Shopify checkout (Sept 2026): a Cart › Checkout › Secure
+  payment step row, Delivery + Payment sections on the left, and a sticky order
+  summary (thumbnails with qty badges, subtotal / shipping / total) on the
+  right, which folds into a native `<details>` "Show order summary" bar under
+  1025px. The three fixed NZ zones (Auckland / North Island / South Island)
+  render as radio rows, each quoted **live** and in parallel from
+  `GET /shipping/quote?zone=&qty=` whenever the total qty changes, so every
+  rate shows before the shopper picks. **The store collects the customer's
+  contact and delivery details itself** (Sept 2026): email, phone, name or
+  business, address lines, city, postcode — country is not a field, delivery
+  is NZ-only. A signed-in shopper's form starts from `GET /checkout/prefill`
+  (account name/email, then the last card order's address and phone, then a
+  trade application's business name / delivery address / phones); a guest, or
+  any prefill failure, starts blank, and every field stays editable. The form
+  is a real `<form>` so native `required` / `type=email` validation runs
+  before submit; `src/lib/checkoutCustomer.js` (tested) owns the blank form,
+  the prefill mapping and the `customer` body shape. **GST 15%** is shown as
+  its own row on goods plus freight through `src/lib/gst.js`, a tested mirror
+  of the API's `src/orders/gst.js` — change one, change both. "Pay now" POSTs
+  `{ lines: [{ sku, qty }], zone, customer }` to `POST /checkout/session` then
   `window.location.href = body.url` (redirect to Stripe). **No prices are sent**
   — the API re-resolves them. The cart is NOT cleared on redirect, so Stripe's
-  `cancel_url` (`/cart`) returns to an intact cart. **The store collects no
-  delivery details itself** — Stripe collects the NZ shipping address and phone
-  on its own page (`shipping_address_collection` / `phone_number_collection`,
-  set API-side) and the webhook persists them onto the order; the checkout page
-  just says so. A failed `POST /checkout/session` surfaces the API's message
+  `cancel_url` (`/cart`) returns to an intact cart. Stripe's page asks for the
+  card only — the API forwards the address and phone as the PaymentIntent's
+  `shipping` and the email as `customer_email`, and the webhook persists them
+  from session metadata. A failed `POST /checkout/session` surfaces the API's message
   inline, which for the common case names the SKU and how many remain in stock.
   `/checkout/success`
   (`CheckoutSuccess.jsx`) reads `?session_id=` from the URL, verifies it via

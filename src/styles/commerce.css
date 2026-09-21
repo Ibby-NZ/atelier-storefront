@@ -343,47 +343,254 @@
 }
 
 /* --- Checkout ------------------------------------------------------------- */
-/* Centred under the banner (feedback, Sept 2026). */
+/* Shopify-shaped (Sept 2026): Delivery + Payment on the left, a sticky order
+   summary on its own tinted ground on the right. The summary is a native
+   <details>; its <summary> bar is hidden on desktop and becomes the
+   "Show order summary" toggle under 1025px. */
 .checkout {
-  max-width: var(--container-narrow);
-  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24rem;
+  gap: var(--s8);
+  align-items: start;
 }
 
-.checkout-lines {
+.checkout-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
   margin: 0 0 var(--s6);
   padding: 0;
   list-style: none;
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.checkout-steps li + li::before {
+  content: "›";
+  margin-right: var(--s2);
+}
+
+.checkout-steps a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.checkout-steps a:hover {
+  color: var(--accent);
+}
+
+.checkout-steps [aria-current] {
+  color: var(--ink);
+}
+
+.checkout-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
+}
+
+.checkout-section h2 {
+  margin: 0 0 var(--s2);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--d-sm);
+  color: var(--ink);
+}
+
+.checkout-hint {
+  margin: 0 0 var(--s4);
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* The contact / delivery fields: Shopify's two-up grid, full-width rows
+   marked `.field-span` (the trade form's own convention). */
+.checkout-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4) var(--s4);
+  align-items: start;
+  margin: 0 0 var(--s5);
+}
+
+.checkout-fields .field-span {
+  grid-column: 1 / -1;
+}
+
+.checkout-fields .field-optional {
+  margin-left: var(--s2);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.checkout-hint-region {
+  margin-bottom: var(--s2);
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ship-options {
+  display: flex;
+  flex-direction: column;
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+
+.ship-option {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  font-size: var(--t-sm);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--quick);
+}
+
+.ship-option + .ship-option {
   border-top: var(--hair);
+}
+
+.ship-option:hover {
+  background: var(--surface);
+}
+
+.ship-option.is-selected {
+  background: var(--surface);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.ship-option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.ship-option-name {
+  flex: 1 1 auto;
+}
+
+.ship-option-rate {
+  font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
+  white-space: nowrap;
+}
+
+.checkout-pay {
+  width: 100%;
+  height: 52px;
+  margin-top: var(--s2);
+}
+
+.checkout-section .cart-continue {
+  display: inline-block;
+  margin-top: var(--s4);
+}
+
+.checkout-summary {
+  order: 1;
+  position: sticky;
+  top: var(--s5);
+  padding: var(--s6);
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.checkout-summary > summary {
+  display: none; /* desktop: always open, no toggle */
+  list-style: none;
+}
+
+.checkout-summary > summary::-webkit-details-marker {
+  display: none;
+}
+
+.checkout-lines {
+  margin: 0 0 var(--s5);
+  padding: 0;
+  list-style: none;
 }
 
 .checkout-line {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--s4);
-  padding: var(--s4) 0;
-  border-bottom: var(--hair);
+  padding: var(--s3) 0;
   font-size: var(--t-sm);
-  color: var(--ink-soft);
 }
 
-.checkout-line > span:last-child {
+.checkout-line-media {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border: var(--hair);
+  border-radius: var(--r-md);
+  background: var(--surface-deep);
+}
+
+.checkout-line-media .cart-line-image {
+  border-radius: inherit;
+}
+
+.checkout-line-qty {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+}
+
+.checkout-line-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.checkout-line-name {
+  color: var(--ink);
+}
+
+.checkout-line-meta {
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+.checkout-line-price {
+  flex: none;
   font-family: var(--font-ui); /* money in the UI face, not mono (feedback, Sept 2026) */
   color: var(--ink);
   white-space: nowrap;
 }
 
-.checkout-shipping {
-  margin: 0 0 var(--s6);
-  max-width: 18rem;
-}
-
 .checkout-totals {
-  margin: 0 0 var(--s6);
-  padding: var(--s5);
-  border: var(--hair);
-  border-radius: var(--r-md);
-  background: var(--surface);
+  margin: 0;
+  padding-top: var(--s4);
+  border-top: var(--hair);
 }
 
 .checkout-totals > div {
@@ -408,7 +615,7 @@
 
 .checkout-total {
   margin-top: var(--s3);
-  padding-top: var(--s4) !important;
+  padding-top: var(--s4);
   border-top: var(--hair);
 }
 
@@ -426,14 +633,6 @@
   font-weight: 500;
   font-size: var(--d-md);
   color: var(--accent);
-}
-
-.checkout > .btn {
-  height: 46px;
-}
-
-.checkout .cart-continue {
-  margin-left: var(--s5);
 }
 
 /* --- Order confirmation --------------------------------------------------- */
@@ -1449,6 +1648,57 @@
     max-width: 26rem;
   }
 
+  /* Checkout folds to one column; the summary moves above the form as a
+     "Show order summary" bar (Shopify's phone layout). */
+  .checkout {
+    grid-template-columns: 1fr;
+    gap: var(--s6);
+  }
+
+  .checkout-summary {
+    order: 0;
+    position: static;
+    padding: 0;
+    border: 0;
+    border-bottom: var(--hair);
+    border-radius: 0;
+    background: none;
+  }
+
+  .checkout-summary > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s4);
+    padding: var(--s4) 0;
+    font-size: var(--t-sm);
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  .checkout-summary > summary strong {
+    font-family: var(--font-ui);
+    font-weight: 500;
+    font-size: var(--t-base);
+    color: var(--ink);
+  }
+
+  .checkout-summary[open] > summary {
+    border-bottom: var(--hair);
+  }
+
+  .checkout-summary .checkout-lines {
+    padding-top: var(--s3);
+  }
+
+  .checkout-summary .checkout-totals {
+    margin-bottom: var(--s5);
+  }
+
+  .checkout-fields {
+    grid-template-columns: 1fr;
+  }
+
   .request-summary {
     max-width: 32rem;
   }
@@ -1490,11 +1740,6 @@
   .request-line .cart-remove {
     align-self: end;
     justify-self: end;
-  }
-
-  .checkout .cart-continue {
-    display: inline-block;
-    margin: var(--s5) 0 0;
   }
 
   .order-line {
