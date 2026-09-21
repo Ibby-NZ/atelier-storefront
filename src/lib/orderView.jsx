@@ -1,8 +1,8 @@
-// Shared order-rendering helpers for the account history (US-022) and the guest
-// order-lookup page. Both read the same order shape from atelier-api:
-//   { order_number, kind, status, subtotal_cents, shipping_cents, total_cents,
-//     shipping_zone, xero_invoice_ref, created_at, lines: [{ sku, product_name,
-//     qty, unit_price_cents, cut_requirements }] }
+// Shared order-rendering helpers for the account history (US-022). Reads the
+// order shape from atelier-api's /orders/mine:
+//   { order_number, kind, status, subtotal_cents, shipping_cents, gst_cents,
+//     total_cents, shipping_zone, xero_invoice_ref, created_at, lines: [{ sku,
+//     product_name, qty, unit_price_cents, cut_requirements }] }
 //
 // These are plain FUNCTIONS that return JSX and are CALLED normally
 // (statusBadge(order.status), orderCard(order)) — never used as <Component/>.
@@ -176,6 +176,16 @@ export function orderCard(order, { open = false } = {}) {
             <div>
               <dt>Shipping{order.shipping_zone ? ` (${order.shipping_zone})` : ''}</dt>
               <dd>{formatMoney(order.shipping_cents, currency)}</dd>
+            </div>
+          ) : null}
+          {/* Only a card checkout stores gst_cents (charged as its own Stripe
+              line, inside total_cents). A fabric request is priced ex-GST and
+              the invoice states the tax, so its 0 stays hidden rather than
+              printing "GST $0.00" on an order that will carry GST. */}
+          {Number(order.gst_cents) > 0 ? (
+            <div>
+              <dt>GST 15%</dt>
+              <dd>{formatMoney(order.gst_cents, currency)}</dd>
             </div>
           ) : null}
           <div className="order-total-row">
