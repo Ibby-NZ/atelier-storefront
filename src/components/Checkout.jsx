@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiFetch, ApiError } from '../lib/api.js'
 import { readCart, cartCount, cartSubtotalCents, cartCurrency, CART_EVENT } from '../lib/cart.js'
-import { formatMoney } from '../lib/money.js'
+import { formatMoney, STORE_CURRENCY } from '../lib/money.js'
 import { gstCents } from '../lib/gst.js'
 import { EMPTY_CUSTOMER, customerFromPrefill, customerBody } from '../lib/checkoutCustomer.js'
 
@@ -106,7 +106,7 @@ export default function Checkout() {
     )
   }
 
-  const currency = cartCurrency(items)
+  const currency = cartCurrency()
   const subtotal = cartSubtotalCents(items)
   const shipping = quotes ? quotes[zone] : null
   const gst = shipping != null ? gstCents(subtotal + shipping) : null
@@ -180,7 +180,7 @@ export default function Checkout() {
                   {line.colourway && <span className="checkout-line-meta">{line.colourway}</span>}
                 </span>
                 <span className="checkout-line-price">
-                  {formatMoney((Number(line.price_cents) || 0) * (Number(line.qty) || 0), line.currency)}
+                  {formatMoney((Number(line.price_cents) || 0) * (Number(line.qty) || 0), STORE_CURRENCY)}
                 </span>
               </li>
             )
@@ -309,9 +309,6 @@ export default function Checkout() {
             All transactions are secure and encrypted. You will enter your card details
             with Stripe.
           </p>
-          {!currency && (
-            <p className="cart-note">Items in different currencies check out separately.</p>
-          )}
           {payError && (
             <p className="error-state">
               {payError} <a href="/cart">Review your cart</a>
@@ -320,7 +317,7 @@ export default function Checkout() {
           <button
             type="submit"
             className="btn btn-primary checkout-pay"
-            disabled={submitting || !quotes || !currency}
+            disabled={submitting || !quotes}
           >
             {submitting ? 'Redirecting to Stripe…' : 'Pay now'}
           </button>

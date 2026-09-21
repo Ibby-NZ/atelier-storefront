@@ -14,7 +14,7 @@ import {
   productClassLabel,
   weaveBackground,
   isFabric,
-  TRADE_CURRENCY,
+  STORE_CURRENCY,
 } from '../lib/catalogue.js'
 import {
   isTradeGateError,
@@ -327,9 +327,10 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     // precedence priceInfo() renders (FR-3): the API only ever sends
     // `trade_price_cents` to an approved trade shopper, so its presence IS the
     // entitlement. Storing retail here made the card say "Trade $X" and the cart
-    // say retail. Trade money is NZD cents whatever `product.currency` (the
-    // supplier's, and the retail figure's) says. The API re-resolves the charge
-    // on the same rule — this figure is never trusted for money.
+    // say retail. Both figures are STORE_CURRENCY cents — `product.currency` is
+    // the supplier's and describes neither, which is why the cart used to hold a
+    // US$ line beside an NZ$ one and refuse to subtotal them. The API re-resolves
+    // the charge on the same rule — this figure is never trusted for money.
     const tradePriceCents = product.trade_price_cents ?? null
     addToCart(
       {
@@ -340,7 +341,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
         slug: product.slug,
         image_url: selected.image_url ?? product.hi_res_asset_url ?? null,
         price_cents: tradePriceCents ?? product.retail_price_cents ?? null,
-        currency: tradePriceCents == null ? product.currency : TRADE_CURRENCY,
+        currency: STORE_CURRENCY,
       },
       qty
     )

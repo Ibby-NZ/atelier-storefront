@@ -5,6 +5,7 @@ import Layout from '../../layouts/Layout.astro'
 import ProductDetail from '../../components/ProductDetail.jsx'
 import { apiFetch, ApiError } from '../../lib/api.js'
 import { productSummary, isFabric } from '../../lib/catalogue.js'
+import { STORE_CURRENCY } from '../../lib/money.js'
 import { isTradeGateError, TRADE_GATE_PAGE } from '../../lib/tradeGate.js'
 
 // Product detail page (US-018) — the single template EVERY product renders
@@ -107,7 +108,10 @@ const productLd = product
             offers: {
               '@type': 'Offer',
               price: (product.retail_price_cents / 100).toFixed(2),
-              priceCurrency: product.currency ?? 'NZD',
+              // The SELLING currency. `product.currency` is the supplier's and
+              // never described this figure, so the rich result used to publish
+              // a New Zealand price to Google as USD.
+              priceCurrency: STORE_CURRENCY,
               availability: product.colourways?.some((colourway) => colourway.in_stock)
                 ? 'https://schema.org/InStock'
                 : 'https://schema.org/OutOfStock',
