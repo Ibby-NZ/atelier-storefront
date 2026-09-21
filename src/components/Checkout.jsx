@@ -269,36 +269,38 @@ export default function Checkout() {
 
         <section className="checkout-section" aria-labelledby="checkout-reference">
           <h2 id="checkout-reference">Your reference</h2>
-          <fieldset className="field-group">
-          <legend>Your reference (optional)</legend>
-          <label className="field">
-            <span>Order notes</span>
-            <textarea
-              rows={3}
-              maxLength={500}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-          </label>
-          <label className="field">
-            <span>Your reference</span>
-            <input
-              type="text"
-              maxLength={200}
-              value={reference}
-              onChange={(event) => setReference(event.target.value)}
-            />
-          </label>
-          <label className="field">
-            <span>Your PO number</span>
-            <input
-              type="text"
-              maxLength={200}
-              value={poNumber}
-              onChange={(event) => setPoNumber(event.target.value)}
-            />
-          </label>
-      </fieldset>
+          <p className="checkout-hint">
+            Optional. A note for the office, and the reference or PO number you file this order under.
+          </p>
+          <div className="checkout-fields">
+            <label className="field field-span">
+              <span>Order notes</span>
+              <textarea
+                rows={3}
+                maxLength={500}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+              />
+            </label>
+            <label className="field field-span">
+              <span>Your reference</span>
+              <input
+                type="text"
+                maxLength={200}
+                value={reference}
+                onChange={(event) => setReference(event.target.value)}
+              />
+            </label>
+            <label className="field field-span">
+              <span>Your PO number</span>
+              <input
+                type="text"
+                maxLength={200}
+                value={poNumber}
+                onChange={(event) => setPoNumber(event.target.value)}
+              />
+            </label>
+          </div>
         </section>
 
         <section className="checkout-section" aria-labelledby="checkout-payment">
