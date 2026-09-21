@@ -691,10 +691,9 @@
   margin-top: var(--s4);
 }
 
-/* --- Forms (auth, order request, lookup) ---------------------------------- */
+/* --- Forms (auth, order request) ------------------------------------------ */
 .auth-form,
-.request-form,
-.order-lookup {
+.request-form {
   display: flex;
   flex-direction: column;
   gap: var(--s5);
@@ -886,14 +885,6 @@
   .trade-form .field-group {
     padding: var(--s5);
   }
-}
-
-.order-lookup {
-  max-width: none;
-}
-
-.order-lookup .auth-form {
-  max-width: 28rem;
 }
 
 .auth-form .btn,
@@ -1392,8 +1383,6 @@
   color: var(--ink-soft);
 }
 
-/* A repeat order sits under its own card rather than in the card header: the
-   card is shared with the guest order-lookup page, which has no basket. */
 /* The order the hash named (#orders/<number>): the card the confirmation's
    "View in my account" lands on, so it is not one card among many. */
 .account-order.is-focused {

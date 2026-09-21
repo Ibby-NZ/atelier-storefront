@@ -1005,7 +1005,7 @@ Where it surfaces:
   `/auth/me` → `user` or null, swallows 401), `logout()` (POST `/auth/logout`,
   never throws), `accountLabel(user)` (name or email). `/auth/me`
   and login both return a `{ user }` envelope — read `body.user`.
-- **`/account`, `/order-lookup` (US-022)** — `/account` is now the multi-panel
+- **`/account` (US-022)** — `/account` is now the multi-panel
   trade client portal; **see the "Account portal" section below for how it is
   built**, and treat that as the source of record. What still holds here:
   `Account.jsx` (`client:load`) resolves auth at runtime with
@@ -1017,12 +1017,13 @@ Where it surfaces:
   this existed a pending account and an approved one looked identical from the
   storefront. Orders are one panel among six now (paged via `GET
   /orders/mine?page=&limit=`, not a single unbounded list), and **log out lives
-  inside the Account panel**, not beside the greeting. `/order-lookup`
-  (`OrderLookupForm.jsx`) is PUBLIC — order
-  number + email → `GET /orders/lookup?order_number=&email=`; a 404 (either key
-  wrong) shows a friendly "no order matches" message, never an enumeration
-  signal. Order rendering (status pill, line table, totals, invoice reference)
-  is **shared** via `src/lib/orderView.jsx`: `statusBadge(status)` +
+  inside the Account panel**, not beside the greeting. **There is no public
+  order lookup any more** (22 Sep 2026): `/order-lookup` + `OrderLookupForm.jsx`
+  and the API's `GET /orders/lookup` were removed because order number + email
+  let any visitor who knew both read another client's order; a client sees
+  their orders under `/account#orders`, and that is the only customer read.
+  Order rendering (status pill, line table, totals, invoice reference)
+  lives in `src/lib/orderView.jsx`: `statusBadge(status)` +
   `orderCard(order)` are plain FUNCTIONS returning JSX, CALLED normally
   (`orders.map((o) => orderCard(o))`) — NOT `<OrderCard/>`. A shared component
   used only in JSX would trip `no-unused-vars` (no React plugin); a called
@@ -2080,8 +2081,10 @@ would turn every heading invisible. Each surface gets its ground flipped to
   first segment, `orderFromHash` the order, and Account scrolls the card
   (`orderCardId`) into view and marks it `.is-focused` once the Orders panel
   has rows. The account's Orders panel already renders every order in full
-  (lines, totals, status) — that IS the customer's order detail; a guest has
-  /order-lookup.
+  (lines, totals, status) — that IS the customer's order detail. A card
+  checkout's stored `gst_cents` prints as its own "GST 15%" row above the
+  total (it is inside `total_cents`); a fabric request stores 0 and shows no
+  GST row, because its price is ex-GST and the invoice states the tax.
 
 ### The sample enquiry cart and the trade details form (16 Sep 2026)
 
