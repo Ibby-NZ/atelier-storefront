@@ -4,6 +4,7 @@ import { readCart, cartCount, cartSubtotalCents, cartCurrency, CART_EVENT } from
 import { formatMoney, STORE_CURRENCY } from '../lib/money.js'
 import { gstCents } from '../lib/gst.js'
 import { EMPTY_CUSTOMER, customerFromPrefill, customerBody } from '../lib/checkoutCustomer.js'
+import { NZ_REGIONS, RATE_ZONES, zoneForRegion } from '../lib/shipping.js'
 
 // Checkout island (US-019), laid out like a Shopify checkout: Contact, Delivery
 // and Your reference on the left, and on the right — in this order — the
@@ -11,7 +12,7 @@ import { EMPTY_CUSTOMER, customerFromPrefill, customerBody } from '../lib/checko
 // (page feedback, Sept 2026). The summary is a native <details>, collapsed into
 // a "Show order summary" bar on phones, no JS accordion.
 // Every shipping zone is quoted live from GET /shipping/quote in parallel so
-// the Region field can price each one before it is chosen. The customer's contact and
+// the Region field can price each region before it is chosen. The customer's contact and
 // delivery details are collected HERE (Sept 2026) — a signed-in shopper starts
 // from GET /checkout/prefill (account, last order, trade application) and may
 // edit every field — and travel with the cart to POST /checkout/session, which
@@ -20,24 +21,24 @@ import { EMPTY_CUSTOMER, customerFromPrefill, customerBody } from '../lib/checko
 // every price (see checkout.js). GST (15%, src/lib/gst.js) is shown on goods
 // plus freight and charged by the API as its own line.
 //
-// REGION IS THE ZONE. The three fixed New Zealand zones seeded in the API
-// (meeting decision, flat-rate per zone) are the delivery regions, so they are
-// ONE control — a Region <select> among the address fields — and the shipping
-// method on the right states the rate that region buys. Two controls would be
-// two answers to "where is this going", and the cheaper one would be the one the
+// THE REGION CHOOSES THE ZONE. The shopper picks their own New Zealand region
+// (lib/shipping.js) and that single control decides the rate zone sent to the
+// API, which still prices the three fixed zones seeded there (meeting decision,
+// flat-rate per zone); the shipping method on the right states the rate that
+// region buys. It stays ONE control among the address fields: two would be two
+// answers to "where is this going", and the cheaper one would be the one the
 // freight was charged at. Delivery is NZ-only, so no country field.
 //
 // The whole page is ONE <form>: Pay now sits in the right-hand column but
 // submits the fields on the left, so native `required` / type=email validation
 // still runs before payNow does.
 
-const SHIPPING_ZONES = ['Auckland', 'North Island', 'South Island']
 const DESKTOP = '(min-width: 1025px)' // matches the commerce.css breakpoint
 
 export default function Checkout() {
   const [items, setItems] = useState(null)
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER)
-  const [zone, setZone] = useState(SHIPPING_ZONES[0])
+  const [region, setRegion] = useState(NZ_REGIONS[0])
   const [quotes, setQuotes] = useState(null) // { [zone]: rate_cents } once every zone answered
   const [quoteError, setQuoteError] = useState('')
   const [summaryOpen, setSummaryOpen] = useState(false)
@@ -83,13 +84,13 @@ export default function Checkout() {
     setQuotes(null)
     setQuoteError('')
     Promise.all(
-      SHIPPING_ZONES.map((z) =>
+      RATE_ZONES.map((z) =>
         apiFetch(`/shipping/quote?zone=${encodeURIComponent(z)}&qty=${encodeURIComponent(totalQty)}`)
       )
     )
       .then((bodies) => {
         if (!active) return
-        setQuotes(Object.fromEntries(SHIPPING_ZONES.map((z, i) => [z, Number(bodies[i].rate_cents)])))
+        setQuotes(Object.fromEntries(RATE_ZONES.map((z, i) => [z, Number(bodies[i].rate_cents)])))
       })
       .catch((err) => {
         if (!active) return
@@ -117,6 +118,7 @@ export default function Checkout() {
 
   const currency = cartCurrency()
   const subtotal = cartSubtotalCents(items)
+  const zone = zoneForRegion(region)
   const shipping = quotes ? quotes[zone] : null
   const gst = shipping != null ? gstCents(subtotal + shipping) : null
   const total = shipping != null ? subtotal + shipping + gst : null
@@ -198,20 +200,22 @@ export default function Checkout() {
               <span>City</span>
               <input type="text" autoComplete="shipping address-level2" required value={customer.city} onChange={edit('city')} />
             </label>
-            {/* The zone, as an address field. Each option carries its own rate
-                so the choice is priced before it is made — the shipping method
-                and the totals on the right both follow this select. */}
+            {/* Where it is going, as an address field. Each option carries the
+                rate its zone buys, so the choice is priced before it is made —
+                the shipping method and the totals on the right both follow it. */}
             <label className="field">
               <span>Region</span>
               <select
                 autoComplete="shipping address-level1"
                 required
-                value={zone}
-                onChange={(event) => setZone(event.target.value)}
+                value={region}
+                onChange={(event) => setRegion(event.target.value)}
               >
-                {SHIPPING_ZONES.map((z) => (
-                  <option key={z} value={z}>
-                    {quotes ? `${z} — ${formatMoney(quotes[z], currency)}` : z}
+                {NZ_REGIONS.map((name) => (
+                  <option key={name} value={name}>
+                    {quotes
+                      ? `${name} — ${formatMoney(quotes[zoneForRegion(name)], currency)}`
+                      : name}
                   </option>
                 ))}
               </select>
@@ -273,7 +277,7 @@ export default function Checkout() {
           <h2 id="checkout-method-heading">Shipping method</h2>
           <div className="ship-options">
             <div className="ship-option is-selected">
-              <span className="ship-option-name">{zone} — flat rate</span>
+              <span className="ship-option-name">{region} — flat rate</span>
               <span className="ship-option-rate">{rateText(shipping)}</span>
             </div>
           </div>
