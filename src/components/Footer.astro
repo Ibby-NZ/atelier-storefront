@@ -16,7 +16,7 @@ import { SOCIAL } from '../lib/site.js'
 // journal posts; the client asked for Mailchimp on 16 Sep 2026. With no
 // MAILCHIMP_* on the API the route answers 503 and its sentence is printed
 // under the box — never a "Join us" that swallows the address and says nothing.
-// Plain <script>, not an island: the footer is on every page and a React
+// Plain bundled script, not an island: the footer is on every page and a React
 // hydration for one input is not worth it. Re-armed on `astro:page-load`
 // because ClientRouter swaps the footer on navigation.
 //
