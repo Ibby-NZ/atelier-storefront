@@ -223,8 +223,9 @@ export default function RequestList() {
           Your request number is <strong>{result.order_number}</strong>.
         </p>
         <p>
-          We will be in touch within 24 hours to confirm stock and pricing
-          {backorder ? ', and to confirm the lead time on the items we are backordering.' : '.'}
+          We&rsquo;ll email you a quote to review — usually within 24 hours
+          {backorder ? ', with the lead time on the items we are backordering.' : '.'} You can
+          accept it, or tell us what to change, straight from that email.
         </p>
         <a className="btn btn-primary" href="/products">
           Continue browsing

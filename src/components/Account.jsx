@@ -4,6 +4,7 @@ import { fetchCurrentUser, logout, accountLabel } from '../lib/auth.js'
 import { isApprovedTrade, tradeStatusNote } from '../lib/account.js'
 import { accountSections, orderCardId, orderFromHash, sectionFromHash, SECTION } from '../lib/accountSections.js'
 import { orderCard } from '../lib/orderView.jsx'
+import { quoteActions, useQuoteAnswer } from '../lib/quoteActions.jsx'
 import { reorderPlan, toRequestLines, toCartLines } from '../lib/reorder.js'
 import { replaceRequestList } from '../lib/requestList.js'
 import { tradeDetailsErrors, tradeDetailsPatch } from '../lib/tradeDetails.js'
@@ -271,6 +272,36 @@ export default function Account() {
     [loadPanel]
   )
 
+  // Accept / Reject a quote the office has sent (src/lib/quoteActions.jsx).
+  // The answer comes back in the same customer shape as the panel's rows, so it
+  // replaces its row in place — no refetch, and nothing for the requestedRef
+  // dedupe above to swallow.
+  const quote = useQuoteAnswer({
+    post: (order, accept, reason) =>
+      apiFetch(`/orders/mine/${encodeURIComponent(order.order_number)}/${accept ? 'accept' : 'reject'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(accept ? {} : { reason }),
+      }),
+    onAnswered: (answered) =>
+      setPanels((current) => {
+        const orders = current[SECTION.ORDERS]
+        if (!orders?.data) return current
+        return {
+          ...current,
+          [SECTION.ORDERS]: {
+            ...orders,
+            data: {
+              ...orders.data,
+              orders: (orders.data.orders ?? []).map((row) =>
+                row.order_number === answered.order_number ? answered : row
+              ),
+            },
+          },
+        }
+      }),
+  })
+
   // --- Actions -------------------------------------------------------------
   const handleReorder = useCallback((order) => {
     const plan = reorderPlan(order)
@@ -513,6 +544,7 @@ export default function Account() {
             onDownload: handleDownload,
             onLogout: handleLogout,
             onLoadMore: handleLoadMore,
+            quote,
             onSaveDetails: handleSaveDetails,
             onChangePassword: handleChangePassword,
             onSaveTradeDetails: handleSaveTradeDetails,
@@ -604,6 +636,9 @@ function renderPanel({ section, sections, panel, state, handlers, flags }) {
               {/* The order a link named arrives expanded; the rest collapse,
                   so dozens fit on one screen. */}
               {orderCard(order, { open: flags.focusedOrder === order.order_number })}
+              {/* A quote the office sent: answer it here, as the emailed
+                  link would. Nothing renders for any other status. */}
+              {quoteActions(order, { ...handlers.quote.uiFor(order), ...handlers.quote.handlersFor(order) })}
               {reorderPlan(order).destination ? (
                 <div className="account-order-actions">
                   <button

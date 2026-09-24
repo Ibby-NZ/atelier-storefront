@@ -1,0 +1,32 @@
+/* The quote page (/quote) and the same Accept / Reject on an order in My
+   Account — src/lib/quoteActions.jsx. Everything else on the page reuses
+   .order-card, .field and .request-success. */
+
+.quote-review {
+  display: grid;
+  gap: var(--s5);
+  max-width: 48rem;
+}
+
+.quote-actions {
+  display: grid;
+  gap: var(--s3);
+  margin-top: var(--s3);
+}
+
+.quote-actions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+}
+
+.quote-reject {
+  display: grid;
+  gap: var(--s3);
+  max-width: 36rem;
+}
+
+.quote-status {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}

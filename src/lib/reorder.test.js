@@ -39,7 +39,7 @@ const goodLine = (overrides = {}) => ({
 const order = (lines, overrides = {}) => ({
   order_number: 'REQ-TEST',
   kind: 'order_request',
-  status: 'requested',
+  status: 'quote_requested',
   total_cents: 0,
   lines,
   ...overrides,
@@ -123,10 +123,10 @@ test('hasQuotedTotal is false for the placeholder zero a fabric request carries'
   assert.equal(hasQuotedTotal(null), false)
 })
 
-test('hasQuotedTotal stays false once a zero-total order is confirmed or shipped', () => {
+test('hasQuotedTotal stays false once a zero-total order is invoiced or shipped', () => {
   // The regression this guards: keying on status instead of the total puts
   // $0.00 back on exactly the orders a client is most likely to open.
-  for (const status of ['confirmed', 'paid', 'shipped']) {
+  for (const status of ['pending_payment', 'paid', 'shipped']) {
     assert.equal(hasQuotedTotal(order([fabricLine()], { status, total_cents: 0 })), false)
   }
 })

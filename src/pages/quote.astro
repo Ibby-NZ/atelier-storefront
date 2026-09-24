@@ -1,0 +1,25 @@
+---
+export const prerender = true // storefront pages stay static; EmDash routes render on-demand
+import Layout from '../layouts/Layout.astro'
+import QuoteReview from '../components/QuoteReview.jsx'
+
+// The quote page (24 Sep 2026). The `quote_sent` letter links here with a
+// signed ?token=, so a guest can accept or reject without an account; the
+// island reads the token client-side. Signed-in clients can answer the same
+// quote from /account#orders.
+---
+
+<Layout
+  title="Your quote — Atelier Textiles"
+  description="Review your quote from Atelier Textiles, and accept it or tell us what to change."
+>
+  <section class="page-intro">
+    <p class="page-eyebrow">Your quote</p>
+    <h1>Review your quote</h1>
+    <p>
+      Accept it and we will raise the invoice, or tell us what to change and we will re-quote.
+    </p>
+  </section>
+
+  <QuoteReview client:load />
+</Layout>

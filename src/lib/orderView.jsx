@@ -13,13 +13,22 @@
 import { formatMoney, STORE_CURRENCY } from './money.js'
 import { hasQuotedTotal } from './reorder.js'
 
-// Human labels + a CSS modifier class per order status.
+// Human labels + a CSS modifier class per order status — atelier-api's twelve
+// (src/orders/order-states.js, 24 Sep 2026). `quote_sent` is "Quote received"
+// here: the office sends it, the client receives it.
 const STATUS_META = {
-  requested: { label: 'Requested', className: 'status-requested' },
-  confirmed: { label: 'Confirmed', className: 'status-confirmed' },
+  quote_requested: { label: 'Quote requested', className: 'status-quote_requested' },
+  quote_sent: { label: 'Quote received', className: 'status-quote_sent' },
+  quote_accepted: { label: 'Quote accepted', className: 'status-quote_accepted' },
+  quote_rejected: { label: 'Quote rejected', className: 'status-quote_rejected' },
+  back_order: { label: 'Back order', className: 'status-back_order' },
+  processing: { label: 'Processing', className: 'status-processing' },
+  pending_payment: { label: 'Pending payment', className: 'status-pending_payment' },
   paid: { label: 'Paid', className: 'status-paid' },
   shipped: { label: 'Shipped', className: 'status-shipped' },
-  declined: { label: 'Declined', className: 'status-declined' },
+  completed: { label: 'Completed', className: 'status-completed' },
+  cancelled: { label: 'Cancelled', className: 'status-cancelled' },
+  refunded: { label: 'Refunded', className: 'status-refunded' },
 }
 
 const KIND_LABELS = {
