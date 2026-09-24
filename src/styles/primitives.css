@@ -626,7 +626,8 @@ a.tag:hover {
 .product-stock.in,
 .swatch-stock.in,
 .status-paid,
-.status-shipped {
+.status-shipped,
+.status-completed {
   color: var(--sage);
   border-color: var(--sage-line);
 }
@@ -634,19 +635,25 @@ a.tag:hover {
 .pill-clay,
 .product-stock.out,
 .swatch-stock.out,
-.status-declined {
+.status-back_order,
+.status-cancelled,
+.status-refunded {
   color: var(--clay);
   border-color: var(--clay-line);
 }
 
 .pill-muted,
-.status-requested,
+.status-quote_requested,
+.status-quote_sent,
+.status-quote_accepted,
+.status-quote_rejected,
 .status-unknown {
   color: var(--muted);
   border-color: var(--line);
 }
 
-.status-confirmed {
+.status-processing,
+.status-pending_payment {
   color: var(--ink-soft);
   border-color: var(--line);
 }

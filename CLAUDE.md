@@ -1179,28 +1179,6 @@ Where it surfaces:
     the shop banner since Sept 2026 — see Resources + company pages. The
     footer links them unconditionally; the markdown ships placeholder copy.
 
-- **`/admin/orders` (US-023)** — back-office order queue, a single `client:load`
-  island `AdminOrders.jsx`. Because this is a static build with no server-side
-  guard, the island IS the access gate: `fetchCurrentUser()` on mount → no user
-  redirects to `/login?redirect=/admin/orders`; a signed-in user whose `role` is
-  neither `backoffice` nor `director` is redirected to `/` (no order data
-  fetched, no broken page). Backoffice/director load `GET /admin/orders?status=`
-  (a status `<select>` re-queries) and expand a row to edit line quantities
-  (`PATCH /admin/orders/:id` `{ lines: [{ id, qty }] }`) and drive the lifecycle:
-  Confirm (POST `/confirm` with `xero_invoice_ref`), Mark Paid (`/mark-paid`),
-  Mark Shipped (`/ship`), Decline (`/decline`). Action buttons are shown per
-  status (requested → Confirm/Decline/edit; confirmed → Mark Paid/Decline/edit;
-  paid → Ship; shipped/declined → none), and the API's state machine is the real
-  authority — an invalid transition returns 409 whose message is shown inline.
-  The list re-loads after every mutation so status/totals/reservation stay
-  accurate. `/auth/me` exposes `role` (from `PUBLIC_USER_COLUMNS`), so the role
-  check needs no extra call. Reuses `statusBadge` from `orderView.jsx` and
-  `formatMoney`. An expanded card also shows the **delivery address and phone**
-  Stripe collected (`order.shipping_address` / `order.contact_phone`, flattened
-  by the plain `addressLines()` helper — a called function, not a JSX
-  sub-component, per the ESLint constraint below). Request-kind orders carry
-  neither, so the block is simply absent.
-
 - **`/admin`, `/admin/brands`, `/admin/products` — catalogue admin** — staff
   create/edit brands, collections, products and colourways against the
   backoffice-only `/admin/{brands,collections,products,colourways}` JSON
@@ -1683,6 +1661,25 @@ markdown collections (above) remain the shipped baseline.
 - Beta rough edges + workarounds: `tasks/emdash-blockers.md`.
 
 ## Account portal (`/account`)
+
+- **A quote the office sent can be answered here and on `/quote`** (24 Sep
+  2026). atelier-api moved orders to twelve statuses (quote_requested →
+  quote_sent → quote_accepted | quote_rejected → back_order | processing →
+  pending_payment → paid → shipped → completed, plus cancelled/refunded);
+  `STATUS_META` in `src/lib/orderView.jsx` labels all twelve — `quote_sent`
+  reads **"Quote received"** here — and `primitives.css` colours each
+  `.status-<status>`. The `quote_sent` letter links
+  `/quote?token=…`: a prerendered page whose `QuoteReview.jsx` island reads the
+  token from `window.location` (the reset-password posture), loads
+  `GET /orders/quote/:token` and posts `/orders/quote/:token/accept|reject`.
+  In the orders panel the same buttons post `/orders/mine/:order_number/accept|reject`
+  and the answered order REPLACES its row in `panels` (same customer shape) —
+  no refetch, so nothing fights the `requestedRef` dedupe. Both share
+  `quoteActions(order, ui)` + `useQuoteAnswer` (`src/lib/quoteActions.jsx`,
+  called, never `<QuoteActions/>`) and the pure rules in `src/lib/quoteReview.js`
+  (tested): Reject needs a reason (the API's 422 carries the same
+  `errors[].field = 'reason'`), a 409 means it was already answered, and
+  `outcomeText` words the answered states. Styles: `src/styles/quote.css`.
 
 - One prerendered page, one island (`Account.jsx`), **six panels behind the URL
   HASH** — not six routes. Every page here is `prerender = true`, so separate
