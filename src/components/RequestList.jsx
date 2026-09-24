@@ -475,8 +475,8 @@ export default function RequestList() {
           </strong>
         </p>
         <p className="cart-note">
-          Priced on confirmation — nothing is charged here. We confirm stock and pricing, then
-          send your quote.
+          Nothing is charged here. We confirm stock and pricing, then email you a quote to
+          review — its prices show on your order once it is sent.
         </p>
 
         <fieldset className="field-group">

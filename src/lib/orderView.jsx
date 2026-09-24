@@ -114,7 +114,7 @@ export function orderCard(order, { open = false } = {}) {
           {/* The figure the summary is worth reading for. An unpriced request
               says so rather than printing the $0.00 its columns hold. */}
           <span className="order-summary-total">
-            {priced ? formatMoney(order.total_cents, currency) : 'Priced on confirmation'}
+            {priced ? formatMoney(order.total_cents, currency) : 'Price to follow'}
           </span>
           {statusBadge(order.status)}
         </span>
@@ -216,7 +216,7 @@ export function orderCard(order, { open = false } = {}) {
           <div className="order-total-row">
             <dt>Total</dt>
             <dd className="order-total-pending">
-              {order.xero_invoice_ref ? 'See invoice' : 'Priced on confirmation'}
+              {order.xero_invoice_ref ? 'See invoice' : 'Price to follow'}
             </dd>
           </div>
           {order.xero_invoice_ref ? (

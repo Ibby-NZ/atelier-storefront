@@ -1038,8 +1038,9 @@ Where it surfaces:
   (`orders.map((o) => orderCard(o))`) — NOT `<OrderCard/>`. A shared component
   used only in JSX would trip `no-unused-vars` (no React plugin); a called
   function counts as a use. Order money fields are integer cents rendered with
-  `formatMoney`; an order whose TOTAL IS ZERO shows "Priced on confirmation"
-  instead of money (`hasQuotedTotal` in `src/lib/reorder.js`) — a fabric request
+  `formatMoney`; an order whose TOTAL IS ZERO — or null, which is how the API
+  sends a quote the office has not sent yet (24 Sep 2026: no prices before
+  `quote_sent`) — shows "Price to follow" instead of money (`hasQuotedTotal` in `src/lib/reorder.js`) — a fabric request
   is created with every money column at 0 and nothing ever fills them in, so
   printing them verbatim put "$0.00" on every fabric order ever placed. The test
   is the total, not the status: the zeros survive confirmation, payment and
@@ -1729,7 +1730,7 @@ markdown collections (above) remain the shipped baseline.
 - **`hasQuotedTotal` decides whether an order shows money at all.**
   `createOrderRequest` writes zero into every money column and nothing ever
   fills them in — the amount is set by hand in Xero at confirmation — so an
-  unpriced order reads "Priced on confirmation". Keyed on the **total being
+  unpriced order reads "Price to follow". Keyed on the **total being
   zero, not on the status**: the zeros survive confirmation, payment and
   shipping, which are exactly the orders a client opens.
 - `formatMoney` takes CENTS, `formatAmount` takes a DECIMAL — legacy Dynamics
