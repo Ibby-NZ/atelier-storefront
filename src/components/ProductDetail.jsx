@@ -11,6 +11,7 @@ import {
 } from '../lib/requestList.js'
 import {
   priceInfo,
+  pricedFor,
   productClassLabel,
   weaveBackground,
   isFabric,
@@ -308,7 +309,9 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     return <p className="container detail-static products-empty">This product is not available.</p>
   }
 
-  const price = priceInfo(product, viewer, `/products/${encodeURIComponent(slug)}`)
+  // The selected variation may carry its own price (blank = the product's).
+  const priced = pricedFor(product, selected)
+  const price = priceInfo(priced, viewer, `/products/${encodeURIComponent(slug)}`)
   const fabric = isFabric(product)
   const specs = SPEC_FIELDS.filter(
     (field) => product[field.key] != null && product[field.key] !== ''
@@ -331,7 +334,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     // the supplier's and describes neither, which is why the cart used to hold a
     // US$ line beside an NZ$ one and refuse to subtotal them. The API re-resolves
     // the charge on the same rule — this figure is never trusted for money.
-    const tradePriceCents = product.trade_price_cents ?? null
+    const tradePriceCents = priced.trade_price_cents ?? null
     addToCart(
       {
         sku: selected.sku,
@@ -340,7 +343,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
         brand: product.brand?.name ?? null,
         slug: product.slug,
         image_url: selected.image_url ?? product.hi_res_asset_url ?? null,
-        price_cents: tradePriceCents ?? product.retail_price_cents ?? null,
+        price_cents: tradePriceCents ?? priced.retail_price_cents ?? null,
         currency: STORE_CURRENCY,
       },
       qty
