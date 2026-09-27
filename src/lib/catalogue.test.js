@@ -11,6 +11,7 @@ import {
   CATEGORY_LABELS,
   priceBandFor,
   visiblePriceCents,
+  pricedFor,
 } from './catalogue.js'
 
 const GUEST = null
@@ -210,4 +211,17 @@ test('priceBandFor: the office bands — under 100, 100–200, 201–300, …', 
   assert.deepEqual(priceBandFor(48600), { value: '401-500', label: '$401–$500', from: 401 })
   assert.deepEqual(priceBandFor(100000), { value: '901-1000', label: '$901–$1,000', from: 901 })
   assert.deepEqual(priceBandFor(123456), { value: '1201-1300', label: '$1,201–$1,300', from: 1201 })
+})
+
+test('pricedFor: the selected variation\'s own price, else the product\'s', () => {
+  const product = { name: 'Atlas', price_hidden: false, retail_price_cents: 10000, trade_price_cents: 8000 }
+  const own = pricedFor(product, { sku: 'A-1', retail_price_cents: 12000, trade_price_cents: 9000 })
+  assert.equal(own.retail_price_cents, 12000)
+  assert.equal(own.trade_price_cents, 9000)
+  assert.equal(own.name, 'Atlas')
+  // A colourway without figures (an older API) keeps the product's.
+  assert.equal(pricedFor(product, { sku: 'A-2' }).retail_price_cents, 10000)
+  assert.equal(pricedFor(product, null), product)
+  // Trade stays absent for a viewer the API sent no trade price.
+  assert.equal(visiblePriceCents(pricedFor({ price_hidden: false, retail_price_cents: 10000 }, { retail_price_cents: 12000 })), 12000)
 })

@@ -105,6 +105,22 @@ export function visiblePriceCents(product) {
   return null
 }
 
+/**
+ * The product as priced for one of its variations (colourways). The API sends
+ * each colourway the price it SELLS at — its own, else the product's — under
+ * the product's visibility rules, so the selected colourway's figure is the one
+ * to show and to put in the cart. A colourway with no figure (none selected, or
+ * an API from before variation prices) leaves the product's.
+ */
+export function pricedFor(product, colourway) {
+  if (!product || !colourway) return product
+  return {
+    ...product,
+    retail_price_cents: colourway.retail_price_cents ?? product.retail_price_cents,
+    trade_price_cents: colourway.trade_price_cents ?? product.trade_price_cents,
+  }
+}
+
 // The library's Price facet: $100 bands over the visible price. The bands are
 // the office's ("100–200, 201–300, …"): the first closed band starts at $100,
 // each later one at the previous ceiling plus one, and anything under $100 is
