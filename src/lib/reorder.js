@@ -23,6 +23,17 @@ import { STORE_CURRENCY } from './money.js'
 const FABRIC_TYPE = 'fabric'
 const FINISHED_TYPE = 'finished_good'
 
+// Whether a line goes back in the CART (1 Oct 2026): the product is sold
+// retail today (the CRM's Retail tick), and the amount is one the cart takes —
+// whole units, so a part metre of a Retail fabric is quoted. Every other line
+// goes back on the quote request. An API that predates the tick sends no
+// `sell_retail`, and the type decides as it did.
+const toCart = (line) => {
+  const retail = typeof line.sell_retail === 'boolean' ? line.sell_retail : line.product_type === FINISHED_TYPE
+  if (!retail) return false
+  return line.product_type !== FABRIC_TYPE || Number.isInteger(Number(line.qty))
+}
+
 const linesOf = (order) => (Array.isArray(order?.lines) ? order.lines : [])
 
 /**
@@ -42,7 +53,7 @@ const linesOf = (order) => (Array.isArray(order?.lines) ? order.lines : [])
  */
 export function toRequestLines(order) {
   return linesOf(order)
-    .filter((line) => line.product_type === FABRIC_TYPE && line.sku)
+    .filter((line) => !toCart(line) && line.sku)
     .map((line) => ({
       sku: line.sku,
       slug: line.slug ?? null,
@@ -53,6 +64,8 @@ export function toRequestLines(order) {
       in_stock: false,
       lead_time: line.lead_time ?? null,
       metres: metresOf(line),
+      // A finished good is quoted in whole units (requestList.js lineUnit).
+      ...(line.product_type === FABRIC_TYPE ? {} : { unit: 'unit' }),
       // The original cutting instructions come back with the line. They are the
       // part of a repeat order most likely to be identical, and the shopper can
       // edit or clear them on the request page.
@@ -84,7 +97,7 @@ function metresOf(line) {
  */
 export function toCartLines(order) {
   return linesOf(order)
-    .filter((line) => line.product_type === FINISHED_TYPE && line.sku)
+    .filter((line) => toCart(line) && line.sku)
     .map((line) => ({
       sku: line.sku,
       slug: line.slug ?? null,

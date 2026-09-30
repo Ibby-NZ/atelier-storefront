@@ -137,3 +137,23 @@ test('hasQuotedTotal is true for a real paid checkout', () => {
     true
   )
 })
+
+// 1 Oct 2026: the Retail tick, not the type, decides which basket a line refills.
+test('a reorder sends a quote-only good to the request list and a Retail fabric to the cart', () => {
+  const order = {
+    lines: [
+      { sku: 'GOOD-Q', product_type: 'finished_good', sell_retail: false, qty: '2.00', unit_price_cents: 1000 },
+      { sku: 'CLOTH-R', product_type: 'fabric', sell_retail: true, qty: '3.00', unit_price_cents: 5000 },
+      { sku: 'CLOTH-PART', product_type: 'fabric', sell_retail: true, qty: '2.50', unit_price_cents: 5000 },
+      { sku: 'GOOD-OLD', product_type: 'finished_good', qty: '1.00', unit_price_cents: 900 },
+    ],
+  }
+  assert.deepEqual(toRequestLines(order).map((line) => [line.sku, line.unit ?? 'metre']), [
+    ['GOOD-Q', 'unit'],
+    ['CLOTH-PART', 'metre'],
+  ])
+  assert.deepEqual(toCartLines(order).map((line) => [line.sku, line.qty]), [
+    ['CLOTH-R', 3],
+    ['GOOD-OLD', 1],
+  ])
+})

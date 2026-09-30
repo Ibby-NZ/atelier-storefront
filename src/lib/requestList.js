@@ -42,6 +42,22 @@ export function normaliseMetres(value) {
   return Math.min(Math.round(amount * 100) / 100, MAX_METRES)
 }
 
+// A line's unit (1 Oct 2026). Every product can be quoted now, not only fabric,
+// so a finished good lands here in whole UNITS while a cloth stays in metres.
+// A line stored before this has no unit and is metres. The amount keeps the
+// `metres` key either way — it is what the API's `qty_metres` carries, and the
+// API reads the unit off the product, never off the request.
+export const LINE_UNITS = Object.freeze({ metre: 'metre', unit: 'unit' })
+export const lineUnit = (line) => (line?.unit === LINE_UNITS.unit ? LINE_UNITS.unit : LINE_UNITS.metre)
+
+// A line's amount in its own unit: metres to 2dp, units to a whole number.
+// 0 for anything unusable, as normaliseMetres.
+export function normaliseAmount(value, unit = LINE_UNITS.metre) {
+  if (unit !== LINE_UNITS.unit) return normaliseMetres(value)
+  const amount = Math.round(Number(value))
+  return Number.isFinite(amount) && amount >= 1 ? Math.min(amount, MAX_METRES) : 0
+}
+
 // The part of a line that describes the cloth, as opposed to what the shopper
 // asked for. Kept separate so a re-add (or a live refresh) can update the name,
 // image and stock state without touching the metres or the cut requirements
@@ -59,6 +75,7 @@ function lineIdentity(item) {
     // the opposite mistake is a 422 from the API at submit.
     in_stock: item.in_stock === true,
     lead_time: item.lead_time ?? null,
+    unit: lineUnit(item),
   }
 }
 
@@ -67,8 +84,8 @@ function lineIdentity(item) {
 // metres value falls back to 1 rather than dropping the add on the floor.
 export function mergeRequestLine(items, item, metres = 1) {
   if (!item || !item.sku) return items
-  const amount = normaliseMetres(metres) || 1
   const identity = lineIdentity(item)
+  const amount = normaliseAmount(metres, identity.unit) || 1
   const existing = items.find((line) => line.sku === identity.sku)
   if (!existing) {
     return [...items, { ...identity, metres: amount, cut_requirements: null }]
@@ -78,7 +95,7 @@ export function mergeRequestLine(items, item, metres = 1) {
       ? {
           ...line,
           ...identity,
-          metres: normaliseMetres(Number(line.metres) + amount) || amount,
+          metres: normaliseAmount(Number(line.metres) + amount, identity.unit) || amount,
           // The shopper's own inputs survive the merge.
           cut_requirements: line.cut_requirements ?? null,
         }
@@ -92,9 +109,11 @@ export function mergeRequestLine(items, item, metres = 1) {
 // through '' and '0.' on the way to '0.5', and treating those as a delete makes
 // a line vanish mid-keystroke.
 export function withRequestMetres(items, sku, metres) {
-  const amount = normaliseMetres(metres)
-  if (amount === 0) return items
-  return items.map((line) => (line.sku === sku ? { ...line, metres: amount } : line))
+  return items.map((line) => {
+    if (line.sku !== sku) return line
+    const amount = normaliseAmount(metres, lineUnit(line))
+    return amount === 0 ? line : { ...line, metres: amount }
+  })
 }
 
 // Per-line cut requirements (batch shading, cutting instructions). Stored
@@ -150,10 +169,19 @@ export function requestLineCount(items) {
   return items.length
 }
 
+// Metres of cloth only; a finished good's units are counted apart.
 export function requestTotalMetres(items) {
   return normaliseMetres(
-    items.reduce((sum, line) => sum + (Number(line.metres) || 0), 0)
+    items
+      .filter((line) => lineUnit(line) === LINE_UNITS.metre)
+      .reduce((sum, line) => sum + (Number(line.metres) || 0), 0)
   )
+}
+
+export function requestTotalUnits(items) {
+  return items
+    .filter((line) => lineUnit(line) === LINE_UNITS.unit)
+    .reduce((sum, line) => sum + (normaliseAmount(line.metres, LINE_UNITS.unit) || 0), 0)
 }
 
 // Any line short on stock makes the whole request a backorder API-side, which
@@ -171,7 +199,7 @@ export function hasUnavailableLine(items) {
 export function toRequestPayloadLines(items) {
   return items.map((line) => ({
     sku: line.sku,
-    qty_metres: normaliseMetres(line.metres),
+    qty_metres: normaliseAmount(line.metres, lineUnit(line)),
     cut_requirements: String(line.cut_requirements ?? '').trim() || null,
   }))
 }

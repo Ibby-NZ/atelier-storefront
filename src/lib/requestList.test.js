@@ -10,6 +10,8 @@ import {
   applyProductRefresh,
   requestLineCount,
   requestTotalMetres,
+  requestTotalUnits,
+  lineUnit,
   hasBackorderLine,
   hasUnavailableLine,
   toRequestPayloadLines,
@@ -58,6 +60,7 @@ test('adding builds a line and never mutates the array it was given', () => {
       image_url: 'https://cdn.example/atlas-bleu.jpg',
       in_stock: true,
       lead_time: '6 weeks',
+      unit: 'metre',
       metres: 4.5,
       cut_requirements: null,
     },
@@ -218,4 +221,25 @@ test('requestAddressPayload sends the checkout shape, trimmed, blanks as null, w
       country: 'New Zealand',
     }
   )
+})
+
+// 1 Oct 2026: every listed product can be quoted, so a finished good lands on
+// the request list in whole units beside cloth in metres.
+test('a finished good is quoted in whole units, cloth in metres, and they total apart', () => {
+  const cushion = { ...swatch(), sku: 'AT-CUSH-01', slug: 'atelier-cushion', name: 'Cushion', unit: 'unit' }
+  let items = mergeRequestLine([], swatch(), 2.5)
+  items = mergeRequestLine(items, cushion, 2.6)
+  assert.equal(lineUnit(items[0]), 'metre')
+  assert.equal(items[1].unit, 'unit')
+  assert.equal(items[1].metres, 3)
+  items = mergeRequestLine(items, cushion, 1)
+  assert.equal(items[1].metres, 4)
+  // A typed 1.5 on a unit line rounds; 0.4 is no quantity and leaves it alone.
+  assert.equal(withRequestMetres(items, 'AT-CUSH-01', 1.5)[1].metres, 2)
+  assert.equal(withRequestMetres(items, 'AT-CUSH-01', 0.4)[1].metres, 4)
+  assert.equal(requestTotalMetres(items), 2.5)
+  assert.equal(requestTotalUnits(items), 4)
+  assert.deepEqual(toRequestPayloadLines(items).map((line) => line.qty_metres), [2.5, 4])
+  // A line stored before units existed is metres.
+  assert.equal(lineUnit({ sku: 'OLD', metres: 1.2 }), 'metre')
 })

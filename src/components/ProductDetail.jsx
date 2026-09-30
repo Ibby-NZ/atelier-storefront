@@ -15,6 +15,7 @@ import {
   productClassLabel,
   weaveBackground,
   isFabric,
+  soldRetail,
   STORE_CURRENCY,
 } from '../lib/catalogue.js'
 import {
@@ -322,7 +323,15 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   // previous commit showed — the one to hold under the incoming image.
   const outgoingHero = previousHero.current
 
-  const canAddToCart = !fabric && Boolean(selected?.in_stock)
+  // Every listed product can be quoted; the cart sells only a Retail one (the
+  // CRM's tick beside "Show on the website", 1 Oct 2026) that this viewer has a
+  // price for. Card checkout takes whole units, so a Retail fabric goes in the
+  // cart in whole metres; a part metre is quoted instead.
+  const retail = soldRetail(product)
+  const cartPriceCents = priced.trade_price_cents ?? priced.retail_price_cents ?? null
+  const cartQty = fabric ? normaliseMetres(metres) : qty
+  const wholeMetres = !fabric || Number.isInteger(cartQty)
+  const canAddToCart = retail && Boolean(selected?.in_stock) && cartPriceCents != null && cartQty > 0 && wholeMetres
 
   const onAddToCart = () => {
     if (!canAddToCart) return
@@ -346,17 +355,17 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
         price_cents: tradePriceCents ?? priced.retail_price_cents ?? null,
         currency: STORE_CURRENCY,
       },
-      qty
+      cartQty
     )
-    setAdded(qty)
+    setAdded(cartQty)
   }
 
-  // Fabric is added per colourway, with its stock state, so the request page
-  // can decide whether the lead-time acceptance is required without re-deriving
-  // it.
+  // Added per colourway, with its stock state, so the request page can decide
+  // whether the lead-time acceptance is required without re-deriving it. A
+  // finished good goes on in whole units, a cloth in metres.
   const onAddToRequest = () => {
     if (!selected) return
-    const wanted = normaliseMetres(metres)
+    const wanted = fabric ? normaliseMetres(metres) : qty
     if (wanted === 0) {
       setMetresError('Enter the metres wanted (greater than 0).')
       return
@@ -372,6 +381,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
         image_url: selected.image_url ?? product.hi_res_asset_url ?? null,
         in_stock: selected.in_stock === true,
         lead_time: product.lead_time ?? null,
+        unit: fabric ? 'metre' : 'unit',
       },
       wanted
     )
@@ -400,7 +410,9 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   // truth of that flow instead.
   const lede = fabric
     ? 'Cut to order by the metre. We confirm stock and batch shading before invoicing. Add as many cloths as you like and send them as one request.'
-    : 'Dispatched from the Auckland workroom. Delivery details are collected securely at checkout.'
+    : retail
+      ? 'Dispatched from the Auckland workroom. Buy it now, or add it to a quote request for trade or larger orders.'
+      : 'Sold by quote. Add it to a quote request and we confirm price and availability before anything is invoiced.'
 
   return (
     <article className="product-detail">
@@ -526,6 +538,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                       setMetres(event.target.value)
                       setMetresError('')
                       setRequested(0)
+                      setAdded(0)
                     }}
                   />
                   <span className="metres-unit" aria-hidden="true">
@@ -549,6 +562,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                       const next = Math.floor(Number(event.target.value))
                       setQty(Number.isFinite(next) ? Math.min(MAX_QTY, Math.max(1, next)) : 1)
                       setAdded(0)
+                      setRequested(0)
                     }}
                   />
                 </span>
@@ -608,16 +622,9 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
           )}
 
           <div className="detail-actions">
-            {fabric ? (
-              <button
-                type="button"
-                className="action-fill"
-                onClick={onAddToRequest}
-                disabled={!selected}
-              >
-                {selected && !selected.in_stock ? 'Add to backorder quote' : 'Add to quote'}
-              </button>
-            ) : (
+            {/* A Retail product offers the cart AND a quote (B2B and B2C); any
+                other listed product, the quote alone. */}
+            {retail && (
               <button
                 type="button"
                 className="action-fill"
@@ -627,6 +634,14 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                 Add to cart
               </button>
             )}
+            <button
+              type="button"
+              className={retail ? 'action-outline' : 'action-fill'}
+              onClick={onAddToRequest}
+              disabled={!selected}
+            >
+              {selected && !selected.in_stock ? 'Add to backorder quote' : 'Add to quote'}
+            </button>
             {/* One sample control for both branches — it was two identical
                 copies, and a third would have drifted. */}
             <button
@@ -648,43 +663,35 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
 
           {metresError && <p className="field-error">{metresError}</p>}
 
-          {fabric ? (
-            <>
-              {!selected ? (
-                <p className="purchase-note">No colourway is listed to request.</p>
-              ) : (
-                !selected.in_stock && (
-                  <p className="purchase-note">
-                    {selected.name} is out of stock and will be backordered.{' '}
-                    {product.lead_time
-                      ? `Estimated lead time: ${product.lead_time}.`
-                      : 'Lead time confirmed on request.'}
-                    {anyInStock ? ' Another colourway is in stock.' : ''}
-                  </p>
-                )
-              )}
-              {requested > 0 && (
-                <p className="purchase-added">
-                  {requested} m × {selected?.name} added to your quote request.{' '}
-                  <a href={REQUEST_PATH}>Review request</a>
-                </p>
-              )}
-            </>
+          {/* One set of notes for every product: out of stock is a backorder
+              on a quote, and the cart (when it is offered) says so too. */}
+          {!selected ? (
+            <p className="purchase-note">No colourway is listed.</p>
           ) : (
-            <>
-              {!selected && <p className="purchase-note">No colourway is listed to buy.</p>}
-              {selected && !selected.in_stock && (
-                <p className="purchase-note">
-                  {selected.name} is out of stock.
-                  {anyInStock ? ' Choose another colourway.' : ''}
-                </p>
-              )}
-              {added > 0 && (
-                <p className="purchase-added">
-                  {added} × {selected?.name} added to your cart. <a href="/cart">View cart</a>
-                </p>
-              )}
-            </>
+            !selected.in_stock && (
+              <p className="purchase-note">
+                {selected.name} is out of stock
+                {retail && !fabric ? ', so it cannot go in the cart' : ''} — it can be quoted as a backorder.{' '}
+                {product.lead_time
+                  ? `Estimated lead time: ${product.lead_time}.`
+                  : 'Lead time confirmed on request.'}
+                {anyInStock ? ' Another colourway is in stock.' : ''}
+              </p>
+            )
+          )}
+          {retail && fabric && selected?.in_stock && !wholeMetres && (
+            <p className="purchase-note">The cart sells whole metres; add a part metre to a quote instead.</p>
+          )}
+          {requested > 0 && (
+            <p className="purchase-added">
+              {fabric ? `${requested} m` : requested} × {selected?.name} added to your quote request.{' '}
+              <a href={REQUEST_PATH}>Review request</a>
+            </p>
+          )}
+          {added > 0 && (
+            <p className="purchase-added">
+              {fabric ? `${added} m` : added} × {selected?.name} added to your cart. <a href="/cart">View cart</a>
+            </p>
           )}
         </div>
       </div>
