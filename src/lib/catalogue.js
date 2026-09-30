@@ -248,6 +248,12 @@ export function weaveBackground(hexTones) {
 export const isFabric = (product) => product?.product_type === 'fabric'
 
 /**
+ * A towel's variations are its sizes (1 Oct 2026): the product page picks one
+ * from a Size drop-down instead of the colour discs.
+ */
+export const sizedByVariation = (product) => product?.category === 'towel'
+
+/**
  * Whether the cart sells the product (1 Oct 2026, the CRM's Retail tick beside
  * "Show on the website"). Every listed product can be quoted; only a Retail one
  * can ALSO be added to the cart — a B2B and B2C product. An API that predates
