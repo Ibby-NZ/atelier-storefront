@@ -16,6 +16,7 @@ import {
   weaveBackground,
   isFabric,
   soldRetail,
+  sizedByVariation,
   STORE_CURRENCY,
 } from '../lib/catalogue.js'
 import {
@@ -38,11 +39,17 @@ import {
 //
 // 2026 layout: one raised surface-cream band, edge to edge (the page is
 // `bleed`) — the photograph on the left inside a subtle hairline, and on the
-// right the ochre "Fabric | House" badge, the display name, the lede, the
-// price, the Size and Colour controls, the hairline spec rows, the selected
-// colourway's SKU line and the action buttons (the direction's first real
-// buttons — filled tan primary, hairline outline secondary). Below the band, a
-// "Similar" strip of library cards from the same house.
+// right the ochre "Fabric | House" badge, the display name, the description
+// and hairline spec rows (under the heading, page feedback 1 Oct 2026), the
+// price, the Size and Colour controls, the selected colourway's SKU line, the
+// action buttons (the direction's first real buttons — filled tan primary,
+// hairline outline secondary) and, small and last, the lede on how the thing
+// is bought. Below the band, a "Similar" strip of library cards from the same
+// house.
+//
+// A towel's variations are its SIZES (1 Oct 2026, `sizedByVariation`): the
+// same colourway rows, each with its own price and stock, picked from a Size
+// drop-down instead of the colour discs.
 //
 // The colourway is the thing actually bought — every SKU on this page belongs
 // to a colourway, not the product — so the Colour select drives the whole
@@ -57,9 +64,9 @@ import {
 //                    the back office; an out-of-stock colourway is added the
 //                    same way and carries its lead-time note through to the
 //                    request page, where the whole list is sent as ONE request.
-//                    "Request a sample" sits beside it, landing on /contact
-//                    with the colourway named (sampleHref below).
-//   finished good -> "Add to cart" (quantity field).
+//                    "Request a sample" sits beside it, and on a fabric only.
+//   finished good -> "Add to cart" (quantity field). No sample: a made-up
+//                    piece has no cutting to send (1 Oct 2026).
 //
 // THE TRADE GATE (lib/tradeGate.js) is why this island has a fourth status.
 // Designs from the maisons Atelier represents are served only to approved trade
@@ -79,10 +86,10 @@ import {
 // (see ProductLibrary.jsx, same constraint).
 
 const SPEC_FIELDS = [
-  // First, because on a finished good it is the thing a shopper is actually
-  // choosing between: one product per size, so a bath sheet and a hand towel
-  // are two products and this is what tells them apart. Absent on a fabric,
-  // and the filter below drops a field the product does not carry.
+  // First, because on a finished good sold one product per size it is what
+  // tells a bath sheet from a hand towel. (A towel whose sizes are variations
+  // picks the size from the drop-down instead.) Absent on a fabric, and the
+  // filter below drops a field the product does not carry.
   { key: 'size', label: 'Size' },
   { key: 'composition', label: 'Composition' },
   { key: 'width', label: 'Width' },
@@ -314,6 +321,8 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
   const priced = pricedFor(product, selected)
   const price = priceInfo(priced, viewer, `/products/${encodeURIComponent(slug)}`)
   const fabric = isFabric(product)
+  const sized = sizedByVariation(product)
+  const variationNoun = sized ? 'size' : 'colourway'
   const specs = SPEC_FIELDS.filter(
     (field) => product[field.key] != null && product[field.key] !== ''
   )
@@ -405,9 +414,9 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
     setSampleAdded(selected.name)
   }
 
-  // The lede under the name. The mock writes the fabric flow's own explainer
-  // there; a finished good has no equivalent copy, so it states the simpler
-  // truth of that flow instead.
+  // The lede, last in the column. The mock writes the fabric flow's own
+  // explainer; a finished good has no equivalent copy, so it states the
+  // simpler truth of that flow instead.
   const lede = fabric
     ? 'Cut to order by the metre. We confirm stock and batch shading before invoicing. Add as many cloths as you like and send them as one request.'
     : retail
@@ -493,13 +502,21 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
 
           <h1 className="detail-name">{product.name}</h1>
 
-          {/* The office's own copy for this product, when it has written any.
-              It sits ABOVE the flow lede rather than replacing it: that
-              sentence explains how the thing is bought, which is still true
-              whatever the description says. */}
+          {/* Under the heading: the office's own copy for this product, when it
+              has written any, then the spec rows — size, composition and the
+              rest (page feedback, 1 Oct 2026). */}
           {product.description && <p className="detail-lede">{product.description}</p>}
 
-          <p className="detail-lede">{lede}</p>
+          {specs.length > 0 && (
+            <dl className="detail-specs">
+              {specs.map((field) => (
+                <div key={field.key}>
+                  <dt>{field.label}</dt>
+                  <dd>{String(product[field.key])}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
 
           {viewerReady ? (
             <p className={price.muted ? 'detail-price muted' : 'detail-price'}>
@@ -521,6 +538,24 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
           )}
 
           <div className="detail-controls">
+            {/* A towel's variations are sizes: one drop-down, out of stock in
+                the option's name. */}
+            {sized && colourways.length > 0 && (
+              <label className="detail-control">
+                <span className="detail-control-label">Size</span>
+                <span className="detail-colour-select">
+                  <select value={selectedSku ?? ''} onChange={(event) => chooseColourway(event.target.value)}>
+                    {colourways.map((colourway) => (
+                      <option key={colourway.sku} value={colourway.sku}>
+                        {colourway.name}
+                        {colourway.in_stock ? '' : ' — out of stock'}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              </label>
+            )}
+
             {fabric ? (
               <label className="detail-control">
                 <span className="detail-control-label">Size</span>
@@ -573,7 +608,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                 one ringed. Each disc paints the colourway's own tones through
                 `weaveBackground`, so a colourway with none falls back to the
                 surface. Out of stock is in the name, not hidden. */}
-            {colourways.length > 0 && (
+            {!sized && colourways.length > 0 && (
               <div className="detail-control detail-colour" role="group" aria-labelledby="detail-colour-label">
                 <span className="detail-control-label" id="detail-colour-label">
                   Colour
@@ -599,17 +634,6 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
               </div>
             )}
           </div>
-
-          {specs.length > 0 && (
-            <dl className="detail-specs">
-              {specs.map((field) => (
-                <div key={field.key}>
-                  <dt>{field.label}</dt>
-                  <dd>{String(product[field.key])}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
 
           {selected && (
             <p className="detail-selected">
@@ -642,17 +666,19 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
             >
               {selected && !selected.in_stock ? 'Add to backorder quote' : 'Add to quote'}
             </button>
-            {/* One sample control for both branches — it was two identical
-                copies, and a third would have drifted. */}
-            <button
-              type="button"
-              className="action-outline"
-              onClick={onRequestSample}
-              disabled={!selected}
-              title="Add a cutting of this colourway to your sample request"
-            >
-              Request a sample
-            </button>
+            {/* A cutting is a fabric thing; a finished good offers no sample
+                (1 Oct 2026). */}
+            {fabric && (
+              <button
+                type="button"
+                className="action-outline"
+                onClick={onRequestSample}
+                disabled={!selected}
+                title="Add a cutting of this colourway to your sample request"
+              >
+                Request a sample
+              </button>
+            )}
           </div>
           {sampleAdded && (
             <p className="purchase-added">
@@ -666,7 +692,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
           {/* One set of notes for every product: out of stock is a backorder
               on a quote, and the cart (when it is offered) says so too. */}
           {!selected ? (
-            <p className="purchase-note">No colourway is listed.</p>
+            <p className="purchase-note">No {variationNoun} is listed.</p>
           ) : (
             !selected.in_stock && (
               <p className="purchase-note">
@@ -675,7 +701,7 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
                 {product.lead_time
                   ? `Estimated lead time: ${product.lead_time}.`
                   : 'Lead time confirmed on request.'}
-                {anyInStock ? ' Another colourway is in stock.' : ''}
+                {anyInStock ? ` Another ${variationNoun} is in stock.` : ''}
               </p>
             )
           )}
@@ -693,6 +719,10 @@ export default function ProductDetail({ slug, initialProduct = null, tradeGated 
               {fabric ? `${added} m` : added} × {selected?.name} added to your cart. <a href="/cart">View cart</a>
             </p>
           )}
+
+          {/* How the thing is bought — small and below the actions, not under
+              the name (page feedback, 1 Oct 2026). */}
+          <p className="purchase-note">{lede}</p>
         </div>
       </div>
 

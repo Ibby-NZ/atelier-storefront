@@ -4,9 +4,11 @@
  *
  * One raised surface-cream band, edge to edge (the page is `bleed`): the
  * photograph on the left inside a subtle hairline, the buy column on the
- * right — ochre "Fabric | House" badge, grotesk display name, lede, price,
- * the Size and Colour controls, hairline spec rows, the selected SKU line and
- * the direction's buttons (.action-fill / .action-outline, direction-2026.css).
+ * right — ochre "Fabric | House" badge, grotesk display name, description and
+ * hairline spec rows, price, the Size and Colour controls (a towel's Size is
+ * the `.detail-colour-select` drop-down), the selected SKU line, the
+ * direction's buttons (.action-fill / .action-outline, direction-2026.css) and
+ * the lede as a small `.purchase-note`.
  * Below the band, the "Similar" strip reuses the library's product cards
  * (library.css).
  *
