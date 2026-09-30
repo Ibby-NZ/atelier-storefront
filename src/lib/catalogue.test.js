@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {
+import { soldRetail,
   priceInfo,
   NO_PRICE_COPY,
   productSummary,
@@ -224,4 +224,12 @@ test('pricedFor: the selected variation\'s own price, else the product\'s', () =
   assert.equal(pricedFor(product, null), product)
   // Trade stays absent for a viewer the API sent no trade price.
   assert.equal(visiblePriceCents(pricedFor({ price_hidden: false, retail_price_cents: 10000 }, { retail_price_cents: 12000 })), 12000)
+})
+
+// 1 Oct 2026: the Retail tick decides the cart; every listed product is quotable.
+test('soldRetail reads the Retail tick, and the old type rule when the API sends none', () => {
+  assert.equal(soldRetail({ product_type: 'fabric', sell_retail: true }), true)
+  assert.equal(soldRetail({ product_type: 'finished_good', sell_retail: false }), false)
+  assert.equal(soldRetail({ product_type: 'finished_good' }), true)
+  assert.equal(soldRetail({ product_type: 'fabric' }), false)
 })

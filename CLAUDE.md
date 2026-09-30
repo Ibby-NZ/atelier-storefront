@@ -328,6 +328,22 @@ from **atelier-api**. Plain JavaScript (no TypeScript), ESM.
   build does diagnostics). Keep real logic in `.js/.jsx` modules so it stays
   covered. JSX parses via espree's `ecmaFeatures.jsx` — no extra parser dep.
 
+## Cart or quote: the Retail tick (1 Oct 2026)
+
+- **Every listed product can be quoted; only a Retail one can also go in the cart.** The CRM's
+  Retail tick beside "Show on the website" is `sell_retail` on the API's card and detail reads.
+  `soldRetail(product)` (`lib/catalogue.js`) reads it, falling back to the old type rule (finished
+  goods only) when an older API sends none. The product page draws "Add to cart" (fill) and "Add to
+  quote" (outline) for a Retail product, "Add to quote" alone otherwise. Card checkout refuses a
+  product not sold retail, so the storefront and the API hold one rule.
+- **The request list takes finished goods now, in whole units** (`lineUnit`, `normaliseAmount` in
+  `lib/requestList.js`); a cloth stays in metres and a line stored before this is metres. The amount
+  keeps the `metres` key, which is what `qty_metres` posts. `RequestList` labels a unit line
+  "Quantity" and totals metres and items apart.
+- **A Retail fabric goes in the cart in whole metres** (card checkout takes whole units); a part
+  metre is quoted. Reorder (`lib/reorder.js`) refills the cart with a line the cart sells today and
+  the request list with the rest, by the order line's `sell_retail`.
+
 ## Shared view helpers
 
 - **`src/lib/catalogue.js`** is the single place the catalogue display rules

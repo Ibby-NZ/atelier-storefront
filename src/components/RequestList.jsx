@@ -16,8 +16,10 @@ import {
   hasBackorderLine,
   hasUnavailableLine,
   requestTotalMetres,
+  requestTotalUnits,
   toRequestPayloadLines,
-  normaliseMetres,
+  normaliseAmount,
+  lineUnit,
   ADDRESS_FIELDS,
   EMPTY_ADDRESS,
   requestAddressPayload,
@@ -243,14 +245,14 @@ export default function RequestList() {
       <div className="cart-empty">
         {deepLinkFailed && (
           <p className="error-state">
-            We could not add that fabric — it may no longer be listed. Please choose it from the
+            We could not add that product — it may no longer be listed. Please choose it from the
             library.
           </p>
         )}
         <p className="products-empty">Your request list is empty.</p>
         <p className="cart-note">
-          Choose a fabric and the colourway you want, set the metres, and add it here. You can
-          add as many as you like and send them as one request.
+          Choose a product and the colourway you want, set the metres or quantity, and add it
+          to a quote. You can add as many as you like and send them as one request.
         </p>
         <a className="btn btn-primary" href="/products">
           Browse the library
@@ -260,15 +262,17 @@ export default function RequestList() {
   }
 
   const totalMetres = requestTotalMetres(items)
+  // Finished goods are quoted too since 1 Oct 2026, in whole units.
+  const totalUnits = requestTotalUnits(items)
   const anyBackorder = hasBackorderLine(items)
   const anyUnavailable = hasUnavailableLine(items)
   const needsLeadTime = anyBackorder || leadTimeForced
 
-  const changeMetres = (sku, value) => {
-    setDrafts((current) => ({ ...current, [sku]: value }))
+  const changeMetres = (line, value) => {
+    setDrafts((current) => ({ ...current, [line.sku]: value }))
     // Commit only a usable figure. '' and '0.' are keystrokes on the way to
-    // '0.5'; the stored metres simply stay at their last good value.
-    if (normaliseMetres(value) > 0) setRequestMetres(sku, value)
+    // '0.5'; the stored amount simply stays at its last good value.
+    if (normaliseAmount(value, lineUnit(line)) > 0) setRequestMetres(line.sku, value)
   }
 
   // Snap the field back to what is actually stored once editing stops, so a
@@ -292,8 +296,9 @@ export default function RequestList() {
     for (const line of items) {
       if (line.unavailable) {
         lines[line.sku] = 'No longer available — remove this line to send your request.'
-      } else if (normaliseMetres(line.metres) === 0) {
-        lines[line.sku] = 'Enter the metres wanted (greater than 0).'
+      } else if (normaliseAmount(line.metres, lineUnit(line)) === 0) {
+        lines[line.sku] =
+          lineUnit(line) === 'unit' ? 'Enter the quantity wanted (1 or more).' : 'Enter the metres wanted (greater than 0).'
       }
     }
     if (!email.trim()) {
@@ -431,17 +436,17 @@ export default function RequestList() {
                 </div>
 
                 <label className="cart-qty request-metres">
-                  <span className="request-metres-label">Metres</span>
+                  <span className="request-metres-label">{lineUnit(line) === 'unit' ? 'Quantity' : 'Metres'}</span>
                   <input
                     type="number"
-                    min={METRES_STEP}
+                    min={lineUnit(line) === 'unit' ? 1 : METRES_STEP}
                     max={MAX_METRES}
-                    step={METRES_STEP}
-                    inputMode="decimal"
-                    aria-label={`Metres of ${label}`}
+                    step={lineUnit(line) === 'unit' ? 1 : METRES_STEP}
+                    inputMode={lineUnit(line) === 'unit' ? 'numeric' : 'decimal'}
+                    aria-label={`${lineUnit(line) === 'unit' ? 'Quantity' : 'Metres'} of ${label}`}
                     aria-invalid={lineErrors[line.sku] ? 'true' : undefined}
                     value={drafts[line.sku] ?? String(line.metres)}
-                    onChange={(event) => changeMetres(line.sku, event.target.value)}
+                    onChange={(event) => changeMetres(line, event.target.value)}
                     onBlur={() => settleMetres(line.sku)}
                   />
                 </label>
@@ -468,10 +473,21 @@ export default function RequestList() {
 
       <aside className="cart-summary request-summary">
         <p className="cart-subtotal">
-          <span>{items.length === 1 ? '1 cloth' : `${items.length} cloths`}</span>
+          <span>{items.length === 1 ? '1 line' : `${items.length} lines`}</span>
           <strong>
-            {totalMetres}
-            <span className="request-metres-unit"> m</span>
+            {totalMetres > 0 && (
+              <>
+                {totalMetres}
+                <span className="request-metres-unit"> m</span>
+              </>
+            )}
+            {totalMetres > 0 && totalUnits > 0 && ' · '}
+            {totalUnits > 0 && (
+              <>
+                {totalUnits}
+                <span className="request-metres-unit">{totalUnits === 1 ? ' item' : ' items'}</span>
+              </>
+            )}
           </strong>
         </p>
         <p className="cart-note">

@@ -248,6 +248,15 @@ export function weaveBackground(hexTones) {
 export const isFabric = (product) => product?.product_type === 'fabric'
 
 /**
+ * Whether the cart sells the product (1 Oct 2026, the CRM's Retail tick beside
+ * "Show on the website"). Every listed product can be quoted; only a Retail one
+ * can ALSO be added to the cart — a B2B and B2C product. An API that predates
+ * the tick sends no `sell_retail`, and the old rule (finished goods only) holds.
+ */
+export const soldRetail = (product) =>
+  typeof product?.sell_retail === 'boolean' ? product.sell_retail : !isFabric(product)
+
+/**
  * A one-line prose summary of a product, built from whatever specification
  * fields it actually carries. This is the product page's meta description and
  * its Open Graph description — writing it from the same fields the page shows
